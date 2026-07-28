@@ -16,9 +16,9 @@
   <header class="topbar"><div class="page topbar-inner"><a class="brand" href="#top" aria-label="Столичный Дом"><span class="brand-mark">⌂</span><span><span class="brand-title">Столичный Дом</span><span class="brand-subtitle">Недвижимость • Бухгалтерские услуги</span></span></a><a class="top-link" href="#request">Оставить заявку</a></div></header>
   <main id="top">
     <section class="hero"><div class="page hero-grid"><div><div class="eyebrow">Астана</div><h1>Столичный Дом</h1><p class="hero-text">Риэлторские и бухгалтерские услуги. Быстрая связь с компанией без лишних формальностей.</p><div class="contact-grid">
-      <a class="contact-button telegram" href="https://t.me/77021900472" target="_blank" rel="noopener noreferrer">Telegram</a>
+     <!-- <a class="contact-button telegram" href="https://t.me/77021900472" target="_blank" rel="noopener noreferrer">Telegram</a>-->
       <a class="contact-button whatsapp" href="https://wa.me/77021900472" target="_blank" rel="noopener noreferrer">WhatsApp</a>
-      <a class="contact-button call" href="tel:+77021900472">Позвонить</a>
+      <!-- <a class="contact-button call" href="tel:+77021900472">Позвонить</a> -->
       <a class="contact-button mobile" href="sms:+77021900472">Сотовый</a>
     </div></div><div class="hero-card" aria-label="Современный жилой комплекс"><div class="hero-card-label"><strong>Ваши вопросы — наша работа</strong><span>Недвижимость и бухгалтерия в одном месте</span></div><div class="building"></div></div></div></section>
     <section id="services"><div class="page"><div class="section-heading"><h2>Услуги</h2><p>Выберите нужное направление и свяжитесь с нами удобным способом.</p></div><div class="services"><article class="service-card"><div class="service-icon">🏠</div><h3>Недвижимость</h3><p>Помощь по вопросам жилой и коммерческой недвижимости.</p><ul class="service-list"><li>Покупка недвижимости</li><li>Продажа недвижимости</li><li>Аренда квартир и помещений</li><li>Сопровождение сделок</li></ul></article><article class="service-card"><div class="service-icon">📊</div><h3>Бухгалтерские услуги</h3><p>Бухгалтерское сопровождение предпринимателей и компаний.</p><ul class="service-list"><li>Регистрация ИП и ТОО</li><li>Ведение бухгалтерского учёта</li><li>Налоговая отчётность</li><li>Консультации</li></ul></article></div></div></section>
@@ -26,7 +26,7 @@
   </main>
   <footer><div class="page footer-inner"><div class="footer-brand">Столичный Дом</div><div>Недвижимость • Бухгалтерские услуги • Астана</div></div></footer>
   <script>
-    const whatsappNumber="77000000000";
+    const whatsappNumber="77021900472";
     document.getElementById("sendRequest").addEventListener("click",()=>{const name=document.getElementById("name").value.trim();const phone=document.getElementById("phone").value.trim();const service=document.getElementById("service").value;const message=document.getElementById("message").value.trim();if(!name||!phone){alert("Пожалуйста, укажите имя и телефон.");return}const text=["Здравствуйте! Новая заявка с сайта «Столичный Дом».","",`Имя: ${name}`,`Телефон: ${phone}`,`Услуга: ${service}`,`Комментарий: ${message||"Не указан"}`].join("\n");window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`,"_blank","noopener,noreferrer")});
   </script>
 </body>
