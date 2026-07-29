@@ -64,7 +64,7 @@
   .page{width:min(100% - 28px,1120px)}
   .topbar-inner{min-height:68px;gap:12px}
   .brand{gap:9px;min-width:0;flex:1}
-  .brand-mark{width:40px;height:40px;border-radius:12px;font-size:20px}
+  .brand-mark{width:60px;height:60px}
   .brand-title{
     display:block;
     overflow:hidden;
@@ -96,7 +96,7 @@
   .page{width:min(100% - 20px,1120px)}
   .topbar-inner{min-height:62px}
   .brand{justify-content:flex-start}
-  .brand-mark{width:36px;height:36px;border-radius:11px;font-size:18px}
+  .brand-mark{width:52px;height:52px}
   .brand-title{
     font-size:clamp(15px,5vw,20px);
     letter-spacing:.05em
@@ -175,9 +175,20 @@
 </head>
 <body>
   <!-- ЗАМЕНИТЕ КОНТАКТЫ: USERNAME и номер 77000000000 -->
-  <header class="topbar"><div class="page topbar-inner"><a class="brand" href="#top" aria-label="Столичный Дом"><span class="brand-mark">
-    <img src="images/logo.png" alt="Столичный Дом">
-</span><span class="brand-title">Столичный Дом</span><span class="brand-subtitle">Агентство недвижимости</span></span></a><a class="top-link" href="#request">Оставить заявку</a></div></header>
+  <header class="topbar">
+    <div class="page topbar-inner">
+      <a class="brand" href="#top" aria-label="Столичный Дом">
+        <span class="brand-mark">
+          <img src="images/logo.png" alt="Столичный Дом">
+        </span>
+        <span>
+          <span class="brand-title">Столичный Дом</span>
+          <span class="brand-subtitle">Агентство недвижимости</span>
+        </span>
+      </a>
+      <a class="top-link" href="#request">Оставить заявку</a>
+    </div>
+  </header>
   <main id="top">
     <section class="hero"><div class="page hero-grid"><div><div class="eyebrow">Астана</div><h1>Столичный Дом</h1><p class="hero-text">Покупка, продажа, аренда недвижимости и сопровождение сделок в Астане.</p><div class="contact-grid">
      <!-- <a class="contact-button telegram" href="https://t.me/77021900472" target="_blank" rel="noopener noreferrer">Telegram</a>-->
