@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
   <style>
     :root{--gold:#c9a227;--gold-dark:#a78316;--text:#1f1f1f;--muted:#707070;--line:#e8e4d8;--soft:#f7f5ef;--white:#fff;--telegram:#229ed9;--whatsapp:#25d366;--call:#d3aa25;--mobile:#383838;--shadow:0 16px 40px rgba(38,34,20,.08);--radius:24px}
-    *{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}body{min-height:100vh;font-family:Inter,Arial,Helvetica,sans-serif;color:var(--text);background:radial-gradient(circle at top left,rgba(201,162,39,.08),transparent 28rem),var(--white);line-height:1.5}a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit}.page{width:min(1120px,calc(100% - 32px));margin:0 auto}.topbar{position:sticky;top:0;z-index:20;border-bottom:1px solid rgba(232,228,216,.9);background:rgba(255,255,255,.92);backdrop-filter:blur(14px)}.topbar-inner{min-height:74px;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{display:flex;align-items:center;gap:12px;min-width:0}.brand-mark{
+    *{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}body{min-height:100vh;font-family:Inter,Arial,Helvetica,sans-serif;color:var(--text);background:#111;line-height:1.5;overflow-x:hidden}a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit}.page{width:min(1120px,calc(100% - 32px));margin:0 auto}.topbar{position:sticky;top:0;z-index:20;border-bottom:1px solid rgba(212,175,55,.35);background:rgba(255,255,255,.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}.topbar-inner{min-height:74px;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{display:flex;align-items:center;gap:12px;min-width:0}.brand-mark{
     width:70px;
     height:70px;
     display:flex;
@@ -61,27 +61,98 @@
 }
     .contact-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:32px}.contact-button{min-height:64px;display:flex;align-items:center;justify-content:center;gap:11px;padding:16px 18px;border:1px solid transparent;border-radius:18px;color:var(--white);font-weight:800;text-align:center;box-shadow:0 10px 24px rgba(0,0,0,.08);transition:.2s ease}.contact-button:hover{transform:translateY(-2px);filter:brightness(.97)}.telegram{background:var(--telegram)}.whatsapp{background:var(--whatsapp)}.call{background:var(--call)}.mobile{background:var(--mobile)}.contact-button svg{width:22px;height:22px;flex:0 0 auto;fill:currentColor}.hero-card{position:relative;min-height:430px;overflow:hidden;border:1px solid var(--line);border-radius:34px;background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,0)),linear-gradient(135deg,#d9c783 0%,#f3ead0 48%,#b8901d 100%);box-shadow:var(--shadow)}.building{position:absolute;inset:auto 7% 0;height:78%;border:1px solid rgba(255,255,255,.65);border-bottom:none;border-radius:18px 18px 0 0;background:linear-gradient(90deg,transparent 31%,rgba(255,255,255,.45) 31% 34%,transparent 34% 65%,rgba(255,255,255,.45) 65% 68%,transparent 68%),repeating-linear-gradient(0deg,rgba(255,255,255,.55) 0 2px,transparent 2px 54px),linear-gradient(180deg,rgba(255,255,255,.75),rgba(255,255,255,.28));box-shadow:inset 0 0 0 10px rgba(255,255,255,.08)}.building:before,.building:after{content:"";position:absolute;bottom:0;width:25%;height:73%;border:1px solid rgba(255,255,255,.45);border-bottom:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.5) 0 2px,transparent 2px 47px),rgba(255,255,255,.19)}.building:before{left:-16%;border-radius:15px 0 0 0}.building:after{right:-16%;border-radius:0 15px 0 0}.hero-card-label{position:absolute;top:24px;left:24px;right:24px;padding:16px 18px;border:1px solid rgba(255,255,255,.65);border-radius:18px;color:#594512;background:rgba(255,255,255,.72);backdrop-filter:blur(10px)}.hero-card-label strong{display:block;margin-bottom:4px;font-family:Georgia,"Times New Roman",serif;font-size:22px}.hero-card-label span{font-size:14px}section{padding:50px 0}.section-heading{margin-bottom:24px}.section-heading h2{font-family:Georgia,"Times New Roman",serif;font-size:clamp(32px,5vw,48px);font-weight:500}.section-heading p{max-width:680px;margin-top:10px;color:var(--muted)}.services{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.service-card{padding:30px;border:1px solid var(--line);border-radius:var(--radius);background:var(--white);box-shadow:var(--shadow)}.service-icon{width:52px;height:52px;display:grid;place-items:center;margin-bottom:24px;border-radius:16px;color:var(--gold-dark);background:var(--soft);font-size:26px}.service-card h3{font-family:Georgia,"Times New Roman",serif;font-size:28px;font-weight:500}.service-card p{margin-top:10px;color:var(--muted)}.service-list{display:grid;gap:11px;margin-top:22px;list-style:none}.service-list li{position:relative;padding-left:22px}.service-list li:before{content:"";position:absolute;left:0;top:.65em;width:8px;height:8px;border-radius:50%;background:var(--gold);transform:translateY(-50%)}.form-wrap{display:grid;grid-template-columns:.8fr 1.2fr;gap:24px;align-items:stretch}.form-intro,.form-card{border:1px solid var(--line);border-radius:var(--radius)}.form-intro{padding:34px;color:#fff;background:#252525}.form-intro h2{font-family:Georgia,"Times New Roman",serif;font-size:clamp(32px,5vw,46px);font-weight:500}.form-intro p{margin-top:15px;color:rgba(255,255,255,.72)}.form-contact{margin-top:28px;color:#e5c65d;font-weight:800}.form-card{padding:28px;background:var(--white);box-shadow:var(--shadow)}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.field{display:grid;gap:8px}.field.full{grid-column:1/-1}label{font-size:14px;font-weight:700}input,select,textarea{width:100%;border:1px solid #dedbd2;border-radius:14px;outline:none;background:#fff;color:var(--text);transition:.2s ease}input,select{height:52px;padding:0 15px}textarea{min-height:120px;padding:14px 15px;resize:vertical}input:focus,select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 4px rgba(201,162,39,.12)}.submit-button{width:100%;min-height:54px;margin-top:18px;border:0;border-radius:15px;color:#fff;background:var(--gold);font-weight:800;cursor:pointer;transition:.2s ease}.submit-button:hover{background:var(--gold-dark);transform:translateY(-1px)}.form-note{margin-top:12px;color:var(--muted);font-size:12px;text-align:center}footer{margin-top:34px;padding:34px 0 44px;border-top:1px solid var(--line)}.footer-inner{display:flex;align-items:center;justify-content:space-between;gap:20px;color:var(--muted);font-size:14px}.footer-brand{color:var(--text);font-family:Georgia,"Times New Roman",serif;font-size:18px}
 
-.hero{
-  position:relative;
-  overflow:hidden;
-}
-.hero-video-bg{
-  position:absolute;
+.site-video-bg{
+  position:fixed;
   inset:0;
   width:100%;
   height:100%;
   object-fit:cover;
-  z-index:0;
+  z-index:-3;
+  pointer-events:none;
 }
-.hero-overlay{
-  position:absolute;
+.site-video-overlay{
+  position:fixed;
   inset:0;
-  background:rgba(0,0,0,.35);
-  z-index:1;
+  z-index:-2;
+  pointer-events:none;
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.48),rgba(0,0,0,.34) 42%,rgba(0,0,0,.52)),
+    radial-gradient(circle at top left,rgba(201,162,39,.18),transparent 42%);
 }
-.hero .page{
-  position:relative;
+main,footer{position:relative;z-index:1}
+.hero{padding:76px 0 50px;background:transparent}
+.hero-card,
+.service-card,
+.form-card,
+.form-intro{
+  border:1px solid rgba(212,175,55,.38);
+  background:rgba(255,255,255,.82);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  box-shadow:0 16px 42px rgba(0,0,0,.22);
+}
+.hero-card{
+  background:linear-gradient(145deg,rgba(255,255,255,.24),rgba(255,255,255,.08));
+}
+.hero-card-label{
   z-index:2;
+  border:1px solid rgba(255,255,255,.55);
+  color:#3e2e08;
+  background:rgba(255,255,255,.76);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+.form-intro{
+  color:#fff;
+  background:rgba(20,20,20,.72);
+}
+.form-intro p{color:rgba(255,255,255,.78)}
+.section-heading h2,
+.section-heading p{color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.45)}
+footer{
+  border-top:1px solid rgba(212,175,55,.32);
+  background:rgba(255,255,255,.72);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+.service-card,
+.form-card,
+.hero-card,
+.form-intro{
+  animation:fadeUp .8s ease both;
+}
+.service-card:nth-child(2){animation-delay:.12s}
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(22px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.brand-mark img{
+  animation:logoGlow 1.6s ease-out both;
+}
+@keyframes logoGlow{
+  0%{opacity:0;transform:scale(.92);filter:drop-shadow(0 0 0 rgba(212,175,55,0))}
+  60%{opacity:1;transform:scale(1.03);filter:drop-shadow(0 0 16px rgba(212,175,55,.75))}
+  100%{opacity:1;transform:scale(1);filter:drop-shadow(0 0 8px rgba(212,175,55,.35))}
+}
+.contact-button,.submit-button,.top-link{
+  position:relative;
+  overflow:hidden;
+}
+.contact-button::after,.submit-button::after,.top-link::after{
+  content:"";
+  position:absolute;
+  top:-80%;
+  left:-40%;
+  width:35%;
+  height:260%;
+  transform:rotate(25deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);
+  transition:left .65s ease;
+}
+.contact-button:hover::after,.submit-button:hover::after,.top-link:hover::after{left:120%}
+@media (prefers-reduced-motion:reduce){
+  *{scroll-behavior:auto!important}
+  .service-card,.form-card,.hero-card,.form-intro,.brand-mark img{animation:none!important}
 }
 
 @media(max-width:820px){
@@ -198,6 +269,12 @@
 </style>
 </head>
 <body>
+
+  <video class="site-video-bg" autoplay muted loop playsinline preload="metadata" aria-hidden="true">
+    <source src="video/astana.mp4" type="video/mp4">
+  </video>
+  <div class="site-video-overlay" aria-hidden="true"></div>
+
   <!-- ЗАМЕНИТЕ КОНТАКТЫ: USERNAME и номер 77000000000 -->
   <header class="topbar">
     <div class="page topbar-inner">
@@ -214,14 +291,14 @@
     </div>
   </header>
   <main id="top">
-    <section class="hero"><video class="hero-video-bg" autoplay muted loop playsinline preload="metadata"><source src="video/astana.mp4" type="video/mp4"></video><div class="hero-overlay"></div><div class="page hero-grid"><div><div class="eyebrow">Астана</div><h1>Столичный Дом</h1><p class="hero-text">Покупка, продажа, аренда недвижимости и сопровождение сделок в Астане.</p><div class="contact-grid">
+    <section class="hero"><div class="page hero-grid"><div><div class="eyebrow">Астана</div><h1>Столичный Дом</h1><p class="hero-text">Покупка, продажа, аренда недвижимости и сопровождение сделок в Астане.</p><div class="contact-grid">
      <!-- <a class="contact-button telegram" href="https://t.me/77021900472" target="_blank" rel="noopener noreferrer">Telegram</a>-->
       <a class="contact-button whatsapp" href="https://wa.me/77021900472" target="_blank" rel="noopener noreferrer">WhatsApp</a>
       <!-- <a class="contact-button call" href="tel:+77021900472">Позвонить</a> -->
       <a class="contact-button mobile" href="sms:+77021900472">Сотовый</a>
     </div></div><div class="hero-card" aria-label="Современный жилой комплекс"><div class="hero-card-label"><strong>Ваши вопросы — наша работа</strong><span>Покупка • Продажа • Аренда недвижимости</span></div><div class="building"></div></div></div></section>
-    <section id="services"><div class="page"><div class="section-heading"><h2>Услуги</h2><p>Поможем купить, продать или арендовать недвижимость в Астане.</p></div><div class="services"><article class="service-card"><div class="service-icon">🏠</div><h3>Покупка и продажа</h3><p>Полное сопровождение сделок с жилой и коммерческой недвижимостью.</p><ul class="service-list"><li>Подбор подходящих объектов</li><li>Оценка и подготовка к продаже</li><li>Проверка документов</li><li>Сопровождение сделки</li></ul></article><article class="service-card"><div class="service-icon">🔑</div><h3>Аренда недвижимости</h3><p>Помощь собственникам и арендаторам в поиске надёжного варианта.</p><ul class="service-list"><li>Аренда квартир и домов</li><li>Коммерческие помещения</li><li>Проверка условий аренды</li><li>Консультация специалиста</li></ul></article></div></div></section>
-    <section id="request"><div class="page form-wrap"><div class="form-intro"><h2>Оставить заявку</h2><p>Заполните форму. После нажатия откроется WhatsApp с готовым сообщением.</p><div class="form-contact">Столичный Дом</div></div><div class="form-card"><div class="form-grid"><div class="field"><label for="name">Ваше имя</label><input id="name" type="text" placeholder="Введите имя"></div><div class="field"><label for="phone">Телефон</label><input id="phone" type="tel" placeholder="+7 700 000 00 00"></div><div class="field full"><label for="service">Вид услуги</label><select id="service"><option value="Покупка недвижимости">Покупка недвижимости</option><option value="Продажа недвижимости">Продажа недвижимости</option><option value="Аренда недвижимости">Аренда недвижимости</option><option value="Сопровождение сделки">Сопровождение сделки</option><option value="Консультация">Консультация</option></select></div><div class="field full"><label for="message">Комментарий</label><textarea id="message" placeholder="Кратко опишите ваш вопрос"></textarea></div></div><button class="submit-button" id="sendRequest" type="button">Отправить в WhatsApp</button><p class="form-note">Отправка происходит через WhatsApp. Данные не сохраняются на сайте.</p></div></div></section>
+    <section id="services" style="background:transparent"><div class="page"><div class="section-heading"><h2>Услуги</h2><p>Поможем купить, продать или арендовать недвижимость в Астане.</p></div><div class="services"><article class="service-card"><div class="service-icon">🏠</div><h3>Покупка и продажа</h3><p>Полное сопровождение сделок с жилой и коммерческой недвижимостью.</p><ul class="service-list"><li>Подбор подходящих объектов</li><li>Оценка и подготовка к продаже</li><li>Проверка документов</li><li>Сопровождение сделки</li></ul></article><article class="service-card"><div class="service-icon">🔑</div><h3>Аренда недвижимости</h3><p>Помощь собственникам и арендаторам в поиске надёжного варианта.</p><ul class="service-list"><li>Аренда квартир и домов</li><li>Коммерческие помещения</li><li>Проверка условий аренды</li><li>Консультация специалиста</li></ul></article></div></div></section>
+    <section id="request" style="background:transparent"><div class="page form-wrap"><div class="form-intro"><h2>Оставить заявку</h2><p>Заполните форму. После нажатия откроется WhatsApp с готовым сообщением.</p><div class="form-contact">Столичный Дом</div></div><div class="form-card"><div class="form-grid"><div class="field"><label for="name">Ваше имя</label><input id="name" type="text" placeholder="Введите имя"></div><div class="field"><label for="phone">Телефон</label><input id="phone" type="tel" placeholder="+7 700 000 00 00"></div><div class="field full"><label for="service">Вид услуги</label><select id="service"><option value="Покупка недвижимости">Покупка недвижимости</option><option value="Продажа недвижимости">Продажа недвижимости</option><option value="Аренда недвижимости">Аренда недвижимости</option><option value="Сопровождение сделки">Сопровождение сделки</option><option value="Консультация">Консультация</option></select></div><div class="field full"><label for="message">Комментарий</label><textarea id="message" placeholder="Кратко опишите ваш вопрос"></textarea></div></div><button class="submit-button" id="sendRequest" type="button">Отправить в WhatsApp</button><p class="form-note">Отправка происходит через WhatsApp. Данные не сохраняются на сайте.</p></div></div></section>
   </main>
   <footer><div class="page footer-inner"><div class="footer-brand">Столичный Дом</div><div>Агентство недвижимости • Астана</div></div></footer>
   <script>
