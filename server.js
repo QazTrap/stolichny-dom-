@@ -9,8 +9,6 @@ const PORT = Number(process.env.PORT || 3000);
 const KGD_PORTAL_HOST = (process.env.KGD_PORTAL_HOST || "https://portal.kgd.gov.kz").replace(/\/$/, "");
 const KGD_API_TOKEN = process.env.KGD_API_TOKEN;
 const PUBLIC_APP_URL = (process.env.PUBLIC_APP_URL || "https://stoldom.site").replace(/\/$/, "");
-const allowedOrigins = (process.env.CORS_ORIGINS || PUBLIC_APP_URL)
-  .split(",").map(value => value.trim()).filter(Boolean);
 
 app.disable("x-powered-by");
 
