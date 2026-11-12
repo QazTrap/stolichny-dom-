@@ -49,7 +49,7 @@ app.get("/api/health", (_req, res) => {
 
 app.post("/api/counterparty", async (req, res) => {
   const xin = String(req.body?.xin || "").trim();
-  if (!/^\\d{12}$/.test(xin)) {
+  if (!/^\d{12}$/.test(xin)) {
     return res.status(400).json({ error: "Введите корректный БИН из 12 цифр." });
   }
   if (!KGD_API_TOKEN) {
@@ -100,7 +100,7 @@ app.post("/api/counterparty", async (req, res) => {
 
 app.get("/api/counterparty/:xin/qr", async (req, res) => {
   const xin = String(req.params.xin || "");
-  if (!/^\\d{12}$/.test(xin)) return res.status(400).json({ error: "Некорректный БИН." });
+  if (!/^\d{12}$/.test(xin)) return res.status(400).json({ error: "Некорректный БИН." });
   try {
     const target = `${PUBLIC_APP_URL}/?bin=${encodeURIComponent(xin)}`;
     const png = await QRCode.toBuffer(target, { type: "png", width: 360, margin: 2, errorCorrectionLevel: "M" });
