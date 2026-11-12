@@ -35,12 +35,7 @@ app.use(helmet({
 app.use(cors({
   origin(origin, callback) {
     if (!origin) return callback(null, true);
-    try {
-      const requestHost = new URL(origin).host;
-      if (allowedOrigins.includes(origin) || requestHost === currentHost) {
-        return callback(null, true);
-      }
-    } catch {}
+    if (allowedOrigins.includes(origin)) return callback(null, true);
     return callback(new Error("Origin is not allowed by CORS"));
   }
 }));
