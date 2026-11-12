@@ -158,7 +158,7 @@
     document.getElementById('flags').innerHTML = labels.map(([label,key]) => flag(label,d[key])).join('');
     const extra = ['taxDebt1','taxDebt2','taxDebt3','taxDebt4'].filter(key => d[key] !== null && d[key] !== undefined && Number(d[key]) !== 0);
     document.getElementById('extraDebtWrap').hidden = extra.length === 0;
-    document.getElementById('extraDebt').innerHTML = extra.map(key => item(key,money(d[key]))).join('');
+    document.getElementById('extraDebt').innerHTML = extra.map(key => item('Дополнительный показатель задолженности',money(d[key]))).join('');
     const stats = Array.isArray(d.statistics) ? d.statistics : [];
     document.getElementById('statsWrap').hidden = stats.length === 0;
     document.getElementById('statsBody').innerHTML = stats.map(s => '<tr>'+
