@@ -3,6 +3,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const QRCode = require("qrcode");
+const path = require("path");
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -13,10 +14,33 @@ const allowedOrigins = (process.env.CORS_ORIGINS || PUBLIC_APP_URL)
   .split(",").map(value => value.trim()).filter(Boolean);
 
 app.disable("x-powered-by");
-app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+
+// The frontend is served by this same Node service. Inline CSS/JS are used by index.html.
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "same-origin" },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:"],
+      connectSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      frameAncestors: ["'none'"]
+    }
+  }
+}));
+
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    if (!origin) return callback(null, true);
+    try {
+      const requestHost = new URL(origin).host;
+      if (allowedOrigins.includes(origin) || requestHost === currentHost) {
+        return callback(null, true);
+      }
+    } catch {}
     return callback(new Error("Origin is not allowed by CORS"));
   }
 }));
@@ -24,12 +48,13 @@ app.use(express.json({ limit: "20kb" }));
 app.use("/api", rateLimit({ windowMs: 60_000, limit: 30, standardHeaders: "draft-7", legacyHeaders: false }));
 
 app.get("/api/health", (_req, res) => {
+  res.set("Cache-Control", "no-store");
   res.json({ ok: true, service: "STOLDOM.SITE", integrationConfigured: Boolean(KGD_API_TOKEN) });
 });
 
 app.post("/api/counterparty", async (req, res) => {
   const xin = String(req.body?.xin || "").trim();
-  if (!/^\d{12}$/.test(xin)) {
+  if (!/^\\d{12}$/.test(xin)) {
     return res.status(400).json({ error: "Введите корректный БИН из 12 цифр." });
   }
   if (!KGD_API_TOKEN) {
@@ -37,7 +62,7 @@ app.post("/api/counterparty", async (req, res) => {
   }
 
   try {
-    const response = await fetch(\`\${KGD_PORTAL_HOST}/services/isnaportal/public/get-sur-data\`, {
+    const response = await fetch(`${KGD_PORTAL_HOST}/services/isnaportal/public/get-sur-data`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -68,6 +93,7 @@ app.post("/api/counterparty", async (req, res) => {
       return res.status(502).json({ error: "БИН в ответе КГД не совпадает с запрошенным. Данные не показаны." });
     }
 
+    res.set("Cache-Control", "no-store");
     return res.json({ source: "КГД МФ РК — открытые данные", retrievedAt: new Date().toISOString(), data });
   } catch (error) {
     const timeout = error?.name === "TimeoutError" || error?.name === "AbortError";
@@ -79,9 +105,9 @@ app.post("/api/counterparty", async (req, res) => {
 
 app.get("/api/counterparty/:xin/qr", async (req, res) => {
   const xin = String(req.params.xin || "");
-  if (!/^\d{12}$/.test(xin)) return res.status(400).json({ error: "Некорректный БИН." });
+  if (!/^\\d{12}$/.test(xin)) return res.status(400).json({ error: "Некорректный БИН." });
   try {
-    const target = \`\${PUBLIC_APP_URL}/?bin=\${encodeURIComponent(xin)}\`;
+    const target = `${PUBLIC_APP_URL}/?bin=${encodeURIComponent(xin)}`;
     const png = await QRCode.toBuffer(target, { type: "png", width: 360, margin: 2, errorCorrectionLevel: "M" });
     res.set({ "Content-Type": "image/png", "Cache-Control": "no-store" });
     return res.send(png);
@@ -90,5 +116,10 @@ app.get("/api/counterparty/:xin/qr", async (req, res) => {
   }
 });
 
-app.get("/", (_req, res) => res.status(200).send("STOLDOM.SITE API is running."));
-app.listen(PORT, () => console.log(\`STOLDOM API listening on port \${PORT}\`));
+// Serve the actual app from the same origin as the API.
+app.get("/", (_req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
+app.listen(PORT, () => console.log(`STOLDOM.SITE listening on port ${PORT}`));
