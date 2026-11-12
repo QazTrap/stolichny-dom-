@@ -1,0 +1,20 @@
+{
+  "name": "stoldom-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "STOLDOM.SITE — проверка контрагентов через открытые данные КГД РК",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0",
+    "express-rate-limit": "^7.5.0",
+    "qrcode": "^1.5.4"
+  }
+}
