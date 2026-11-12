@@ -1,5 +1,4 @@
 const express = require("express");
-const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const QRCode = require("qrcode");
@@ -32,13 +31,6 @@ app.use(helmet({
   }
 }));
 
-app.use(cors({
-  origin(origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error("Origin is not allowed by CORS"));
-  }
-}));
 app.use(express.json({ limit: "20kb" }));
 app.use("/api", rateLimit({ windowMs: 60_000, limit: 30, standardHeaders: "draft-7", legacyHeaders: false }));
 
