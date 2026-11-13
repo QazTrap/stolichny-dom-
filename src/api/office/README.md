@@ -2,23 +2,38 @@
 
 All routes are mounted under `/api/office`.
 
-| Domain | Endpoints | Future responsibility |
+| Domain | Endpoints | Current state |
 |---|---|---|
-| organizations | GET/POST /organizations, GET /organizations/:id | Company profiles, BIN, contacts, accountant assignments |
-| documents | GET/POST /documents, GET /documents/:id | ESF, EAVR, contracts, acts, bank statements, 1C files |
-| reports | GET /reports, GET /reports/calendar | Tax forms, deadlines, reporting status |
-| tasks | GET/POST /tasks, PATCH /tasks/:id | Team tasks, assignees, priorities, due dates |
-| integrations | GET /integrations, GET /integrations/:provider/status, POST /integrations/:provider/connect | Provider connection status and authorization workflows |
-| settings | GET/PUT /settings | Roles, permissions, workspace preferences |
+| organizations | `GET /organizations/lookup/:bin` | **Live KGD open-data proxy**; requires `KGD_API_TOKEN` |
+| organizations | `GET/POST /organizations`, `GET /organizations/:id` | Requires PostgreSQL persistence and authentication |
+| documents | `GET/POST /documents`, `GET /documents/:id` | Scaffold only |
+| reports | `GET /reports`, `GET /reports/calendar` | Scaffold only |
+| tasks | `GET/POST /tasks`, `PATCH /tasks/:id` | Scaffold only |
+| integrations | `GET /integrations`, `GET /integrations/:provider/status`, `POST /integrations/:provider/connect` | Scaffold only |
+| settings | `GET/PUT /settings` | Scaffold only |
 
-The route modules intentionally return HTTP 501 with `MODULE_NOT_CONFIGURED` until persistence, authorization and domain logic are implemented. No demo company or tax data is fabricated.
+## KGD counterparty lookup
 
-## Planned provider adapters
+The organizations lookup endpoint calls the documented KGD open-data API:
+
+- Upstream: `POST {KGD_PORTAL_HOST}/services/isnaportal/public/get-sur-data`
+- Header: `X-Portal-Token: {KGD_API_TOKEN}`
+- JSON body: `{"xin":"12-digit-BIN" }`
+- STOLDOM endpoint: `GET /api/office/organizations/lookup/:bin`
+
+The token is read only from server-side environment variables. If it is absent, the endpoint returns `503 KGD_TOKEN_MISSING`. The endpoint does not fabricate company records. It returns the KGD response with source and retrieval timestamp.
+
+Configure:
+- `KGD_PORTAL_HOST` (currently defaults to `https://portal.kgd.gov.kz`)
+- `KGD_API_TOKEN` (request from KGD administrator)
+
+KGD announced a planned portal-domain change from `portal.kgd.gov.kz` to `kgd.gov.kz`, with a preliminary transition date of 17 November 2026. Keep the host configurable and verify the final migration notice before changing production settings.
+
+## Other provider integrations
 
 External adapters should be isolated from business routes, for example:
-- `src/integrations/kgd/`
 - `src/integrations/smart-bridge/`
 - `src/integrations/banks/`
 - `src/integrations/one-c/`
 
-Secrets must remain in server-side environment variables. A BIN alone must never be treated as authorization to access protected taxpayer, banking or eGov data. Record provider, retrieval time and source freshness for every imported dataset.
+Smart Bridge services require their own service-card review, eligibility/access request, organization authorization and credentials. A BIN alone does not authorize access to protected taxpayer, bank or eGov data. Record provider, retrieval time and source freshness for every imported dataset.
