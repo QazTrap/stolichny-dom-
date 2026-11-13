@@ -39,7 +39,13 @@
     <div class="panel"><h2>Рабочая сводка</h2><p class="sub">Показатели появятся после подключения базы организаций и рабочих процессов.</p><div class="grid"><div class="tile blue"><span class="k">Организации</span><strong>—</strong><small>Нет подключённых данных</small></div><div class="tile yellow"><span class="k">Задачи на контроле</span><strong>—</strong><small>Ожидает настройки</small></div><div class="tile red"><span class="k">Ближайшие сроки</span><strong>—</strong><small>Календарь ещё не подключён</small></div></div></div>
     <div class="panel"><h2>Быстрый доступ</h2><p class="sub">Основные действия кабинета.</p><div class="actions"><button class="btn primary" data-go="organizations">Добавить организацию</button><button class="btn" data-go="documents">Открыть документы</button><button class="btn" data-go="tasks">Перейти к задачам</button></div></div>
   </section>
-  <section class="view hidden" id="view-organizations" role="tabpanel" aria-labelledby="tab-organizations"><div class="panel"><h2>Организации</h2><p class="sub">Единый список компаний, которые обслуживает бухгалтерская команда.</p><div class="notice">Поиск по БИН будет получать только те сведения, к которым есть законный доступ. Сам по себе БИН не открывает закрытые данные КГД, банков или eGov.</div><div class="empty"><strong>Пока нет подключённой базы организаций</strong><p>После настройки хранилища здесь появятся карточки компаний, ответственные бухгалтеры, реквизиты и история проверок.</p></div><div class="actions"><a class="btn primary" href="/?bin=">Открыть проверку контрагента</a></div></div></section>
+  <section class="view hidden" id="view-organizations" role="tabpanel" aria-labelledby="tab-organizations"><div class="panel"><h2>Организации</h2><p class="sub">Единый список компаний, которые обслуживает бухгалтерская команда.</p><div class="notice">Поиск по БИН будет получать только те сведения, к которым есть законный доступ. Сам по себе БИН не открывает закрытые данные КГД, банков или eGov.</div><form id="binLookupForm" class="actions" style="margin:0 0 14px">
+  <input id="officeBin" inputmode="numeric" maxlength="12" placeholder="Введите БИН из 12 цифр" aria-label="БИН организации" required style="flex:1;min-width:210px;padding:10px 12px;border:1px solid #cbd5de;border-radius:8px">
+  <button class="btn primary" type="submit" id="binLookupButton">Получить данные из КГД</button>
+</form>
+<div id="binLookupStatus" class="notice" hidden role="status"></div>
+<div id="binLookupResult" class="empty"><strong>Введите БИН для проверки</strong><p>Запрос пойдёт в официальный API КГД «Сведения по контрагентам (открытые данные)». Для работы нужен действующий серверный токен КГД.</p></div>
+<div class="actions"><a class="btn" href="/">Открыть отдельную страницу проверки</a></div></div></section>
   <section class="view hidden" id="view-documents" role="tabpanel" aria-labelledby="tab-documents"><div class="panel"><h2>Документы</h2><p class="sub">Документы будут сгруппированы по организациям и периодам.</p><div class="empty"><strong>Хранилище документов не подключено</strong><p>Планируемые типы: ЭСФ, ЭАВР, договоры, акты, накладные, банковские выписки и файлы 1С.</p></div></div></section>
   <section class="view hidden" id="view-reports" role="tabpanel" aria-labelledby="tab-reports"><div class="panel"><h2>Отчётность</h2><p class="sub">Контроль форм, сроков сдачи и налоговых обязательств.</p><div class="empty"><strong>Календарь отчётности пока не подключён</strong><p>Сроки будут рассчитываться по налоговому режиму и виду деятельности с указанием источника и даты актуализации.</p></div></div></section>
   <section class="view hidden" id="view-tasks" role="tabpanel" aria-labelledby="tab-tasks"><div class="panel"><h2>Задачи команды</h2><p class="sub">Поручения, ответственные сотрудники, приоритеты и дедлайны.</p><div class="empty"><strong>Задачи ещё не созданы</strong><p>После подключения базы можно будет распределять работу по организациям и контролировать выполнение.</p></div></div></section>
@@ -59,6 +65,30 @@
   tabs.forEach((tab,index)=>{tab.addEventListener('click',()=>activate(tab.dataset.tab));tab.addEventListener('keydown',e=>{if(!['ArrowRight','ArrowLeft','Home','End'].includes(e.key))return;e.preventDefault();let next=index;if(e.key==='ArrowRight')next=(index+1)%tabs.length;if(e.key==='ArrowLeft')next=(index-1+tabs.length)%tabs.length;if(e.key==='Home')next=0;if(e.key==='End')next=tabs.length-1;activate(tabs[next].dataset.tab,true);});});
   document.querySelectorAll('[data-go]').forEach(btn=>btn.addEventListener('click',()=>activate(btn.dataset.go)));
   const initial=location.hash.slice(1);if(tabs.some(tab=>tab.dataset.tab===initial))activate(initial);
+  const binForm=document.getElementById('binLookupForm');
+  const binInput=document.getElementById('officeBin');
+  const binButton=document.getElementById('binLookupButton');
+  const binStatus=document.getElementById('binLookupStatus');
+  const binResult=document.getElementById('binLookupResult');
+  const esc=value=>String(value??'—').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const val=value=>value&&typeof value==='object'?(value.ru||value.kk||JSON.stringify(value)):value;
+  binInput?.addEventListener('input',()=>binInput.value=binInput.value.replace(/\\D/g,'').slice(0,12));
+  binForm?.addEventListener('submit',async event=>{
+    event.preventDefault();
+    const bin=binInput.value.trim();
+    if(!/^\\d{12}$/.test(bin)){binStatus.hidden=false;binStatus.textContent='БИН должен состоять из 12 цифр.';return;}
+    binButton.disabled=true;binButton.textContent='Запрашиваем…';binStatus.hidden=false;binStatus.textContent='Отправляем запрос в API КГД…';
+    try{
+      const response=await fetch('/api/office/organizations/lookup/'+encodeURIComponent(bin),{headers:{Accept:'application/json'}});
+      const payload=await response.json();
+      if(!response.ok)throw new Error(payload.error||'Ошибка запроса: '+response.status);
+      const d=payload.data||{};
+      const rows=[['БИН',d.xin||bin],['Наименование',val(d.name)],['Дата регистрации',d.regDate],['Резидентство',val(d.residency)],['ОКЭД',val(d.oked)],['Вид деятельности',val(d.okedName)],['Налоговый режим',val(d.taxMode)],['НДС',val(d.vatInfo)],['Актуальность данных',d.actuality]];
+      binResult.className='panel';binResult.innerHTML='<h3 style="margin:0 0 12px">Результат проверки</h3><div class="grid">'+rows.map(([k,v])=>'<div class="tile"><span class="k">'+esc(k)+'</span><strong style="font-size:15px;overflow-wrap:anywhere">'+esc(v)+'</strong></div>').join('')+'</div><p style="font-size:12px;color:#697684;margin:12px 0 0">Источник: '+esc(payload.source)+' · Получено: '+esc(new Date(payload.retrievedAt).toLocaleString('ru-RU'))+'</p>';
+      binStatus.textContent='Ответ получен от КГД. Проверьте актуальность сведений.';
+    }catch(error){binResult.className='empty';binResult.innerHTML='<strong>Не удалось получить данные</strong><p>'+esc(error.message)+'</p>';binStatus.textContent='Проверьте настройки KGD_API_TOKEN и доступность сервиса КГД.';}
+    finally{binButton.disabled=false;binButton.textContent='Получить данные из КГД';}
+  });
 })();
 </script>
 </body>
