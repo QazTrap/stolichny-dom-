@@ -72,11 +72,11 @@
   const binResult=document.getElementById('binLookupResult');
   const esc=value=>String(value??'—').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const val=value=>value&&typeof value==='object'?(value.ru||value.kk||JSON.stringify(value)):value;
-  binInput?.addEventListener('input',()=>binInput.value=binInput.value.replace(/\\D/g,'').slice(0,12));
+  binInput?.addEventListener('input',()=>binInput.value=binInput.value.replace(/[^0-9]/g,'').slice(0,12));
   binForm?.addEventListener('submit',async event=>{
     event.preventDefault();
     const bin=binInput.value.trim();
-    if(!/^\\d{12}$/.test(bin)){binStatus.hidden=false;binStatus.textContent='БИН должен состоять из 12 цифр.';return;}
+    if(!/^[0-9]{12}$/.test(bin)){binStatus.hidden=false;binStatus.textContent='БИН должен состоять из 12 цифр.';return;}
     binButton.disabled=true;binButton.textContent='Запрашиваем…';binStatus.hidden=false;binStatus.textContent='Отправляем запрос в API КГД…';
     try{
       const response=await fetch('/api/office/organizations/lookup/'+encodeURIComponent(bin),{headers:{Accept:'application/json'}});
