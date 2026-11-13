@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111820">
+  <meta name="description" content="STOLDOM OFFICE — рабочее пространство бухгалтерской компании.">
+  <title>STOLDOM OFFICE — STOLDOM.SITE</title>
+  <style>
+    :root{--ink:#17212b;--muted:#697684;--line:#dce3e9;--paper:#fff;--canvas:#f3f6f8;--blue:#287db7;--blue-soft:#eaf4fb;--yellow:#f5c84c;--red:#c73535;--green:#197447;--radius:13px}
+    *{box-sizing:border-box}body{margin:0;background:var(--canvas);color:var(--ink);font:15px/1.5 Inter,Arial,sans-serif}button,input{font:inherit}button{cursor:pointer}
+    header{background:#111820;color:#fff}.shell{max-width:1200px;margin:auto;padding:0 24px}.top{height:70px;display:flex;align-items:center;justify-content:space-between;gap:18px}.brand{font-weight:850;letter-spacing:.04em;display:flex;align-items:center;gap:11px}.mark{width:34px;height:34px;border-radius:9px;background:var(--yellow);color:#111820;display:grid;place-items:center}.brand small{display:block;color:#aab5bf;font-size:11px;font-weight:500;letter-spacing:0}.back{color:#dce6ee;text-decoration:none;font-size:13px}.back:hover{color:var(--yellow)}
+    main{padding:30px 0 60px}.heading{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:22px}.eyebrow{color:var(--blue);font-size:11px;font-weight:800;letter-spacing:.12em}.heading h1{font-size:29px;letter-spacing:-.03em;margin:3px 0}.heading p{margin:0;color:var(--muted)}.beta{border:1px solid #e6ce78;background:#fff8df;color:#765c0c;padding:6px 10px;border-radius:30px;font-size:11px;font-weight:750;white-space:nowrap}
+    .tabs{display:flex;gap:6px;overflow-x:auto;padding:5px;margin:0 0 18px;background:#e8edf1;border-radius:12px;scrollbar-width:thin}.tab{border:0;background:transparent;color:#52606d;border-radius:8px;padding:10px 13px;white-space:nowrap;font-size:13px;font-weight:700}.tab[aria-selected=true]{background:#fff;color:var(--ink);box-shadow:0 1px 4px #15202b18}
+    .panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-bottom:16px}.panel h2{font-size:19px;margin:0 0 6px}.sub{color:var(--muted);margin:0 0 18px;font-size:13px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.tile{border:1px solid var(--line);border-radius:11px;padding:16px;min-height:116px}.tile .k{font-size:12px;color:var(--muted)}.tile strong{display:block;font-size:25px;margin:5px 0}.tile small{color:var(--muted)}.tile.blue{border-top:3px solid var(--blue)}.tile.yellow{border-top:3px solid var(--yellow)}.tile.red{border-top:3px solid var(--red)}
+    .empty{padding:30px 18px;text-align:center;border:1px dashed #cbd5de;border-radius:10px;color:var(--muted)}.empty strong{display:block;color:var(--ink);font-size:15px;margin-bottom:5px}.empty p{margin:0;font-size:13px}.actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:15px}.btn{border:1px solid #cbd5de;background:#fff;color:var(--ink);border-radius:8px;padding:10px 14px;font-weight:700;font-size:13px;text-decoration:none;display:inline-flex;align-items:center}.btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}.btn:hover{filter:brightness(.97)}
+    .list{display:grid;gap:9px}.list-item{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:13px;border:1px solid var(--line);border-radius:9px}.list-item strong{font-size:13px}.list-item span{font-size:12px;color:var(--muted)}.pill{font-size:11px!important;padding:4px 8px;border-radius:30px;background:#eef2f5;color:#52606d!important;white-space:nowrap}
+    .integration{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.integration article{border:1px solid var(--line);border-radius:10px;padding:14px}.integration h3{font-size:14px;margin:0 0 5px}.integration p{font-size:12px;color:var(--muted);margin:0 0 10px}.integration .state{font-size:11px;font-weight:750;color:#8b6511;background:#fff7dc;padding:4px 8px;border-radius:20px;display:inline-block}
+    .notice{padding:12px 14px;background:var(--blue-soft);border:1px solid #cfe2f1;color:#245c82;border-radius:9px;font-size:13px;margin-bottom:14px}
+    footer{color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding:18px 0}.hidden{display:none!important}
+    @media(max-width:700px){.shell{padding:0 14px}.top{height:62px}.heading{align-items:flex-start;flex-direction:column}.heading h1{font-size:25px}.grid{grid-template-columns:1fr 1fr}.panel{padding:16px}.integration{grid-template-columns:1fr}.list-item{align-items:flex-start;flex-direction:column}.beta{align-self:flex-start}}
+    @media(max-width:420px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header><div class="shell top"><div class="brand"><span class="mark">S</span><span>STOLDOM.SITE<small>OFFICE · рабочее пространство</small></span></div><a class="back" href="/">← Проверка контрагентов</a></div></header>
+<main class="shell">
+  <div class="heading"><div><div class="eyebrow">STOLDOM DIGITAL WORKSPACE</div><h1>Кабинет бухгалтерской компании</h1><p>Организации, документы, отчётность и задачи в одном месте.</p></div><span class="beta">МОДУЛЬ В РАЗРАБОТКЕ</span></div>
+  <nav class="tabs" role="tablist" aria-label="Разделы STOLDOM OFFICE">
+    <button class="tab" role="tab" id="tab-overview" aria-controls="view-overview" aria-selected="true" data-tab="overview">Обзор</button>
+    <button class="tab" role="tab" id="tab-organizations" aria-controls="view-organizations" aria-selected="false" data-tab="organizations">Организации</button>
+    <button class="tab" role="tab" id="tab-documents" aria-controls="view-documents" aria-selected="false" data-tab="documents">Документы</button>
+    <button class="tab" role="tab" id="tab-reports" aria-controls="view-reports" aria-selected="false" data-tab="reports">Отчётность</button>
+    <button class="tab" role="tab" id="tab-tasks" aria-controls="view-tasks" aria-selected="false" data-tab="tasks">Задачи</button>
+    <button class="tab" role="tab" id="tab-integrations" aria-controls="view-integrations" aria-selected="false" data-tab="integrations">Интеграции</button>
+    <button class="tab" role="tab" id="tab-settings" aria-controls="view-settings" aria-selected="false" data-tab="settings">Настройки</button>
+  </nav>
+  <section class="view" id="view-overview" role="tabpanel" aria-labelledby="tab-overview">
+    <div class="panel"><h2>Рабочая сводка</h2><p class="sub">Показатели появятся после подключения базы организаций и рабочих процессов.</p><div class="grid"><div class="tile blue"><span class="k">Организации</span><strong>—</strong><small>Нет подключённых данных</small></div><div class="tile yellow"><span class="k">Задачи на контроле</span><strong>—</strong><small>Ожидает настройки</small></div><div class="tile red"><span class="k">Ближайшие сроки</span><strong>—</strong><small>Календарь ещё не подключён</small></div></div></div>
+    <div class="panel"><h2>Быстрый доступ</h2><p class="sub">Основные действия кабинета.</p><div class="actions"><button class="btn primary" data-go="organizations">Добавить организацию</button><button class="btn" data-go="documents">Открыть документы</button><button class="btn" data-go="tasks">Перейти к задачам</button></div></div>
+  </section>
+  <section class="view hidden" id="view-organizations" role="tabpanel" aria-labelledby="tab-organizations"><div class="panel"><h2>Организации</h2><p class="sub">Единый список компаний, которые обслуживает бухгалтерская команда.</p><div class="notice">Поиск по БИН будет получать только те сведения, к которым есть законный доступ. Сам по себе БИН не открывает закрытые данные КГД, банков или eGov.</div><div class="empty"><strong>Пока нет подключённой базы организаций</strong><p>После настройки хранилища здесь появятся карточки компаний, ответственные бухгалтеры, реквизиты и история проверок.</p></div><div class="actions"><a class="btn primary" href="/?bin=">Открыть проверку контрагента</a></div></div></section>
+  <section class="view hidden" id="view-documents" role="tabpanel" aria-labelledby="tab-documents"><div class="panel"><h2>Документы</h2><p class="sub">Документы будут сгруппированы по организациям и периодам.</p><div class="empty"><strong>Хранилище документов не подключено</strong><p>Планируемые типы: ЭСФ, ЭАВР, договоры, акты, накладные, банковские выписки и файлы 1С.</p></div></div></section>
+  <section class="view hidden" id="view-reports" role="tabpanel" aria-labelledby="tab-reports"><div class="panel"><h2>Отчётность</h2><p class="sub">Контроль форм, сроков сдачи и налоговых обязательств.</p><div class="empty"><strong>Календарь отчётности пока не подключён</strong><p>Сроки будут рассчитываться по налоговому режиму и виду деятельности с указанием источника и даты актуализации.</p></div></div></section>
+  <section class="view hidden" id="view-tasks" role="tabpanel" aria-labelledby="tab-tasks"><div class="panel"><h2>Задачи команды</h2><p class="sub">Поручения, ответственные сотрудники, приоритеты и дедлайны.</p><div class="empty"><strong>Задачи ещё не созданы</strong><p>После подключения базы можно будет распределять работу по организациям и контролировать выполнение.</p></div></div></section>
+  <section class="view hidden" id="view-integrations" role="tabpanel" aria-labelledby="tab-integrations"><div class="panel"><h2>Интеграции и API</h2><p class="sub">Каждый источник подключается отдельно. Ключи и токены хранятся только на сервере.</p><div class="integration"><article><h3>КГД Республики Казахстан</h3><p>Открытые сведения, налоговая информация и доступные проверки по БИН.</p><span class="state">Требуется настройка доступа</span></article><article><h3>Smart Bridge / eGov</h3><p>Государственные сервисы — после согласования доступа, разрешений и токенов.</p><span class="state">Не подключено</span></article><article><h3>Банковские сервисы</h3><p>Выписки и операции — через разрешённые API или загрузку файлов.</p><span class="state">Не подключено</span></article><article><h3>1С и файлы учёта</h3><p>Импорт данных и документов для последующей сверки.</p><span class="state">Не подключено</span></article></div></div></section>
+  <section class="view hidden" id="view-settings" role="tabpanel" aria-labelledby="tab-settings"><div class="panel"><h2>Настройки кабинета</h2><p class="sub">Управление доступом и рабочими правилами.</p><div class="list"><div class="list-item"><div><strong>Пользователи и роли</strong><br><span>Руководитель, бухгалтер, помощник, просмотр</span></div><span class="pill">Запланировано</span></div><div class="list-item"><div><strong>Доступ к организациям</strong><br><span>Разделение данных между командами и клиентами</span></div><span class="pill">Запланировано</span></div><div class="list-item"><div><strong>Журнал действий</strong><br><span>История изменений и проверок</span></div><span class="pill">Запланировано</span></div></div></div></section>
+</main>
+<footer><div class="shell">© STOLDOM.SITE · STOLDOM OFFICE · Источники данных и статус подключения будут отображаться отдельно.</div></footer>
+<script>
+(() => {
+  const tabs=[...document.querySelectorAll('[data-tab]')];
+  function activate(name,focus=false){
+    tabs.forEach(tab=>{const active=tab.dataset.tab===name;tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;});
+    document.querySelectorAll('.view').forEach(view=>view.classList.toggle('hidden',view.id!=='view-'+name));
+    if(focus)document.getElementById('tab-'+name)?.focus();
+    history.replaceState(null,'','#'+name);
+  }
+  tabs.forEach((tab,index)=>{tab.addEventListener('click',()=>activate(tab.dataset.tab));tab.addEventListener('keydown',e=>{if(!['ArrowRight','ArrowLeft','Home','End'].includes(e.key))return;e.preventDefault();let next=index;if(e.key==='ArrowRight')next=(index+1)%tabs.length;if(e.key==='ArrowLeft')next=(index-1+tabs.length)%tabs.length;if(e.key==='Home')next=0;if(e.key==='End')next=tabs.length-1;activate(tabs[next].dataset.tab,true);});});
+  document.querySelectorAll('[data-go]').forEach(btn=>btn.addEventListener('click',()=>activate(btn.dataset.go)));
+  const initial=location.hash.slice(1);if(tabs.some(tab=>tab.dataset.tab===initial))activate(initial);
+})();
+</script>
+</body>
+</html>
