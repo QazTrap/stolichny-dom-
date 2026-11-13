@@ -1,14 +1,14 @@
 const express = require("express");
 const router = express.Router();
 
-const KGD_PORTAL_HOST = (process.env.KGD_PORTAL_HOST || "https://portal.kgd.gov.kz").replace(/\\/$/, "");
+const KGD_PORTAL_HOST = (process.env.KGD_PORTAL_HOST || "https://portal.kgd.gov.kz").replace(/\/$/, "");
 const KGD_API_TOKEN = process.env.KGD_API_TOKEN;
 
 // Real KGD open counterparty data API.
 // POST /api/office/organizations/lookup/:bin
 router.get("/lookup/:bin", async (req, res) => {
   const xin = String(req.params.bin || "").trim();
-  if (!/^\\d{12}$/.test(xin)) {
+  if (!/^\d{12}$/.test(xin)) {
     return res.status(400).json({ ok: false, error: "БИН должен состоять ровно из 12 цифр." });
   }
   if (!KGD_API_TOKEN) {
