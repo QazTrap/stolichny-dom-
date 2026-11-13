@@ -32,6 +32,9 @@ app.use(helmet({
 app.use(express.json({ limit: "20kb" }));
 app.use("/api", rateLimit({ windowMs: 60_000, limit: 30, standardHeaders: "draft-7", legacyHeaders: false }));
 
+// Independent STOLDOM OFFICE API modules.
+app.use("/api/office", require("./src/api/office"));
+
 app.get("/api/health", (_req, res) => {
   res.set("Cache-Control", "no-store");
   res.json({ ok: true, service: "STOLDOM.SITE", integrationConfigured: Boolean(KGD_API_TOKEN) });
@@ -99,6 +102,12 @@ app.get("/api/counterparty/:xin/qr", async (req, res) => {
   } catch {
     return res.status(500).json({ error: "Не удалось сформировать QR-код." });
   }
+});
+
+// STOLDOM OFFICE workspace is kept separate from the existing counterparty checker.
+app.get("/office", (_req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.sendFile(path.join(__dirname, "office.html"));
 });
 
 // Serve the actual app from the same origin as the API.
