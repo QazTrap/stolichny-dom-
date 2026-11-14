@@ -210,7 +210,7 @@ app.post("/api/reconciliation/compare", upload.fields([{ name: "esf", maxCount: 
     const dateFrom = String(req.body.dateFrom || "");
     const dateTo = String(req.body.dateTo || "");
     if (dateFrom || dateTo) {
-      if (!mapping.esf.date || !mapping.oneC.date) throw new Error("Для фильтрации по периоду выберите колонку «Дата» в обоих файлах.");
+      if (!mapping.esf.date || !mapping.oneC.date) throw new Error("Для фильтрации по периоду выберите колонку «Дата совершения оборота» в обоих файлах.");
       const inPeriod = (row, source) => {
         const date = normDate(valueOf(row, "date", mapping[source]));
         return Boolean(date) && (!dateFrom || date >= dateFrom) && (!dateTo || date <= dateTo);
