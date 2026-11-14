@@ -33,7 +33,7 @@
 <div class="mapping-head">Поле</div><div class="mapping-head" id="esfFileName">Файл ЭСФ</div><div class="mapping-head" id="oneCFileName">Файл 1С</div>
 <div>Номер документа *</div><select id="esf-number"></select><select id="oneC-number"></select>
 <div>БИН *</div><select id="esf-bin"></select><select id="oneC-bin"></select>
-<div>Дата</div><select id="esf-date"></select><select id="oneC-date"></select>
+<div>Дата оборота *</div><select id="esf-date"></select><select id="oneC-date"></select>
 <div>Сумма с НДС</div><select id="esf-amount"></select><select id="oneC-amount"></select>
 <div>Сумма НДС</div><select id="esf-vat"></select><select id="oneC-vat"></select>
 </div>
@@ -43,7 +43,7 @@
 <div style="display:flex;justify-content:space-between;align-items:start;gap:12px;flex-wrap:wrap"><div><h2>3. Результат сверки</h2><div class="small" id="reportMeta"></div></div><div class="actions no-print" style="margin:0"><button class="secondary" id="csvButton">Скачать CSV</button><button class="secondary" onclick="window.print()">Печать / PDF</button></div></div>
 <div class="stats" id="stats"></div>
 <p class="notice">«Совпало» означает совпадение по выбранным ключам и проверенным полям. «Нет в 1С» и «Нет в ЭСФ» — документы не найдены по паре БИН + номер. Результат требует проверки бухгалтером и не является автоматическим исправлением учёта.</p>
-<div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Статус</th><th>Номер</th><th>БИН</th><th>Дата ЭСФ</th><th>Дата 1С</th><th>Сумма ЭСФ</th><th>Сумма 1С</th><th>НДС ЭСФ</th><th>НДС 1С</th><th>Комментарий</th></tr></thead><tbody id="reportRows"></tbody></table></div>
+<div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Статус</th><th>Номер</th><th>БИН</th><th>Дата оборота ЭСФ</th><th>Дата оборота 1С</th><th>Сумма ЭСФ</th><th>Сумма 1С</th><th>НДС ЭСФ</th><th>НДС 1С</th><th>Комментарий</th></tr></thead><tbody id="reportRows"></tbody></table></div>
 <div id="duplicatesBlock" class="notice"></div>
 </section>
 </main>
@@ -54,7 +54,7 @@ let preview = null, lastReport = null, files = null;
 const fields = ["number","bin","date","amount","vat"];
 const labels = {matched:"Совпало",mismatch:"Расхождение",missing_1c:"Нет в 1С",missing_esf:"Нет в ЭСФ",needs_review:"Проверить"};
 function status(id,msg,type="info"){const el=$(id);el.className="status show "+type;el.textContent=msg;}
-function auto(headers,field){const patterns={number:/номер|№|invoice|document|эсф|сф/i,bin:/бин|иин|иин\/бин|БИН\/ИИН/i,date:/дата|date/i,amount:/сумма.*(ндс|итог|всего|с ндс)|итого|total|amount/i,vat:/ндс|vat/i};return headers.find(h=>patterns[field].test(h))||"";}
+function auto(headers,field){const patterns={number:/номер|№|invoice|document|эсф|сф/i,bin:/бин|иин|иин\/бин|БИН\/ИИН/i,date:/дата\\s*(совершения\\s*)?оборота|период\\s*оборота|turnover\\s*date|date\\s*of\\s*turnover/i,amount:/сумма.*(ндс|итог|всего|с ндс)|итого|total|amount/i,vat:/ндс|vat/i};return headers.find(h=>patterns[field].test(h))||"";}
 function options(id,headers,selected){const el=$(id);el.innerHTML="";const empty=document.createElement("option");empty.value="";empty.textContent="— Не выбрано —";el.appendChild(empty);headers.forEach(h=>{const o=document.createElement("option");o.value=h;o.textContent=h;el.appendChild(o)});el.value=selected||"";}
 function getFiles(){const esf=$("esfFile").files[0],oneC=$("oneCFile").files[0];if(!esf||!oneC)throw new Error("Выберите оба файла — ЭСФ и 1С.");if(esf.size>15*1024*1024||oneC.size>15*1024*1024)throw new Error("Размер каждого файла не должен превышать 15 МБ.");return {esf,oneC};}
 function appendFiles(fd){fd.append("esf",files.esf);fd.append("oneC",files.oneC);}
