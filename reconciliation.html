@@ -54,7 +54,7 @@ let preview = null, lastReport = null, files = null;
 const fields = ["number","bin","date","amount","vat"];
 const labels = {matched:"Совпало",mismatch:"Расхождение",missing_1c:"Нет в 1С",missing_esf:"Нет в ЭСФ",needs_review:"Проверить"};
 function status(id,msg,type="info"){const el=$(id);el.className="status show "+type;el.textContent=msg;}
-function auto(headers,field){const patterns={number:/номер|№|invoice|document|эсф|сф/i,bin:/бин|иин|иин\/бин|БИН\/ИИН/i,date:/дата\\s*(совершения\\s*)?оборота|период\\s*оборота|turnover\\s*date|date\\s*of\\s*turnover/i,amount:/сумма.*(ндс|итог|всего|с ндс)|итого|total|amount/i,vat:/ндс|vat/i};return headers.find(h=>patterns[field].test(h))||"";}
+function auto(headers,field){const patterns={number:/номер|№|invoice|document|эсф|сф/i,bin:/бин|иин|иин\/бин|БИН\/ИИН/i,date:/дата\s*(совершения\s*)?оборота|период\s*оборота|turnover\s*date|date\s*of\s*turnover/i,amount:/сумма.*(ндс|итог|всего|с ндс)|итого|total|amount/i,vat:/ндс|vat/i};return headers.find(h=>patterns[field].test(h))||"";}
 function options(id,headers,selected){const el=$(id);el.innerHTML="";const empty=document.createElement("option");empty.value="";empty.textContent="— Не выбрано —";el.appendChild(empty);headers.forEach(h=>{const o=document.createElement("option");o.value=h;o.textContent=h;el.appendChild(o)});el.value=selected||"";}
 function getFiles(){const esf=$("esfFile").files[0],oneC=$("oneCFile").files[0];if(!esf||!oneC)throw new Error("Выберите оба файла — ЭСФ и 1С.");if(esf.size>15*1024*1024||oneC.size>15*1024*1024)throw new Error("Размер каждого файла не должен превышать 15 МБ.");return {esf,oneC};}
 function appendFiles(fd){fd.append("esf",files.esf);fd.append("oneC",files.oneC);}
