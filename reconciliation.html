@@ -69,7 +69,7 @@ $("mappingPanel").style.display="block";$("reportPanel").style.display="none";st
 $("compareButton").addEventListener("click",async()=>{
 try{if(!preview||!files)throw new Error("Сначала загрузите оба файла.");const mapping={esf:{},oneC:{}};fields.forEach(f=>{mapping.esf[f]=$("esf-"+f).value;mapping.oneC[f]=$("oneC-"+f).value;});
 if(!mapping.esf.number||!mapping.esf.bin||!mapping.oneC.number||!mapping.oneC.bin)throw new Error("Для обоих файлов выберите номер документа и БИН.");
-const fd=new FormData();appendFiles(fd);fd.append("mapping",JSON.stringify(mapping));fd.append("period",($("dateFrom").value||"не указано")+" — "+($("dateTo").value||"не указано"));
+const fd=new FormData();appendFiles(fd);fd.append("mapping",JSON.stringify(mapping));fd.append("dateFrom",$("dateFrom").value);fd.append("dateTo",$("dateTo").value);fd.append("period",($("dateFrom").value||"не указано")+" — "+($("dateTo").value||"не указано"));
 $("compareButton").disabled=true;status("mappingStatus","Сопоставляем документы…");
 const r=await fetch("/api/reconciliation/compare",{method:"POST",body:fd});const data=await r.json();if(!r.ok)throw new Error(data.error||"Ошибка сверки.");lastReport=data;render(data);$("reportPanel").style.display="block";status("mappingStatus","Сверка завершена.","success");$("reportPanel").scrollIntoView({behavior:"smooth"});
 }catch(e){status("mappingStatus",e.message,"error")}finally{$("compareButton").disabled=false;}
