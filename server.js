@@ -207,6 +207,19 @@ app.post("/api/reconciliation/compare", upload.fields([{ name: "esf", maxCount: 
         if (!mapping[source]?.[field]) throw new Error("Выберите колонку для поля «" + (field === "number" ? "Номер документа" : "БИН") + "» в обоих файлах.");
       }
     }
+    const dateFrom = String(req.body.dateFrom || "");
+    const dateTo = String(req.body.dateTo || "");
+    if (dateFrom || dateTo) {
+      if (!mapping.esf.date || !mapping.oneC.date) throw new Error("Для фильтрации по периоду выберите колонку «Дата» в обоих файлах.");
+      const inPeriod = (row, source) => {
+        const date = normDate(valueOf(row, "date", mapping[source]));
+        return Boolean(date) && (!dateFrom || date >= dateFrom) && (!dateTo || date <= dateTo);
+      };
+      esf.rows = esf.rows.filter(row => inPeriod(row, "esf"));
+      oneC.rows = oneC.rows.filter(row => inPeriod(row, "oneC"));
+      esf.rowCount = esf.rows.length;
+      oneC.rowCount = oneC.rows.length;
+    }
     const compared = compareRows(esf, oneC, mapping);
     const counts = compared.rows.reduce((acc, row) => { acc[row.status] = (acc[row.status] || 0) + 1; return acc; }, {});
     res.set("Cache-Control", "no-store");
