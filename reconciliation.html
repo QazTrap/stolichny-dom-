@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#ffffff"><title>Сверка ЭСФ с 1С — STOLDOM.SITE</title>
+<style>
+:root{--ink:#15191f;--muted:#68717d;--line:#dfe4ea;--paper:#fff;--canvas:#f4f6f8;--blue:#1769aa;--blue-soft:#eaf3fb;--yellow:#f5c84c;--yellow-soft:#fff7dc;--red:#c73535;--red-soft:#fff0f0;--green:#197447;--green-soft:#eaf7ef}
+*{box-sizing:border-box}body{margin:0;background:var(--canvas);color:var(--ink);font:15px/1.5 Inter,Arial,sans-serif}button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;margin:auto;padding:0 22px}header{background:#fff;border-bottom:1px solid var(--line)}.head{height:68px;display:flex;align-items:center;justify-content:space-between}.brand{font-weight:800;letter-spacing:.04em}.brand small{display:block;font-size:11px;color:var(--muted);font-weight:500;letter-spacing:0}.back{color:var(--blue);text-decoration:none;font-size:13px;font-weight:700}.main{padding:30px 0 60px}h1{font-size:29px;margin:0 0 7px;letter-spacing:-.03em}.lead{margin:0 0 23px;color:var(--muted);max-width:800px}.panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px;margin:16px 0}.panel h2{font-size:17px;margin:0 0 14px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field label{display:block;font-weight:700;font-size:13px;margin-bottom:6px}.field input,.field select{width:100%;min-height:44px;border:1px solid #cbd3dc;border-radius:8px;padding:8px 11px;background:#fff}.hint{color:var(--muted);font-size:12px;margin:7px 0 0}.primary,.secondary{border-radius:8px;min-height:44px;padding:0 16px;font-weight:700;border:1px solid transparent}.primary{background:var(--blue);color:#fff}.secondary{background:#fff;border-color:#cbd3dc}.primary:disabled{opacity:.55}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}.status{display:none;padding:11px 13px;border-radius:8px;margin-top:14px;font-size:13px}.status.show{display:block}.error{background:var(--red-soft);color:#9d2525}.info{background:var(--blue-soft);color:#15598e}.success{background:var(--green-soft);color:#17643e}.mapping{display:grid;grid-template-columns:140px 1fr 1fr;gap:8px;align-items:center}.mapping>div{font-size:13px}.mapping select{width:100%;min-width:0;height:39px;border:1px solid #cbd3dc;border-radius:7px;padding:5px;background:#fff}.mapping-head{font-weight:800;color:var(--muted);font-size:12px!important}.file-meta{font-size:12px;color:var(--muted);margin-top:6px}.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.stat{border:1px solid var(--line);border-radius:9px;padding:13px}.stat span{display:block;color:var(--muted);font-size:12px}.stat strong{font-size:24px}.stat.good{background:var(--green-soft);border-color:#c8e6d3}.stat.warn{background:var(--yellow-soft);border-color:#f0dfa1}.stat.bad{background:var(--red-soft);border-color:#f1c5c5}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line)}th{background:#f6f8fa;color:#59616d;font-size:12px;position:sticky;top:0}.tag{display:inline-block;border-radius:20px;padding:3px 8px;font-size:11px;font-weight:800}.tag.matched{background:var(--green-soft);color:var(--green)}.tag.mismatch{background:var(--yellow-soft);color:#826000}.tag.missing_1c,.tag.missing_esf{background:var(--red-soft);color:#a52b2b}.tag.needs_review{background:#eef0f3;color:#59616d}.small{font-size:12px;color:var(--muted)}#mappingPanel,#reportPanel{display:none}.notice{font-size:12px;color:var(--muted);margin-top:12px}.hidden{display:none!important}
+@media(max-width:700px){.shell{padding:0 14px}.main{padding-top:22px}h1{font-size:24px}.grid{grid-template-columns:1fr}.mapping{grid-template-columns:100px 1fr 1fr;gap:5px}.mapping select{font-size:12px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.panel{padding:15px}}
+@media print{header,.no-print,#uploadPanel,#mappingPanel,.notice{display:none!important}body{background:#fff}.shell{max-width:none;padding:0}.main{padding:0}.panel{border:0;padding:0}#reportPanel{display:block!important}.table-wrap{overflow:visible}table{white-space:normal;font-size:9px}th,td{padding:5px}}
+</style>
+</head>
+<body>
+<header><div class="shell head"><div class="brand">STOLDOM.SITE<small>Бухгалтерская платформа</small></div><a class="back" href="/">← Проверка контрагентов</a></div></header>
+<main class="shell main">
+<h1>Сверка ЭСФ с 1С</h1>
+<p class="lead">Загрузите два файла за один период. Система сопоставит документы по БИН и номеру, а затем проверит дату, сумму и НДС. Файлы обрабатываются в памяти и не сохраняются в базе.</p>
+<section class="panel" id="uploadPanel">
+<h2>1. Период и файлы</h2>
+<div class="grid">
+<div class="field"><label for="dateFrom">Период с</label><input id="dateFrom" type="date"></div>
+<div class="field"><label for="dateTo">Период по</label><input id="dateTo" type="date"></div>
+<div class="field"><label for="esfFile">Выгрузка из ИС ЭСФ (Excel/CSV)</label><input id="esfFile" type="file" accept=".xlsx,.xls,.xlsm,.csv"></div>
+<div class="field"><label for="oneCFile">Выгрузка из 1С (Excel/CSV)</label><input id="oneCFile" type="file" accept=".xlsx,.xls,.xlsm,.csv"></div>
+</div>
+<p class="hint">Поддерживаются XLSX, XLS, XLSM и CSV. Для первой версии читается первый лист файла. Максимальный размер каждого файла — 15 МБ.</p>
+<div class="actions"><button class="primary" id="previewButton">Загрузить и определить колонки</button></div><div id="uploadStatus" class="status" role="status"></div>
+</section>
+<section class="panel" id="mappingPanel">
+<h2>2. Проверьте соответствие колонок</h2>
+<p class="small">Система предложит варианты автоматически. Проверьте, что выбранные колонки действительно содержат нужные данные. Номер документа и БИН обязательны; остальные поля можно оставить пустыми.</p>
+<div class="mapping">
+<div class="mapping-head">Поле</div><div class="mapping-head" id="esfFileName">Файл ЭСФ</div><div class="mapping-head" id="oneCFileName">Файл 1С</div>
+<div>Номер документа *</div><select id="esf-number"></select><select id="oneC-number"></select>
+<div>БИН *</div><select id="esf-bin"></select><select id="oneC-bin"></select>
+<div>Дата оборота *</div><select id="esf-date"></select><select id="oneC-date"></select>
+<div>Сумма с НДС</div><select id="esf-amount"></select><select id="oneC-amount"></select>
+<div>Сумма НДС</div><select id="esf-vat"></select><select id="oneC-vat"></select>
+</div>
+<div class="actions"><button class="primary" id="compareButton">Выполнить сверку</button></div><div id="mappingStatus" class="status" role="status"></div>
+</section>
+<section class="panel" id="reportPanel">
+<div style="display:flex;justify-content:space-between;align-items:start;gap:12px;flex-wrap:wrap"><div><h2>3. Результат сверки</h2><div class="small" id="reportMeta"></div></div><div class="actions no-print" style="margin:0"><button class="secondary" id="csvButton">Скачать CSV</button><button class="secondary" onclick="window.print()">Печать / PDF</button></div></div>
+<div class="stats" id="stats"></div>
+<p class="notice">«Совпало» означает совпадение по выбранным ключам и проверенным полям. «Нет в 1С» и «Нет в ЭСФ» — документы не найдены по паре БИН + номер. Результат требует проверки бухгалтером и не является автоматическим исправлением учёта.</p>
+<div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Статус</th><th>Номер</th><th>БИН</th><th>Дата оборота ЭСФ</th><th>Дата оборота 1С</th><th>Сумма ЭСФ</th><th>Сумма 1С</th><th>НДС ЭСФ</th><th>НДС 1С</th><th>Комментарий</th></tr></thead><tbody id="reportRows"></tbody></table></div>
+<div id="duplicatesBlock" class="notice"></div>
+</section>
+</main>
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+let preview = null, lastReport = null, files = null;
+const fields = ["number","bin","date","amount","vat"];
+const labels = {matched:"Совпало",mismatch:"Расхождение",missing_1c:"Нет в 1С",missing_esf:"Нет в ЭСФ",needs_review:"Проверить"};
+function status(id,msg,type="info"){const el=$(id);el.className="status show "+type;el.textContent=msg;}
+function auto(headers,field){const patterns={number:/номер|№|invoice|document|эсф|сф/i,bin:/бин|иин|иин\/бин|БИН\/ИИН/i,date:/дата\s*(совершения\s*)?оборота|период\s*оборота|turnover\s*date|date\s*of\s*turnover/i,amount:/сумма.*(ндс|итог|всего|с ндс)|итого|total|amount/i,vat:/ндс|vat/i};return headers.find(h=>patterns[field].test(h))||"";}
+function options(id,headers,selected){const el=$(id);el.innerHTML="";const empty=document.createElement("option");empty.value="";empty.textContent="— Не выбрано —";el.appendChild(empty);headers.forEach(h=>{const o=document.createElement("option");o.value=h;o.textContent=h;el.appendChild(o)});el.value=selected||"";}
+function getFiles(){const esf=$("esfFile").files[0],oneC=$("oneCFile").files[0];if(!esf||!oneC)throw new Error("Выберите оба файла — ЭСФ и 1С.");if(esf.size>15*1024*1024||oneC.size>15*1024*1024)throw new Error("Размер каждого файла не должен превышать 15 МБ.");return {esf,oneC};}
+function appendFiles(fd){fd.append("esf",files.esf);fd.append("oneC",files.oneC);}
+$("previewButton").addEventListener("click",async()=>{
+try{files=getFiles();const fd=new FormData();appendFiles(fd);$("previewButton").disabled=true;status("uploadStatus","Читаем файлы и определяем заголовки…");
+const r=await fetch("/api/reconciliation/preview",{method:"POST",body:fd});const data=await r.json();if(!r.ok)throw new Error(data.error||"Не удалось прочитать файлы.");preview=data;
+$("esfFileName").textContent=data.esf.fileName+" ("+data.esf.rowCount+" строк)";$("oneCFileName").textContent=data.oneC.fileName+" ("+data.oneC.rowCount+" строк)";
+fields.forEach(f=>{options("esf-"+f,data.esf.headers,auto(data.esf.headers,f));options("oneC-"+f,data.oneC.headers,auto(data.oneC.headers,f));});
+$("mappingPanel").style.display="block";$("reportPanel").style.display="none";status("uploadStatus","Файлы прочитаны. Проверьте соответствие колонок ниже.","success");$("mappingPanel").scrollIntoView({behavior:"smooth"});
+}catch(e){status("uploadStatus",e.message,"error")}finally{$("previewButton").disabled=false;}
+});
+$("compareButton").addEventListener("click",async()=>{
+try{if(!preview||!files)throw new Error("Сначала загрузите оба файла.");const mapping={esf:{},oneC:{}};fields.forEach(f=>{mapping.esf[f]=$("esf-"+f).value;mapping.oneC[f]=$("oneC-"+f).value;});
+if(!mapping.esf.number||!mapping.esf.bin||!mapping.oneC.number||!mapping.oneC.bin)throw new Error("Для обоих файлов выберите номер документа и БИН.");
+const fd=new FormData();appendFiles(fd);fd.append("mapping",JSON.stringify(mapping));fd.append("dateFrom",$("dateFrom").value);fd.append("dateTo",$("dateTo").value);fd.append("period",($("dateFrom").value||"не указано")+" — "+($("dateTo").value||"не указано"));
+$("compareButton").disabled=true;status("mappingStatus","Сопоставляем документы…");
+const r=await fetch("/api/reconciliation/compare",{method:"POST",body:fd});const data=await r.json();if(!r.ok)throw new Error(data.error||"Ошибка сверки.");lastReport=data;render(data);$("reportPanel").style.display="block";status("mappingStatus","Сверка завершена.","success");$("reportPanel").scrollIntoView({behavior:"smooth"});
+}catch(e){status("mappingStatus",e.message,"error")}finally{$("compareButton").disabled=false;}
+});
+function money(v){return v===null||v===undefined?"—":new Intl.NumberFormat("ru-RU",{minimumFractionDigits:2,maximumFractionDigits:2}).format(v);}
+function render(d){$("reportMeta").textContent=d.period+" · ЭСФ: "+d.files.esf+" · 1С: "+d.files.oneC;
+const t=d.totals;const cards=[["Выгрузка ЭСФ",t.esf,""],["Выгрузка 1С",t.oneC,""],["Совпало",t.matched||0,"good"],["Расхождения",t.mismatch||0,"warn"],["Нет в 1С",t.missing_1c||0,"bad"],["Нет в ЭСФ",t.missing_esf||0,"bad"],["Требуют проверки",t.needs_review||0,"warn"]];
+$("stats").innerHTML=cards.map(c=>'<div class="stat '+c[2]+'"><span>'+c[0]+'</span><strong>'+c[1]+'</strong></div>').join("");
+$("reportRows").innerHTML=d.rows.map(row=>'<tr><td><span class="tag '+row.status+'">'+labels[row.status]+'</span></td><td>'+esc(row.number||"—")+'</td><td>'+esc(row.bin||"—")+'</td><td>'+esc(row.esfDate||"—")+'</td><td>'+esc(row.oneCDate||"—")+'</td><td>'+money(row.esfAmount)+'</td><td>'+money(row.oneCAmount)+'</td><td>'+money(row.esfVat)+'</td><td>'+money(row.oneCVat)+'</td><td>'+esc(row.details)+'</td></tr>').join("");
+$("duplicatesBlock").textContent=t.duplicates?"Обнаружены повторяющиеся ключи в выгрузке 1С: "+t.duplicates+". Проверьте дубли документов.":"Повторяющиеся ключи в выгрузке 1С не обнаружены.";
+}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+$("csvButton").addEventListener("click",()=>{if(!lastReport)return;const cols=["Статус","Номер","БИН","Дата ЭСФ","Дата 1С","Сумма ЭСФ","Сумма 1С","НДС ЭСФ","НДС 1С","Комментарий"];const rows=lastReport.rows.map(r=>[labels[r.status],r.number,r.bin,r.esfDate,r.oneCDate,r.esfAmount,r.oneCAmount,r.esfVat,r.oneCVat,r.details]);const csv=[cols,...rows].map(row=>row.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(";")).join("\r\n");const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="STOLDOM-ESF-1C-reconciliation.csv";a.click();URL.revokeObjectURL(a.href);});
+})();
+</script>
+</body></html>
