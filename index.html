@@ -93,13 +93,27 @@ function render(){
 }
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function loadEditor(){let x=ops.find(x=>x.id===selected);if(!x){$("operationNumber").textContent="";$("operationMeta").textContent="";return;}$("operationNumber").textContent="№ "+String(x.id).padStart(3,"0");$("operationMeta").textContent=x.date+" · "+fmt(x.amount);$("counterparty").value=x.name;$("purpose").value=x.purpose;$("article").value=x.article||"Оплата от покупателя";$("debit").value=x.debit;$("credit").value=x.credit;document.querySelectorAll('[name="docType"]').forEach(r=>r.checked=r.value===x.doc)}
-$("editForm").addEventListener("submit",e=>{e.preventDefault();let x=ops.find(x=>x.id===selected);if(!x)return;x.name=$("counterparty").value.trim();x.purpose=$("purpose").value.trim();x.article=$("article").value;x.debit=$("debit").value.trim();x.credit=$("credit").value.trim();x.doc=document.querySelector('[name="docType"]:checked')?.value||x.doc;x.status=x.name&&x.purpose&&x.article&&x.debit&&x.credit?"ready":"review";render();loadEditor();toast("Изменения сохранены в текущей сессии")});
+$("editForm").addEventListener("submit",e=>{e.preventDefault();let x=ops.find(x=>x.id===selected);if(!x)return;x.name=$("counterparty").value.trim();x.originalName=x.name;x.purpose=$("purpose").value.trim();x.article=$("article").value;x.debit=$("debit").value.trim();x.credit=$("credit").value.trim();x.doc=document.querySelector('[name="docType"]:checked')?.value||x.doc;x.status=x.name&&x.purpose&&x.article&&x.debit&&x.credit?"ready":"review";render();loadEditor();toast("Изменения сохранены в текущей сессии")});
 $("reset").addEventListener("click",loadEditor);$("search").addEventListener("input",render);
 document.querySelectorAll("[data-filter]").forEach(b=>b.addEventListener("click",()=>{filter=b.dataset.filter;document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x===b));render()}));
 $("preview").addEventListener("click",()=>{if(!ops.length)return;toast("Предварительный просмотр операций: "+ops.length)});
 $("export").addEventListener("click",()=>toast("Формат импорта для вашей конфигурации 1С ещё не настроен"));
 function norm(v){return String(v??"").toLowerCase().replace(/[ё]/g,"е").replace(/\s+/g," ").trim()}
 function num(v){if(typeof v==="number")return v;let s=String(v??"").replace(/[₸$€]/g,"").replace(/\s/g,"").replace(/,(?=\d{1,2}$)/,".").replace(/[^0-9.()-]/g,"");if(/^\(.*\)$/.test(s))s="-"+s.slice(1,-1);return Number(s)||0}
+function shortLegalName(value){
+ const original=String(value??"").trim();
+ const rules=[
+  [/^товарищество\\s+с\\s+ограниченной\\s+ответственностью\\b/i,"ТОО"],
+  [/^индивидуальный\\s+предприниматель\\b/i,"ИП"],
+  [/^товарищество\\s+с\\s+дополнительной\\s+ответственностью\\b/i,"ТДО"],
+  [/^акционерное\\s+общество\\b/i,"АО"],
+  [/^общество\\s+с\\s+ограниченной\\s+ответственностью\\b/i,"ООО"],
+  [/^частное\\s+учреждение\\b/i,"ЧУ"],
+  [/^производственный\\s+кооператив\\b/i,"ПК"]
+ ];
+ for(const [pattern,abbr] of rules){if(pattern.test(original))return original.replace(pattern,abbr).replace(/^([А-ЯЁA-Z]{2,})\\s+/,(m,p)=>p+" ")}
+ return original;
+}
 function dateText(v){if(v instanceof Date)return v.toLocaleDateString("ru-RU");if(typeof v==="number"&&window.XLSX?.SSF){let d=XLSX.SSF.parse_date_code(v);if(d)return [String(d.d).padStart(2,"0"),String(d.m).padStart(2,"0"),d.y].join(".")}let s=String(v??"").trim();if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(8,10)+"."+s.slice(5,7)+"."+s.slice(0,4);return s}
 function parseRows(matrix){
  if(!matrix.length)return[];
@@ -143,7 +157,7 @@ function parseRows(matrix){
   if(!amount)continue;
   const name=get("name")||(doc==="Входящее"?get("payer"):get("receiver"))||get("payer")||get("receiver")||"Не указан";
   const purpose=String(get("purpose")||"").trim();
-  const item={id:Date.now()+r,date:dateText(get("date")),name:String(name).trim(),purpose,amount:Math.abs(amount),article:"",doc:doc||"Входящее",debit:String(get("accountDebit")||""),credit:String(get("accountCredit")||""),status:"review"};
+  const originalName=String(name).trim();const item={id:Date.now()+r,date:dateText(get("date")),name:shortLegalName(originalName),originalName,purpose,amount:Math.abs(amount),article:"",doc:doc||"Входящее",debit:String(get("accountDebit")||""),credit:String(get("accountCredit")||""),status:"review"};
   if(item.doc==="Входящее"){item.debit=item.debit||"1030";item.credit=item.credit||""}
   else{item.debit=item.debit||"";item.credit=item.credit||"1030"}
   item.bin=String(get("bin")||"").trim();
