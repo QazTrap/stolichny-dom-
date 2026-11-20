@@ -114,11 +114,14 @@
       '<td>'+show(x.date||"Проверить дату")+'</td>'+
       '<td>'+show(x.direction==="Входящее"?"Входящие":x.direction==="Исходящее"?"Исходящие":"Не определено")+'</td>'+
       '<td><strong>'+show(x.name||"Не указан")+'</strong>'+(x.possibleDuplicate&&!x.duplicateConfirmed?'<div class="notice">Возможный дубль</div>':"")+'</td>'+
-      '<td class="amount">'+fmt(x.amount)+'</td><td>'+show(x.article||"Не указана")+'</td>'+
+      '<td class="amount">'+fmt(x.amount)+'</td>'+
+      '<td class="account-cell">'+(x.debit?'<span class="account-present">'+show(x.debit)+'</span>':'<span class="account-missing" title="Заполните счёт дебета в редакторе">Указать</span>')+'</td>'+
+      '<td class="account-cell">'+(x.credit?'<span class="account-present">'+show(x.credit)+'</span>':'<span class="account-missing" title="Заполните счёт кредита в редакторе">Указать</span>')+'</td>'+
+      '<td>'+show(x.article||"Не указана")+'</td>'+
       '<td>'+show(x.docType||"Не выбран")+'</td>'+
       '<td><span class="pill '+(x.status==="ready"?"good":x.status==="detected"?"info":"warn")+'">'+
       (x.status==="ready"?"Готово":x.status==="detected"?"Документ определён":"Проверить")+"</span></td></tr>"
-    ).join(""):'<tr><td colspan="7" class="empty">Операции не найдены</td></tr>';
+    ).join(""):'<tr><td colspan="9" class="empty">Операции не найдены</td></tr>';
     $("shownCount").textContent=ops.length?"Показано "+shown.length+" из "+visible.length+" по фильтру (всего "+ops.length+")":"Операций пока нет";
     $("rows").querySelectorAll("tr[data-id]").forEach(tr=>tr.addEventListener("click",()=>{
       selected=Number(tr.dataset.id);loadEditor();render();
@@ -242,7 +245,7 @@
     if(!/^\d{4}$/.test(String(x.credit||"")))a.push("Счёт кредита");
     if(!x.docType)a.push("Документ 1С");
     else if(!["Платёжное поручение входящее","ПКО","Поступление на расчётный счёт"].includes(x.docType)&&x.direction==="Входящее" ||
-      !["Платёжное поручение исходящее","РКО","Списание с расчётного счёта"].includes(x.docType)&&x.direction==="Исходящее")a.push("Направление не совпадает с документом 1С");
+      !["Платёжное поручение исходящее","РКО","Списание с расчётного счёта",C.BANK_FEE_DOCUMENT].includes(x.docType)&&x.direction==="Исходящее")a.push("Направление не совпадает с документом 1С");
     if(x.article==="Банковские комиссии" && x.direction==="Исходящее" &&
        x.docType==="Платёжное поручение исходящее")
       a.push("Комиссия банка: проверьте платёжный ордер (списание денежных средств)");
