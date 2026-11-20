@@ -123,7 +123,7 @@ $("runDateCheck").addEventListener("click",()=>{
  if(!raw){toast("Выберите дату для проверки");return;}
  const date=raw.slice(8,10)+"."+raw.slice(5,7)+"."+raw.slice(0,4);
  const direction=$("checkDirection").value;
- const found=ops.filter(x=>x.date===date&&(direction==="all"||x.doc===direction));
+ const found=ops.filter(x=>x.date===date&&(direction==="all"||x.direction===direction));
  const total=found.reduce((sum,x)=>sum+Number(x.amount||0),0);
  const label=direction==="Исходящее"?"Исходящие":direction==="Входящее"?"Входящие":"Все операции";
  const rows=found.map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+esc(x.purpose)+'</td><td class="amount">'+fmt(x.amount)+'</td></tr>').join("");
