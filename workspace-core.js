@@ -350,6 +350,24 @@
     for (const x of ops) x.status=validateOperation(x);
     return ops;
   }
+
+  // A filled-out form is not a reconciled 1C posting. These are prompts for
+  // accountant verification, never a claim of ledger correctness.
+  function reconciliationNotes(x) {
+    const notes=[];
+    if(x.debitSource==="auto" || x.creditSource==="auto") notes.push("Автоматический Дт/Кт: сверить корреспонденцию счетов с 1С");
+    if(x.articleSource==="auto") notes.push("Предложенная статья ДДС: сопоставить со справочником 1С");
+    if(x.docTypeSource==="auto") notes.push("Предложенный тип документа: проверить в 1С");
+    if(x.article==="Оплата поставщику" || x.article==="Оплата от покупателя")
+      notes.push("Проверить по договору: аванс или погашение задолженности");
+    if(x.article==="Перевод между счетами")
+      notes.push("Сверить оба собственных банковских счёта и не относить перевод на расходы");
+    if(x.article==="Алименты" || x.article==="Исполнительные документы")
+      notes.push("Сверить задолженность и основание удержания");
+    if(x.article==="Налоги и отчисления")
+      notes.push("Сверить вид налога, субсчёт обязательства и КНП");
+    return notes;
+  }
   function validateOperation(x) {
     const dir=x.direction, type=x.docType||"";
     const compatible=dir==="Входящее" ? ["Платёжное поручение входящее","ПКО","Поступление на расчётный счёт"].includes(type) :
@@ -367,5 +385,5 @@
     const outgoing=roundMoney(rows.filter(x=>x.direction==="Исходящее").reduce((s,x)=>s+Number(x.amount||0),0));
     return {incoming,outgoing,net:roundMoney(incoming-outgoing),count:rows.length,unknown:rows.filter(x=>!x.direction).length};
   }
-  return {norm,fixTengeText,escapeHtml,money,dateText,shortLegalName,suggestArticle,suggestArticleDetailed,suggestPosting,refreshSuggestedPosting,suggestDocumentType,suggestDocumentOperation,refreshSuggestedDocument,parseRows,markDuplicates,validateOperation,totals,BANK_FEE_DOCUMENT};
+  return {norm,fixTengeText,escapeHtml,money,dateText,shortLegalName,suggestArticle,suggestArticleDetailed,suggestPosting,refreshSuggestedPosting,suggestDocumentType,suggestDocumentOperation,refreshSuggestedDocument,parseRows,markDuplicates,validateOperation,reconciliationNotes,totals,BANK_FEE_DOCUMENT};
 });
