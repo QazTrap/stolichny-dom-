@@ -236,3 +236,16 @@ test("detects specific tax and social-payment ledger accounts but not generic de
   assert.equal(C.suggestPosting({purpose:"Комиссия за перевод ОПВ, НДС 16%",direction:"Исходящее",article:"Банковские комиссии",knp:"841"}).debit,"7210");
   assert.equal(C.suggestPosting({purpose:"Услуги погрузчика, в т.ч. НДС 16%",direction:"Входящее",article:"Оплата от покупателя",knp:"859"}).credit,"");
 });
+
+test("filled-out operations still flag unverified automatic postings for 1C reconciliation",()=>{
+  const x={direction:"Исходящее",purpose:"Перечисление алиментов",article:"Алименты",
+    debit:"3390",credit:"1030",debitSource:"auto",creditSource:"auto",articleSource:"auto",docTypeSource:"auto"};
+  const notes=C.reconciliationNotes(x);
+  assert.ok(notes.some(note=>note.includes("Дт/Кт")));
+  assert.ok(notes.some(note=>note.includes("ДДС")));
+  assert.ok(notes.some(note=>note.includes("задолженность")));
+  const manual={...x,debitSource:"manual",creditSource:"manual",articleSource:"manual",docTypeSource:"manual"};
+  const manualNotes=C.reconciliationNotes(manual);
+  assert.ok(!manualNotes.some(note=>note.includes("Автоматический Дт/Кт")));
+  assert.ok(manualNotes.some(note=>note.includes("задолженность")));
+});
