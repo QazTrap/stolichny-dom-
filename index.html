@@ -108,38 +108,45 @@ function dateText(v){if(v instanceof Date)return v.toLocaleDateString("ru-RU");i
 function parseRows(matrix){
  if(!matrix.length)return[];
  const aliases={
-  date:["дата операции","дата платежа","дата документа","дата","operation date","transaction date"],
-  payer:["плательщик","наименование плательщика","отправитель","от кого","payer","sender"],
-  receiver:["получатель","наименование получателя","кому","receiver","beneficiary"],
-  name:["контрагент","наименование контрагента","наименование","название контрагента","counterparty"],
+  date:["дата документа","дата операции","дата платежа","дата валютирования","дата","operation date","transaction date"],
+  payer:["наименование плательщика","плательщик","отправитель","от кого","payer","sender"],
+  receiver:["наименование получателя","получатель","кому","receiver","beneficiary"],
+  name:["наименование контрагента","контрагент","название контрагента","counterparty"],
   purpose:["назначение платежа","назначение","детали платежа","описание платежа","описание","purpose","details"],
   amount:["сумма операции","сумма платежа","сумма","amount"],
-  debit:["расход","списание","дебетовая сумма","дебет","debit"],
-  credit:["приход","поступление","кредитовая сумма","кредит","credit"],
+  debit:["сумма по дебету","дебетовая сумма","сумма дебет","расход","списание","дебет","debit"],
+  credit:["сумма по кредиту","кредитовая сумма","сумма кредит","приход","поступление","кредит","credit"],
+  direction:["индикатор дебета/кредита","индикатор дебета кредита","дебет/кредит","тип операции","direction"],
   accountDebit:["счет дебета","счет дебет","дебет счет","счет списания"],
   accountCredit:["счет кредита","счет кредит","кредит счет","счет зачисления"],
-  bin:["бин","иин","бин/иин","иин/бин"]
+  bin:["бин/иин контрагента","бин контрагента","иин контрагента","бин","иин","бин/иин","иин/бин"]
  };
  let headerIndex=-1,headers=[];
  for(let r=0;r<Math.min(matrix.length,20);r++){
   const candidate=(matrix[r]||[]).map(norm);
   const hasDate=candidate.some(x=>aliases.date.some(a=>x===a||x.includes(a)));
-  const hasMoney=candidate.some(x=>aliases.amount.includes(x)||aliases.debit.includes(x)||aliases.credit.includes(x));
+  const moneyAliases=[...aliases.amount,...aliases.debit,...aliases.credit];
+  const hasMoney=candidate.some(x=>moneyAliases.some(a=>x===a||x.includes(a)));
   if(hasDate&&hasMoney){headerIndex=r;headers=candidate;break}
  }
- if(headerIndex<0)throw Error("Не нашёл строку заголовков. В файле должны быть колонки с датой и суммой, приходом или расходом.");
- const col=key=>headers.findIndex(h=>aliases[key].some(a=>h===a||h.includes(a)));
+ if(headerIndex<0)throw Error("Не найдена строка заголовков. Нужны колонки с датой и суммой, дебетом или кредитом.");
+ const col=key=>headers.findIndex(h=>aliases[key].some(a=>h===a||(key!=="amount"&&h.includes(a))));
  const ix={};Object.keys(aliases).forEach(k=>ix[k]=col(k));
  const out=[];
  for(let r=headerIndex+1;r<matrix.length;r++){
   const row=matrix[r]||[];if(!row.some(v=>String(v??"").trim()))continue;
   const get=k=>ix[k]>=0?row[ix[k]]:"";
-  let debit=num(get("debit")),credit=num(get("credit")),amount=num(get("amount"));
-  let doc="";if(debit||credit){if(debit&&credit){doc="";}else doc=credit?"Входящее":"Исходящее"}else if(amount){doc=amount>=0?"Входящее":"Исходящее";amount=Math.abs(amount)}
-  if(!amount)amount=Math.abs(credit||debit);
+  const debit=num(get("debit")),credit=num(get("credit"));
+  let amount=num(get("amount"));
+  const direction=norm(get("direction")).toUpperCase();
+  let doc="";
+  if(credit>0||direction.includes("CREDIT")||direction.includes("КРЕДИТ"))doc="Входящее";
+  else if(debit>0||direction.includes("DEBIT")||direction.includes("ДЕБЕТ"))doc="Исходящее";
+  else if(amount){doc=amount>=0?"Входящее":"Исходящее";amount=Math.abs(amount)}
+  if(!amount)amount=Math.abs(debit||credit);
   if(!amount)continue;
-  let name=get("name")|| (doc==="Входящее"?get("payer"):get("receiver")) || get("payer") || get("receiver") || "Не указан";
-  let purpose=String(get("purpose")||"").trim();
+  const name=get("name")||(doc==="Входящее"?get("payer"):get("receiver"))||get("payer")||get("receiver")||"Не указан";
+  const purpose=String(get("purpose")||"").trim();
   const item={id:Date.now()+r,date:dateText(get("date")),name:String(name).trim(),purpose,amount:Math.abs(amount),article:"",doc:doc||"Входящее",debit:String(get("accountDebit")||""),credit:String(get("accountCredit")||""),status:"review"};
   if(item.doc==="Входящее"){item.debit=item.debit||"1030";item.credit=item.credit||""}
   else{item.debit=item.debit||"";item.credit=item.credit||"1030"}
