@@ -131,7 +131,8 @@
       options+='</optgroup>';
     }
     options+='<option value="__other__">Другой счёт…</option>';
-    return '<select class="inline-ledger-select'+(code?"":" unset")+'" data-ledger-side="'+side+'" title="Выбрать '+label+' прямо в таблице" aria-label="Выбрать '+label+' по операции '+x.id+'">'+options+'</select>';
+    return '<span class="inline-ledger-picker'+(code?"":" unset")+'"><span class="inline-ledger-current">'+(code?show(code):"Указать")+'</span>'+
+      '<select class="inline-ledger-select" data-ledger-side="'+side+'" title="Выбрать '+label+' прямо в таблице" aria-label="Выбрать '+label+' по операции '+x.id+'">'+options+'</select></span>';
   }
   function saveInlineLedger(row,side,account){
     const x=ops.find(op=>op.id===Number(row.dataset.id));
