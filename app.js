@@ -104,7 +104,7 @@
     $("rows").innerHTML=shown.length?shown.map(x=>
       '<tr data-id="'+x.id+'" class="'+(x.id===selected?"selected":"")+'">'+
       '<td>'+show(x.date||"Проверить дату")+'</td>'+
-      '<td>'+show(x.direction==="Входящее"?"Поступление":x.direction==="Исходящее"?"Списание":"Не определено")+'</td>'+
+      '<td>'+show(x.direction==="Входящее"?"Входящие":x.direction==="Исходящее"?"Исходящие":"Не определено")+'</td>'+
       '<td><strong>'+show(x.name||"Не указан")+'</strong>'+(x.possibleDuplicate&&!x.duplicateConfirmed?'<div class="notice">Возможный дубль</div>':"")+'</td>'+
       '<td class="amount">'+fmt(x.amount)+'</td><td>'+show(x.article||"Не указана")+'</td>'+
       '<td>'+show(x.docType||"Не выбран")+'</td>'+
