@@ -41,28 +41,28 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
    <label class="btn primary" for="fileInput">⇧　Загрузить выписку</label><input id="fileInput" type="file" accept=".xlsx,.xls,.csv,.txt">
   </div>
   <div class="stats">
-   <div class="stat"><div class="staticon blue">▤</div><div><strong id="totalCount">3</strong><span>Всего операций</span></div></div>
-   <div class="stat"><div class="staticon yellow">!</div><div><strong id="reviewCount">2</strong><span>Требуют проверки</span></div></div>
-   <div class="stat"><div class="staticon green">✓</div><div><strong id="readyCount">1</strong><span>Готовы к экспорту</span></div></div>
+   <div class="stat"><div class="staticon blue">▤</div><div><strong id="totalCount">0</strong><span>Всего операций</span></div></div>
+   <div class="stat"><div class="staticon yellow">!</div><div><strong id="reviewCount">0</strong><span>Требуют проверки</span></div></div>
+   <div class="stat"><div class="staticon green">✓</div><div><strong id="readyCount">0</strong><span>Готовы к экспорту</span></div></div>
   </div>
   <div class="toolbar">
    <div class="filters">
-    <button class="chip active" data-filter="all">Все (<span id="allChip">3</span>)</button>
-    <button class="chip" data-filter="review">На проверке (<span id="reviewChip">2</span>)</button>
-    <button class="chip" data-filter="ready">Готовы (<span id="readyChip">1</span>)</button>
+    <button class="chip active" data-filter="all">Все (<span id="allChip">0</span>)</button>
+    <button class="chip" data-filter="review">На проверке (<span id="reviewChip">0</span>)</button>
+    <button class="chip" data-filter="ready">Готовы (<span id="readyChip">0</span>)</button>
    </div>
    <input class="search" id="search" placeholder="⌕　Поиск по контрагенту, назначению...">
   </div>
   <div class="workspace">
    <section class="tablecard">
-    <div class="tabletop"><strong>Операции</strong><span class="muted" id="tableCaption">Выберите строку для редактирования</span></div>
+    <div class="tabletop"><strong>Операции</strong><span class="muted" id="tableCaption">Сначала загрузите банковскую выписку</span></div>
     <div class="tablewrap"><table><thead><tr><th>Дата</th><th>Контрагент</th><th>Назначение платежа</th><th>Сумма</th><th>Статья ДДС</th><th>Документ</th><th>Статус</th></tr></thead><tbody id="rows"></tbody></table></div>
-    <div class="pagination"><span id="shownCount">Показано 1–3 из 3</span><span>Демо-данные</span></div>
+    <div class="pagination"><span id="shownCount">Операций пока нет</span></div>
    </section>
-   <section class="editor">
+   <section class="editor" id="editorPanel" hidden>
     <div class="editorhead"><strong>✎　Редактирование операции</strong><span class="muted" id="operationNumber">№ 001</span></div>
     <form class="edit" id="editForm">
-     <div class="muted" id="operationMeta">ТОО «Пример» · 150 000 ₸</div>
+     <div class="muted" id="operationMeta"></div>
      <div><label>Тип документа 1С</label><div class="radios"><label class="radio"><input type="radio" name="docType" value="Входящее"> Платёжное поручение входящее</label><label class="radio"><input type="radio" name="docType" value="Исходящее"> Платёжное поручение исходящее</label></div></div>
      <div><label for="article">Статья движения денежных средств (ДДС)</label><select id="article"><option>Оплата от покупателя</option><option>Оплата поставщику</option><option>Заработная плата</option><option>Налоги и отчисления</option><option>Возврат денежных средств</option><option>Перевод между счетами</option><option>Прочие поступления</option><option>Прочие списания</option></select></div>
      <div class="twocol"><div><label for="debit">Счёт дебета</label><input id="debit" value="1030"></div><div><label for="credit">Счёт кредита</label><input id="credit" value="1210"></div></div>
@@ -75,32 +75,28 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
   </div>
  </main>
 </div>
-<div class="bottom"><div class="ready"><span class="check">✓</span><span id="bottomMessage">Проверьте операции перед подготовкой импорта.</span></div><div class="bottomactions"><button class="btn outline" id="preview">◉　Предварительный просмотр</button><button class="btn primary" id="export" disabled>⇩　Сформировать файл для 1С</button></div></div>
+<div class="bottom"><div class="ready"><span class="check">✓</span><span id="bottomMessage">Загрузите банковскую выписку, чтобы начать работу.</span></div><div class="bottomactions"><button class="btn outline" id="preview" disabled>◉　Предварительный просмотр</button><button class="btn primary" id="export" disabled>⇩　Сформировать файл для 1С</button></div></div>
 <div class="toast" id="toast"></div>
 <script src="/vendor/xlsx.full.min.js" onerror="(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';s.onerror=function(){var f=document.createElement('script');f.src='https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js';document.head.appendChild(f)};document.head.appendChild(s)})()"></script>
 <script>
 (()=>{
-const seed=[
-{id:1,date:"18.11.2026",name:"ТОО «Альфа»",purpose:"Оплата по договору №12",amount:150000,article:"Оплата от покупателя",doc:"Входящее",debit:"1030",credit:"1210",status:"ready"},
-{id:2,date:"18.11.2026",name:"ТОО «Поставщик»",purpose:"Оплата за услуги",amount:85000,article:"Оплата поставщику",doc:"Исходящее",debit:"3310",credit:"1030",status:"review"},
-{id:3,date:"19.11.2026",name:"ИП Садыков",purpose:"Возврат денежных средств",amount:25000,article:"",doc:"Входящее",debit:"1030",credit:"",status:"review"}
-];
-let ops=seed.map(x=>({...x})),selected=1,filter="all";
+let ops=[],selected=null,filter="all";
+
 const $=id=>document.getElementById(id),fmt=n=>new Intl.NumberFormat("ru-RU").format(n)+" ₸";
 function toast(s){$("toast").textContent=s;$("toast").style.display="block";setTimeout(()=>$("toast").style.display="none",2600)}
-function counts(){let ready=ops.filter(x=>x.status==="ready").length,review=ops.length-ready;$("totalCount").textContent=ops.length;$("reviewCount").textContent=review;$("readyCount").textContent=ready;$("allChip").textContent=ops.length;$("reviewChip").textContent=review;$("readyChip").textContent=ready;$("bottomMessage").textContent=review?review+" операций требуют проверки.":"Все операции проверены."; $("export").disabled=review>0||ops.length===0}
+function counts(){let ready=ops.filter(x=>x.status==="ready").length,review=ops.length-ready;$("totalCount").textContent=ops.length;$("reviewCount").textContent=review;$("readyCount").textContent=ready;$("allChip").textContent=ops.length;$("reviewChip").textContent=review;$("readyChip").textContent=ready;$("bottomMessage").textContent=!ops.length?"Загрузите банковскую выписку, чтобы начать работу.":review?review+" операций требуют проверки.":"Все операции проверены."; $("export").disabled=review>0||ops.length===0;$("preview").disabled=ops.length===0;$("editorPanel").hidden=ops.length===0;}
 function render(){
  counts();let q=$("search").value.toLowerCase(),visible=ops.filter(x=>(filter==="all"||(filter==="ready"?x.status==="ready":x.status==="review"))&&(x.name+" "+x.purpose+" "+x.article).toLowerCase().includes(q));
  $("rows").innerHTML=visible.length?visible.map(x=>'<tr data-id="'+x.id+'" class="'+(x.id===selected?'selected':'')+'"><td>'+x.date+'</td><td><strong>'+esc(x.name)+'</strong></td><td>'+esc(x.purpose)+'</td><td class="amount">'+fmt(x.amount)+'</td><td>'+esc(x.article||"Не указана")+'</td><td>'+esc(x.doc)+'</td><td><span class="pill '+(x.status==="ready"?"good":"warn")+'">'+(x.status==="ready"?"Готово":"Проверить")+'</span></td></tr>').join(""):'<tr><td colspan="7" class="empty">Операции не найдены</td></tr>';
- $("shownCount").textContent="Показано "+visible.length+" из "+ops.length;
+ $("shownCount").textContent=ops.length?"Показано "+visible.length+" из "+ops.length:"Операций пока нет";
  $("rows").querySelectorAll("tr[data-id]").forEach(tr=>tr.addEventListener("click",()=>{selected=Number(tr.dataset.id);loadEditor();render()}));
 }
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function loadEditor(){let x=ops.find(x=>x.id===selected);if(!x)return;$("operationNumber").textContent="№ "+String(x.id).padStart(3,"0");$("operationMeta").textContent=x.date+" · "+fmt(x.amount);$("counterparty").value=x.name;$("purpose").value=x.purpose;$("article").value=x.article||"Оплата от покупателя";$("debit").value=x.debit;$("credit").value=x.credit;document.querySelectorAll('[name="docType"]').forEach(r=>r.checked=r.value===x.doc)}
+function loadEditor(){let x=ops.find(x=>x.id===selected);if(!x){$("operationNumber").textContent="";$("operationMeta").textContent="";return;}$("operationNumber").textContent="№ "+String(x.id).padStart(3,"0");$("operationMeta").textContent=x.date+" · "+fmt(x.amount);$("counterparty").value=x.name;$("purpose").value=x.purpose;$("article").value=x.article||"Оплата от покупателя";$("debit").value=x.debit;$("credit").value=x.credit;document.querySelectorAll('[name="docType"]').forEach(r=>r.checked=r.value===x.doc)}
 $("editForm").addEventListener("submit",e=>{e.preventDefault();let x=ops.find(x=>x.id===selected);if(!x)return;x.name=$("counterparty").value.trim();x.purpose=$("purpose").value.trim();x.article=$("article").value;x.debit=$("debit").value.trim();x.credit=$("credit").value.trim();x.doc=document.querySelector('[name="docType"]:checked')?.value||x.doc;x.status=x.name&&x.purpose&&x.article&&x.debit&&x.credit?"ready":"review";render();loadEditor();toast("Изменения сохранены в текущей сессии")});
 $("reset").addEventListener("click",loadEditor);$("search").addEventListener("input",render);
 document.querySelectorAll("[data-filter]").forEach(b=>b.addEventListener("click",()=>{filter=b.dataset.filter;document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x===b));render()}));
-$("preview").addEventListener("click",()=>toast("Предварительный просмотр: демонстрационный режим"));
+$("preview").addEventListener("click",()=>{if(!ops.length)return;toast("Предварительный просмотр операций: "+ops.length)});
 $("export").addEventListener("click",()=>toast("Формат импорта для вашей конфигурации 1С ещё не настроен"));
 function norm(v){return String(v??"").toLowerCase().replace(/[ё]/g,"е").replace(/\s+/g," ").trim()}
 function num(v){if(typeof v==="number")return v;let s=String(v??"").replace(/[₸$€]/g,"").replace(/\s/g,"").replace(/,(?=\d{1,2}$)/,".").replace(/[^0-9.()-]/g,"");if(/^\(.*\)$/.test(s))s="-"+s.slice(1,-1);return Number(s)||0}
