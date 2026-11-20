@@ -358,6 +358,19 @@
     return ops;
   }
 
+  // Inline table editing: a four-digit draft account or an intentional blank.
+  // This sets only the selected side and never confirms accounting correctness.
+  function setManualPostingAccount(x,side,value){
+    if(side!=="debit"&&side!=="credit")return false;
+    const account=String(value??"").trim();
+    if(account!==""&&!/^\d{4}$/.test(account))return false;
+    x[side]=account;
+    x[side+"Source"]="manual";
+    x[side+"Reason"]=account?"Счёт выбран бухгалтером в таблице":"Счёт очищен бухгалтером";
+    x.status=validateOperation(x);
+    return true;
+  }
+
   // A filled-out form is not a reconciled 1C posting. These are prompts for
   // accountant verification, never a claim of ledger correctness.
   function reconciliationNotes(x) {
@@ -394,5 +407,5 @@
     const outgoing=roundMoney(rows.filter(x=>x.direction==="Исходящее").reduce((s,x)=>s+Number(x.amount||0),0));
     return {incoming,outgoing,net:roundMoney(incoming-outgoing),count:rows.length,unknown:rows.filter(x=>!x.direction).length};
   }
-  return {norm,fixTengeText,escapeHtml,money,dateText,shortLegalName,suggestArticle,suggestArticleDetailed,suggestPosting,refreshSuggestedPosting,suggestDocumentType,suggestDocumentOperation,refreshSuggestedDocument,parseRows,markDuplicates,validateOperation,reconciliationNotes,totals,BANK_FEE_DOCUMENT};
+  return {norm,fixTengeText,escapeHtml,money,dateText,shortLegalName,suggestArticle,suggestArticleDetailed,suggestPosting,refreshSuggestedPosting,suggestDocumentType,suggestDocumentOperation,refreshSuggestedDocument,parseRows,markDuplicates,validateOperation,reconciliationNotes,setManualPostingAccount,totals,BANK_FEE_DOCUMENT};
 });
