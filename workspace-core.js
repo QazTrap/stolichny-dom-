@@ -149,7 +149,7 @@
       } else if(article==="Алименты" && /алимент/.test(p)) {
         result.debit="3390";
         result.debitReason="Перечисление ранее удержанных алиментов; проверьте счёт задолженности";
-      } else if(article==="Заработная плата" && /(зарплат|заработн.{0,9}плат|з\\/п|выплат.{0,20}сотруд)/.test(p)) {
+      } else if(article==="Заработная плата" && /(зарплат|заработн.{0,9}плат|з\/п|выплат.{0,20}сотруд)/.test(p)) {
         result.debit="3350";
         result.debitReason="Выплата ранее начисленной заработной платы";
       } else if(article==="Оплата поставщику" && /(аванс|предоплат|предварительн.{0,10}оплат)/.test(p)) {
@@ -290,8 +290,8 @@
         id:0, date:dateText(get("date")), name:shortLegalName(companyName), originalName:companyName, purpose,
         amount:roundMoney(Math.abs(amount)), direction, docType, docTypeSource:docType?"auto":"", article, articleSource:article?"auto":"",
         articleReason:articleSuggestion.reason,articleConfidence:articleSuggestion.confidence,knp,bankRef:String(get("bankRef")??"").trim(),
-        debit:/^\\d{4}$/.test(bankDebit)?bankDebit:"", debitSource:/^\\d{4}$/.test(bankDebit)?"statement":"",
-        credit:/^\\d{4}$/.test(bankCredit)?bankCredit:"", creditSource:/^\\d{4}$/.test(bankCredit)?"statement":"",
+        debit:/^\d{4}$/.test(bankDebit)?bankDebit:"", debitSource:/^\d{4}$/.test(bankDebit)?"statement":"",
+        credit:/^\d{4}$/.test(bankCredit)?bankCredit:"", creditSource:/^\d{4}$/.test(bankCredit)?"statement":"",
         debitReason:"",creditReason:"",
         bin:String(get("bin")||"").trim(), sourceDoc:String(get("bankDoc")||"").trim(),
         docNumber:String(get("number")||"").trim(), sourceSheet:sheetName,
