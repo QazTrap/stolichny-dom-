@@ -107,6 +107,61 @@
     $("editorPanel").hidden=ops.length===0;
     $("tableCaption").textContent=fileLabel||"Операции";
   }
+
+  // A practical local list, not the user's live 1C chart of accounts.
+  // Any other four-digit account can be entered via "Другой счёт…".
+  const ledgerGroups=[
+    ["Денежные средства",[["1010","Касса"],["1020","Денежные средства в пути"],["1030","Текущие банковские счета"],["1040","Корреспондентские счета"],["1050","Сберегательные счета"],["1060","Прочие денежные средства"]]],
+    ["Покупатели и поставщики",[["1210","Долги покупателей"],["1250","Задолженность работников"],["1280","Прочая краткосрочная дебиторская задолженность"],["1610","Авансы выданные"],["3310","Долги поставщикам"],["3510","Авансы полученные"]]],
+    ["Запасы и активы",[["1310","Сырьё и материалы"],["1320","Готовая продукция"],["1330","Товары"],["1340","Незавершённое производство"],["1350","Прочие запасы"],["2410","Основные средства"],["2420","Амортизация основных средств"],["2730","Прочие нематериальные активы"]]],
+    ["Налоги и социальные платежи",[["3110","КПН"],["3120","ИПН"],["3130","НДС"],["3150","Социальный налог"],["3160","Земельный налог"],["3170","Транспортный налог"],["3180","Налог на имущество"],["3211","Социальные отчисления"],["3212","Взносы ОСМС"],["3213","Отчисления ОСМС"],["3220","ОПВ"],["3250","ОПВ работодателя"]]],
+    ["Расчёты и займы",[["3010","Краткосрочные финансовые обязательства"],["3350","Расчёты по оплате труда"],["3390","Прочая краткосрочная кредиторская задолженность"],["4010","Долгосрочные финансовые обязательства"]]],
+    ["Доходы и расходы",[["6010","Доход от реализации"],["7010","Себестоимость реализации"],["7110","Расходы по реализации"],["7210","Административные расходы"],["7310","Расходы по вознаграждениям"],["7470","Прочие расходы"]]]
+  ];
+  const knownLedgerAccounts=new Set(ledgerGroups.flatMap(group=>group[1].map(entry=>entry[0])));
+  function accountPicker(x,side){
+    const code=String(x[side]||"");
+    const label=side==="debit"?"Дт":"Кт";
+    let options='<option value=""'+(!code?' selected':"")+'>Указать / очистить</option>';
+    if(code&&!knownLedgerAccounts.has(code))
+      options+='<option value="'+show(code)+'" selected>'+show(code)+' — выбранный счёт</option>';
+    for(const [group,accounts] of ledgerGroups){
+      options+='<optgroup label="'+show(group)+'">';
+      options+=accounts.map(([number,title])=>'<option value="'+number+'"'+(code===number?" selected":"")+'>'+number+' — '+show(title)+'</option>').join("");
+      options+='</optgroup>';
+    }
+    options+='<option value="__other__">Другой счёт…</option>';
+    return '<select class="inline-ledger-select'+(code?"":" unset")+'" data-ledger-side="'+side+'" title="Выбрать '+label+' прямо в таблице" aria-label="Выбрать '+label+' по операции '+x.id+'">'+options+'</select>';
+  }
+  function saveInlineLedger(row,side,account){
+    const x=ops.find(op=>op.id===Number(row.dataset.id));
+    if(!x || !C.setManualPostingAccount(x,side,account)){
+      toast("Введите четырёхзначный номер счёта, например 3310");
+      return false;
+    }
+    C.markDuplicates(ops);
+    if(selected===x.id){
+      $(side).value=x[side];
+      $("postingHint").textContent="Счёт "+(side==="debit"?"Дт":"Кт")+" выбран в таблице. Сверьте проводку с вашей базой 1С.";
+    }
+    render();
+    scheduleSave();
+    toast(x[side]?"Счёт "+(side==="debit"?"Дт":"Кт")+" "+x[side]+" сохранён":"Счёт "+(side==="debit"?"Дт":"Кт")+" очищен");
+    return true;
+  }
+  function editOtherLedger(select){
+    const cell=select.closest("td"),row=select.closest("tr[data-id]"),side=select.dataset.ledgerSide;
+    if(!cell||!row)return;
+    const existing=ops.find(op=>op.id===Number(row.dataset.id))?.[side]||"";
+    cell.innerHTML='<div class="inline-ledger-custom" data-inline-side="'+side+'">'+
+      '<input type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" aria-label="Номер счёта '+(side==="debit"?"дебета":"кредита")+'" placeholder="4 цифры" value="'+show(existing)+'">'+
+      '<button type="button" data-inline-save aria-label="Сохранить счёт" title="Сохранить">✓</button>'+
+      '<button type="button" data-inline-cancel aria-label="Отменить" title="Отменить">×</button></div>';
+    const input=cell.querySelector("input");
+    input.focus();
+    input.select();
+  }
+
   function render(){
     const visible=currentRows();
     updateStats(visible);
@@ -117,20 +172,58 @@
       '<td>'+show(x.direction==="Входящее"?"Входящие":x.direction==="Исходящее"?"Исходящие":"Не определено")+'</td>'+
       '<td><strong>'+show(x.name||"Не указан")+'</strong>'+(x.possibleDuplicate&&!x.duplicateConfirmed?'<div class="notice">Возможный дубль</div>':"")+'</td>'+
       '<td class="amount">'+fmt(x.amount)+'</td>'+
-      '<td class="account-cell">'+(x.debit?'<span class="account-present">'+show(x.debit)+'</span>':'<span class="account-missing" title="Заполните счёт дебета в редакторе">Указать</span>')+'</td>'+
-      '<td class="account-cell">'+(x.credit?'<span class="account-present">'+show(x.credit)+'</span>':'<span class="account-missing" title="Заполните счёт кредита в редакторе">Указать</span>')+'</td>'+
+      '<td class="account-cell">'+accountPicker(x,"debit")+'</td>'+
+      '<td class="account-cell">'+accountPicker(x,"credit")+'</td>'+
       '<td>'+show(x.article||"Не указана")+'</td>'+
       '<td>'+show(x.docType||"Не выбран")+'</td>'+
       '<td><span class="pill '+(x.status==="ready"?"info":x.status==="detected"?"info":"warn")+'">'+
       (x.status==="ready"?"Реквизиты заполнены":x.status==="detected"?"Документ определён":"Проверить")+"</span></td></tr>"
     ).join(""):'<tr><td colspan="9" class="empty">Операции не найдены</td></tr>';
     $("shownCount").textContent=ops.length?"Показано "+shown.length+" из "+visible.length+" по фильтру (всего "+ops.length+")":"Операций пока нет";
-    $("rows").querySelectorAll("tr[data-id]").forEach(tr=>tr.addEventListener("click",()=>{
-      selected=Number(tr.dataset.id);loadEditor();render();
-    }));
+
     if(!$("dateCheckPanel").hidden&&$("checkDate").value)renderDateCheck();
     if(!$("previewPanel").hidden)renderPreview();
   }
+
+  // Event delegation survives table rerenders and avoids opening the right
+  // editor when selecting a ledger account inside a cell.
+  $("rows").addEventListener("click",event=>{
+    const target=event.target;
+    const row=target.closest("tr[data-id]");
+    if(!row)return;
+    if(target.closest(".inline-ledger-select,.inline-ledger-custom")){
+      if(target.matches("[data-inline-save]")){
+        const custom=target.closest(".inline-ledger-custom");
+        saveInlineLedger(row,custom.dataset.inlineSide,custom.querySelector("input").value);
+      }else if(target.matches("[data-inline-cancel]"))render();
+      return;
+    }
+    selected=Number(row.dataset.id);
+    loadEditor();render();
+  });
+  $("rows").addEventListener("change",event=>{
+    const select=event.target.closest("select[data-ledger-side]");
+    if(!select)return;
+    const row=select.closest("tr[data-id]");
+    if(!row)return;
+    if(select.value==="__other__"){
+      editOtherLedger(select);
+      return;
+    }
+    saveInlineLedger(row,select.dataset.ledgerSide,select.value);
+  });
+  $("rows").addEventListener("keydown",event=>{
+    const custom=event.target.closest(".inline-ledger-custom");
+    if(!custom||event.target.tagName!=="INPUT")return;
+    if(event.key==="Enter"){
+      event.preventDefault();
+      saveInlineLedger(custom.closest("tr[data-id]"),custom.dataset.inlineSide,event.target.value);
+    }else if(event.key==="Escape"){
+      event.preventDefault();
+      render();
+    }
+  });
+
   const articles=[...$("article").options].map(x=>x.value);
   function loadEditor(){
     const x=ops.find(v=>v.id===selected);
