@@ -134,3 +134,38 @@ test("repairs Kazakh ң corrupted in bank currency text without changing other w
   assert.equal(ops[0].purpose,"Возврат в теңге");
   assert.equal(ops[0].name,"ТОО Теңге");
 });
+
+
+test("bank fees get a payment order (cash debit), not an outgoing payment instruction",()=>{
+  const rows=[
+    ["Дата","Дебет","Кредит","КНП","Назначение платежа","Контрагент"],
+    ["20.11.2026","350","","841","Комиссия за перевод согласно тарифам банка, включая НДС","Банк"],
+    ["20.11.2026","7500","","859","Оплата за услуги по договору","ТОО Услуги"],
+    ["20.11.2026","","10000","859","Оплата за работы по счёту","ТОО Заказчик"]
+  ];
+  const ops=C.parseRows(rows,"November");
+  assert.equal(ops.length,3);
+  assert.equal(ops[0].article,"Банковские комиссии");
+  assert.equal(ops[0].docType,"Платёжный ордер (списание денежных средств)");
+  assert.equal(ops[0].docTypeSource,"auto");
+  assert.equal(ops[0].credit,"1030");
+  assert.equal(C.suggestDocumentOperation(ops[0].article,ops[0].docType),"Прочее списание безналичных денежных средств");
+  assert.equal(ops[1].docType,"Платёжное поручение исходящее");
+  assert.equal(ops[2].docType,"Платёжное поручение входящее");
+});
+
+test("corrects previously inferred fee documents but keeps accountant-selected documents",()=>{
+  const fee={
+    date:"20.11.2026",direction:"Исходящее",amount:350,name:"Банк",purpose:"Банковская комиссия",article:"Банковские комиссии",
+    docType:"Платёжное поручение исходящее",debit:"7210",credit:"1030"
+  };
+  assert.equal(C.refreshSuggestedDocument(fee),true);
+  assert.equal(fee.docType,"Платёжный ордер (списание денежных средств)");
+  assert.equal(C.validateOperation(fee),"ready");
+  const manuallySelected={...fee,docType:"Платёжное поручение исходящее",docTypeSource:"manual"};
+  assert.equal(C.refreshSuggestedDocument(manuallySelected),false);
+  assert.equal(manuallySelected.docType,"Платёжное поручение исходящее");
+  const incoming={...fee,direction:"Входящее",docType:"Платёжное поручение входящее",article:"Оплата от покупателя",docTypeSource:"auto"};
+  assert.equal(C.refreshSuggestedDocument(incoming),false);
+  assert.equal(incoming.docType,"Платёжное поручение входящее");
+});
