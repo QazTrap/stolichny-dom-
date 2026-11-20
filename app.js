@@ -33,7 +33,7 @@
       return {
         id:i+1,date:C.dateText(str("date")),name:str("name"),originalName:str("originalName")||str("name"),
         purpose:str("purpose"),amount,direction:["Входящее","Исходящее"].includes(str("direction"))?str("direction"):"",
-        docType:str("docType"),docTypeSource:str("docTypeSource"),article:str("article"),articleSource:str("articleSource"),articleReason:str("articleReason"),articleConfidence:str("articleConfidence"),knp:str("knp"),bankRef:str("bankRef"),debit:str("debit"),credit:str("credit"),
+        docType:str("docType"),docTypeSource:str("docTypeSource"),article:str("article"),articleSource:str("articleSource"),articleReason:str("articleReason"),articleConfidence:str("articleConfidence"),knp:str("knp"),bankRef:str("bankRef"),debit:str("debit"),credit:str("credit"),debitSource:str("debitSource"),creditSource:str("creditSource"),debitReason:str("debitReason"),creditReason:str("creditReason"),
         bin:str("bin"),sourceDoc:str("sourceDoc"),docNumber:str("docNumber"),sourceSheet:str("sourceSheet"),
         possibleDuplicate:false,duplicateConfirmed:!!x.duplicateConfirmed,status:"review"
       };
@@ -48,6 +48,7 @@
       ops=sanitizeImported(parsed.ops);
       ops.forEach(recomputeArticle);
       ops.forEach(C.refreshSuggestedDocument);
+      ops.forEach(C.refreshSuggestedPosting);
       C.markDuplicates(ops);
       selected=ops[0]?.id??null;
       fileLabel=String(parsed.fileLabel||"Черновик").slice(0,200);
@@ -64,8 +65,9 @@
     x.articleReason=proposal.reason;
     x.articleConfidence=proposal.confidence;
     const docChanged=C.refreshSuggestedDocument(x);
+    const postingChanged=C.refreshSuggestedPosting(x);
     x.status=C.validateOperation(x);
-    return changed||docChanged;
+    return changed||docChanged||postingChanged;
   }
   function currentRows(){
     const query=C.norm($("search").value);
@@ -147,6 +149,8 @@
     $("purpose").value=x.purpose;
     $("debit").value=x.debit;
     $("credit").value=x.credit;
+    $("postingHint").textContent=[["Дт",x.debit,x.debitSource,x.debitReason],["Кт",x.credit,x.creditSource,x.creditReason]].map(([side,account,source,reason])=>
+      side+": "+(account||"не указан")+(source==="auto"?" — предложен автоматически"+(reason?" ("+reason+")":""):source==="manual"?" — изменён бухгалтером":source==="statement"?" — из файла":" — требуется проверка")).join(". ");
     if(x.article&&articles.includes(x.article)){
       $("article").value=x.article;$("customArticle").style.display="none";$("customArticle").value="";
     }else if(x.article){
@@ -174,6 +178,8 @@
     x.article=($("article").value==="__custom__"?$("customArticle").value:$("article").value).trim().slice(0,300);
     x.articleSource="manual";
     x.debit=$("debit").value.trim();x.credit=$("credit").value.trim();
+    x.debitSource="manual";x.creditSource="manual";
+    x.debitReason="Счёт выбран или оставлен пустым бухгалтером";x.creditReason="Счёт выбран или оставлен пустым бухгалтером";
     x.direction=$("operationDirection").value;x.docType=$("docType").value;
     x.docTypeSource="manual";
     x.duplicateConfirmed=$("confirmDuplicate").checked;
@@ -316,7 +322,7 @@
       if(file.size>20*1024*1024)throw Error("Черновик слишком большой");
       const data=JSON.parse(await file.text());
       if(data.version!==2)throw Error("Этот формат черновика не поддерживается");
-      ops=sanitizeImported(data.ops);ops.forEach(recomputeArticle);ops.forEach(C.refreshSuggestedDocument);C.markDuplicates(ops);
+      ops=sanitizeImported(data.ops);ops.forEach(recomputeArticle);ops.forEach(C.refreshSuggestedDocument);ops.forEach(C.refreshSuggestedPosting);C.markDuplicates(ops);
       selected=ops[0]?.id??null;fileLabel=String(data.fileLabel||file.name).slice(0,200);
       filter="all";directionFilter="all";resetFilters();
       loadEditor();render();scheduleSave();toast("Черновик загружен: "+ops.length+" операций");
