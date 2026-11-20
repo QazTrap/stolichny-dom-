@@ -122,7 +122,7 @@ test("does not guess cashflow articles for ambiguous KNP",()=>{
 
 test("repairs Kazakh ң corrupted in bank currency text without changing other words",()=>{
   assert.equal(C.fixTengeText("Оплата в те?ге за услуги"),"Оплата в теңге за услуги");
-  assert.equal(C.fixTengeText("Сумма: ТЕ�ГЕ"),"Сумма: теңге");
+  assert.equal(C.fixTengeText("Сумма: ТЕ�ГЕ"),"Сумма: ТЕҢГЕ");
   assert.equal(C.fixTengeText("1000 те□ге"),"1000 теңге");
   assert.equal(C.fixTengeText("Сумма в тенге; что?"),"Сумма в тенге; что?");
   const rows=[
