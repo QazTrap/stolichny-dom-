@@ -292,3 +292,31 @@ test("diesel grade details distinguish summer, winter, off-season and arctic",()
     assert.ok(proposal.reason.includes(meaning),grade+" should mean "+meaning);
   }
 });
+
+test("inline table editing only changes the selected debit or credit account",()=>{
+  const x={
+    date:"20.11.2026",name:"ТОО Тест",purpose:"Оплата поставщику",
+    amount:1000,direction:"Исходящее",docType:"Платёжное поручение исходящее",
+    article:"Оплата поставщику",debit:"",credit:"1030",creditSource:"auto"
+  };
+  assert.equal(C.setManualPostingAccount(x,"debit","3310"),true);
+  assert.equal(x.debit,"3310");
+  assert.equal(x.credit,"1030");
+  assert.equal(x.debitSource,"manual");
+  assert.equal(x.creditSource,"auto");
+  assert.equal(x.status,"ready");
+  C.refreshSuggestedPosting(x);
+  assert.equal(x.debit,"3310","automatic suggestions do not overwrite accountant choice");
+  assert.equal(C.setManualPostingAccount(x,"credit","1010"),true);
+  assert.equal(x.credit,"1010");
+  assert.equal(x.debit,"3310");
+  assert.equal(C.setManualPostingAccount(x,"debit","9999"),true,"allow any valid custom 4-digit account");
+  assert.equal(x.debit,"9999");
+  assert.equal(C.setManualPostingAccount(x,"debit","13<script>"),false);
+  assert.equal(C.setManualPostingAccount(x,"not-a-side","1310"),false);
+  assert.equal(x.debit,"9999");
+  assert.equal(C.setManualPostingAccount(x,"debit",""),true,"account can be intentionally cleared");
+  assert.equal(x.debit,"");
+  assert.equal(x.debitSource,"manual");
+  assert.notEqual(x.status,"ready");
+});
