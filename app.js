@@ -111,6 +111,9 @@
     if(!x){$("operationNumber").textContent="";$("operationMeta").textContent="";return;}
     $("operationNumber").textContent="№ "+String(ops.indexOf(x)+1).padStart(3,"0");
     $("operationMeta").textContent=(x.date||"Дата не определена")+" · "+fmt(x.amount)+(x.docNumber?" · Документ "+x.docNumber:"");
+    const match=x.date?.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    $("editDate").value=match?match[3]+"-"+match[2]+"-"+match[1]:"";
+    $("editAmount").value=Number(x.amount)||"";
     $("operationDirection").value=x.direction||"";
     $("docType").value=x.docType||"";
     $("counterparty").value=x.name;
@@ -134,6 +137,9 @@
     event.preventDefault();
     const x=ops.find(v=>v.id===selected);
     if(!x)return;
+    x.date=C.dateText($("editDate").value);
+    x.amount=Math.round(Number($("editAmount").value)*100)/100;
+    if(!Number.isFinite(x.amount)||x.amount<=0){toast("Укажите корректную положительную сумму");return;}
     x.name=$("counterparty").value.trim().slice(0,300);
     x.originalName=x.name;
     x.purpose=$("purpose").value.trim().slice(0,3000);
