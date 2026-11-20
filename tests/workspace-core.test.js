@@ -58,8 +58,14 @@ test("different bank document numbers are not flagged as duplicates",()=>{
 test("rejects wrong 1C document direction and invalid ledger account",()=>{
   const entry={date:"20.11.2026",name:"ТОО Тест",purpose:"Оплата",amount:100,direction:"Исходящее",docType:"ПКО",article:"Оплата поставщику",debit:"3310",credit:"1030"};
   assert.equal(C.validateOperation(entry),"review");
-  entry.docType="РКО";assert.equal(C.validateOperation(entry),"ready");
+  entry.docType="РКО";assert.equal(C.validateOperation(entry),"detected");
+  entry.credit="1010";assert.equal(C.validateOperation(entry),"ready");
   entry.debit="KZ0000123";assert.equal(C.validateOperation(entry),"detected");
+});
+test("parses European and US amount separators",()=>{
+  assert.equal(C.money("1.234,56"),1234.56);
+  assert.equal(C.money("1,234.56"),1234.56);
+  assert.equal(C.money("1 234,56"),1234.56);
 });
 test("normalizes dates and escapes untrusted workbook values",()=>{
   assert.equal(C.dateText("2026-11-20"),"20.11.2026");
