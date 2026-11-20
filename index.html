@@ -102,9 +102,9 @@ $("reset").addEventListener("click",loadEditor);$("search").addEventListener("in
 document.querySelectorAll("[data-filter]").forEach(b=>b.addEventListener("click",()=>{filter=b.dataset.filter;document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x===b));render()}));
 $("preview").addEventListener("click",()=>toast("Предварительный просмотр: демонстрационный режим"));
 $("export").addEventListener("click",()=>toast("Формат импорта для вашей конфигурации 1С ещё не настроен"));
-function norm(v){return String(v??"").toLowerCase().replace(/[ё]/g,"е").replace(/\\s+/g," ").trim()}
-function num(v){if(typeof v==="number")return v;let s=String(v??"").replace(/[₸$€]/g,"").replace(/\\s/g,"").replace(/,(?=\\d{1,2}$)/,".").replace(/[^0-9.()-]/g,"");if(/^\\(.*\\)$/.test(s))s="-"+s.slice(1,-1);return Number(s)||0}
-function dateText(v){if(v instanceof Date)return v.toLocaleDateString("ru-RU");if(typeof v==="number"&&window.XLSX?.SSF){let d=XLSX.SSF.parse_date_code(v);if(d)return [String(d.d).padStart(2,"0"),String(d.m).padStart(2,"0"),d.y].join(".")}let s=String(v??"").trim();if(/^\\d{4}-\\d{2}-\\d{2}/.test(s))return s.slice(8,10)+"."+s.slice(5,7)+"."+s.slice(0,4);return s}
+function norm(v){return String(v??"").toLowerCase().replace(/[ё]/g,"е").replace(/\s+/g," ").trim()}
+function num(v){if(typeof v==="number")return v;let s=String(v??"").replace(/[₸$€]/g,"").replace(/\s/g,"").replace(/,(?=\d{1,2}$)/,".").replace(/[^0-9.()-]/g,"");if(/^\(.*\\)$/.test(s))s="-"+s.slice(1,-1);return Number(s)||0}
+function dateText(v){if(v instanceof Date)return v.toLocaleDateString("ru-RU");if(typeof v==="number"&&window.XLSX?.SSF){let d=XLSX.SSF.parse_date_code(v);if(d)return [String(d.d).padStart(2,"0"),String(d.m).padStart(2,"0"),d.y].join(".")}let s=String(v??"").trim();if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(8,10)+"."+s.slice(5,7)+"."+s.slice(0,4);return s}
 function parseRows(matrix){
  if(!matrix.length)return[];
  const aliases={
@@ -171,7 +171,6 @@ $("fileInput").addEventListener("change",async e=>{
   toast("Импортировано операций: "+ops.length);
  }catch(err){toast(err.message||"Ошибка чтения файла")}e.target.value="";
 });
-loadEditor();render();toast("Загружено операций: "+ops.length)}catch(err){toast(err.message)}e.target.value=""});
 loadEditor();render();
 })();
 </script>
