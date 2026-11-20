@@ -18,6 +18,9 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
 #fileInput{display:none}.toast{position:fixed;right:24px;bottom:90px;background:#173252;color:#fff;padding:12px 16px;border-radius:10px;box-shadow:0 8px 25px #10204425;display:none;z-index:10}
 @media(max-width:1100px){.workspace{grid-template-columns:1fr}.editor{position:static}.stats{grid-template-columns:repeat(3,1fr)}.bottom{left:0}}
 @media(max-width:720px){.top{padding:0 15px}.layout{grid-template-columns:1fr}aside{position:static;display:flex;flex-direction:row;overflow:auto;padding:9px;border-right:0;border-bottom:1px solid var(--line)}.navlabel,.company,.support{display:none}.nav{white-space:nowrap;padding:9px 12px;font-size:12px}main{padding:20px 14px 150px}.heading{align-items:flex-start;flex-direction:column}.heading h1{font-size:22px}.stats{grid-template-columns:1fr;gap:8px}.stat{padding:11px}.staticon{width:40px;height:40px}.toolbar{align-items:stretch}.search{width:100%}.bottom{padding:10px 12px;align-items:stretch;flex-direction:column}.bottomactions .btn{flex:1}.bottomactions{width:100%}.profile .username{display:none}}
+[hidden]{display:none!important}
+ #duplicateWarning{border:1px solid #f1c26f;padding:12px;border-radius:8px}
+ #duplicateWarning input{width:auto;display:inline}
 </style>
 </head>
 <body>
@@ -45,9 +48,11 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
    <div class="stat"><div class="staticon green">✓</div><div><strong id="detectedCount">0</strong><span>Документы определены</span></div></div>
    <div class="stat"><div class="staticon yellow">!</div><div><strong id="reviewCount">0</strong><span>Нужна проверка</span></div></div>
   </div>
-  <div class="stats" style="grid-template-columns:repeat(2,minmax(180px,1fr));margin:0 0 16px">
-   <div class="stat"><div class="staticon blue">∑</div><div><strong id="filteredTotal">0 ₸</strong><span id="filteredTotalLabel">Итого по всем операциям</span></div></div>
-   <div class="stat"><div class="staticon green">▤</div><div><strong id="filteredCount">0</strong><span>Операций в выбранном направлении</span></div></div>
+  <div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin:0 0 16px">
+   <div class="stat"><div class="staticon green">↓</div><div><strong id="filteredTotal">0 ₸</strong><span id="filteredTotalLabel">Поступления по фильтру</span></div></div>
+   <div class="stat"><div class="staticon yellow">↑</div><div><strong id="outgoingTotal">0 ₸</strong><span>Списания по фильтру</span></div></div>
+   <div class="stat"><div class="staticon blue">∑</div><div><strong id="netTotal">0 ₸</strong><span>Разница (поступления − списания)</span></div></div>
+   <div class="stat"><div class="staticon blue">▤</div><div><strong id="filteredCount">0</strong><span>Операций по фильтру</span></div></div>
   </div>
   <div class="toolbar">
    <div class="filters">
@@ -58,7 +63,7 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
     <button class="chip active" data-filter="all">Все статусы (<span id="allChip">0</span>)</button>
     <button class="chip" data-filter="detected">Документ определён (<span id="detectedChip">0</span>)</button>
     <button class="chip" data-filter="review">Проверить (<span id="reviewChip">0</span>)</button>
-    <button class="chip" data-filter="ready">Готовы к 1С (<span id="readyChip">0</span>)</button>
+    <button class="chip" data-filter="ready">Поля заполнены (<span id="readyChip">0</span>)</button>
     <button class="chip" id="toggleDateCheck" type="button">▦ Проверить сумму за дату</button>
    </div>
    <input class="search" id="search" placeholder="⌕　Поиск по контрагенту, назначению...">
@@ -70,6 +75,10 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
     <button class="btn primary" id="runDateCheck" type="button">Проверить дату</button>
    </div>
    <div id="dateCheckResult" style="margin-top:14px"></div>
+  </section>
+  <section class="tablecard" id="previewPanel" style="margin-bottom:14px;padding:16px" hidden>
+   <h2 style="font-size:17px;margin:0 0 12px">Предварительная проверка перед экспортом</h2>
+   <div id="previewContent"></div>
   </section>
   <div class="workspace">
    <section class="tablecard">
@@ -86,166 +95,28 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
      <div class="twocol"><div><label for="debit">Счёт дебета</label><input id="debit" value="1030"></div><div><label for="credit">Счёт кредита</label><input id="credit" value="1210"></div></div>
      <div><label for="counterparty">Контрагент</label><input id="counterparty"></div>
      <div><label for="purpose">Назначение платежа</label><textarea id="purpose"></textarea></div>
+     <div id="duplicateWarning" class="notice" hidden>
+      <strong>Возможный дубль операции</strong>
+      <p id="duplicateHint"></p>
+      <label><input type="checkbox" id="confirmDuplicate"> Это отдельная операция, сверено с банком</label>
+     </div>
      <div class="editactions"><button class="btn outline" type="button" id="reset">Отменить</button><button class="btn primary" type="submit">✓　Сохранить</button></div>
-     <p class="notice">Импорт выполняется локально в браузере. Проверьте реквизиты и заполните статьи ДДС и счета перед дальнейшей обработкой.</p>
+     <p class="notice">Данные обрабатываются в браузере. Автосохранение действует только в текущей вкладке. Для надёжного хранения скачайте черновик. ДДС и счета обязательно сверьте с 1С.</p>
     </form>
    </section>
   </div>
  </main>
 </div>
-<div class="bottom"><div class="ready"><span class="check">✓</span><span id="bottomMessage">Загрузите банковскую выписку, чтобы начать работу.</span></div><div class="bottomactions"><button class="btn outline" id="preview" disabled>◉　Предварительный просмотр</button><button class="btn primary" id="export" disabled>⇩　Сформировать файл для 1С</button></div></div>
+<div class="bottom"><div class="ready"><span class="check">✓</span><span id="bottomMessage">Загрузите банковскую выписку, чтобы начать работу.</span></div><div class="bottomactions"><button class="btn outline" id="preview" disabled>◉　Предварительный просмотр</button><button class="btn primary" id="export" disabled>⇩　Скачать Excel для подготовки 1С</button></div></div>
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:12px 24px 24px">
+  <button class="btn outline" id="saveDraftFile" type="button">↓ Сохранить черновик</button>
+  <button class="btn outline" id="restoreDraftFile" type="button">↑ Открыть черновик</button>
+  <input type="file" id="draftInput" accept=".json,application/json" hidden>
+  <button class="btn outline" id="clearDraft" type="button">Очистить сессию</button>
+  <span class="muted" id="draftStatus">Данные не отправляются на сервер</span>
+ </div>
 <div class="toast" id="toast"></div>
-<script src="/vendor/xlsx.full.min.js" onerror="(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';s.onerror=function(){var f=document.createElement('script');f.src='https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js';document.head.appendChild(f)};document.head.appendChild(s)})()"></script>
-<script>
-(()=>{
-let ops=[],selected=null,filter="all",directionFilter="all";
-
-const $=id=>document.getElementById(id),fmt=n=>new Intl.NumberFormat("ru-RU").format(n)+" ₸";
-function toast(s){$("toast").textContent=s;$("toast").style.display="block";setTimeout(()=>$("toast").style.display="none",2600)}
-function counts(){let ready=ops.filter(x=>x.status==="ready").length,detected=ops.filter(x=>x.status==="detected").length,review=ops.filter(x=>x.status==="review").length;
- let directionOps=ops.filter(x=>directionFilter==="all"||x.direction===directionFilter),directionSum=directionOps.reduce((s,x)=>s+Number(x.amount||0),0);$("filteredTotal").textContent=fmt(directionSum);$("filteredCount").textContent=directionOps.length;$("filteredTotalLabel").textContent=directionFilter==="Входящее"?"Итого по входящим":directionFilter==="Исходящее"?"Итого по исходящим":"Итого по всем операциям";$("totalCount").textContent=ops.length;$("detectedCount").textContent=detected+ready;$("reviewCount").textContent=review;$("allChip").textContent=ops.length;$("detectedChip").textContent=detected;$("reviewChip").textContent=review;$("readyChip").textContent=ready;$("directionAllChip").textContent=ops.length;$("outgoingChip").textContent=ops.filter(x=>x.direction==="Исходящее").length;$("incomingChip").textContent=ops.filter(x=>x.direction==="Входящее").length;$("bottomMessage").textContent=!ops.length?"Загрузите банковскую выписку, чтобы начать работу.":review?review+" операций не удалось определить — нужна проверка.":detected+ready+" документов определены; заполните остальные реквизиты для экспорта.";$("export").disabled=ready!==ops.length||ops.length===0;$("preview").disabled=ops.length===0;$("editorPanel").hidden=ops.length===0;}
-function render(){
- counts();let q=$("search").value.toLowerCase(),visible=ops.filter(x=>(filter==="all"||x.status===filter)&&(directionFilter==="all"||x.direction===directionFilter)&&(x.name+" "+x.purpose+" "+x.article).toLowerCase().includes(q));
- $("rows").innerHTML=visible.length?visible.map(x=>'<tr data-id="'+x.id+'" class="'+(x.id===selected?'selected':'')+'"><td>'+x.date+'</td><td>'+esc(x.direction==="Входящее"?"Поступление":x.direction==="Исходящее"?"Списание":"Не определено")+'</td><td><strong>'+esc(x.name)+'</strong></td><td class="amount">'+fmt(x.amount)+'</td><td>'+esc(x.article||"Не указана")+'</td><td>'+esc(x.docType||"Не выбран")+'</td><td><span class="pill '+(x.status==="ready"?"good":x.status==="detected"?"info":"warn")+'">'+(x.status==="ready"?"Готово":x.status==="detected"?"Документ определён":"Проверить")+'</span></td></tr>').join(""):'<tr><td colspan="7" class="empty">Операции не найдены</td></tr>';
- $("shownCount").textContent=ops.length?"Показано "+visible.length+" из "+ops.length:"Операций пока нет";
- $("rows").querySelectorAll("tr[data-id]").forEach(tr=>tr.addEventListener("click",()=>{selected=Number(tr.dataset.id);loadEditor();render()}));
-}
-function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function loadEditor(){let x=ops.find(x=>x.id===selected);if(!x){$("operationNumber").textContent="";$("operationMeta").textContent="";return;}$("operationNumber").textContent="№ "+String(x.id).padStart(3,"0");$("operationMeta").textContent=x.date+" · "+fmt(x.amount);$("counterparty").value=x.name;$("purpose").value=x.purpose;const articleChoices=[...$("article").options].map(o=>o.value);if(x.article&&articleChoices.includes(x.article)){$("article").value=x.article;$("customArticle").style.display="none";$("customArticle").value="";}else if(x.article){$("article").value="__custom__";$("customArticle").style.display="block";$("customArticle").value=x.article;}else{$("article").value="";$("customArticle").style.display="none";$("customArticle").value="";}$("articleHint").textContent=x.articleSource==="auto"?"Предложено автоматически по назначению платежа. При необходимости измените статью.":"Выберите статью из списка или укажите собственную.";$("debit").value=x.debit;$("credit").value=x.credit;$("operationDirection").value=x.direction||"";$("docType").value=x.docType||""}
-$("editForm").addEventListener("submit",e=>{e.preventDefault();let x=ops.find(x=>x.id===selected);if(!x)return;x.name=$("counterparty").value.trim();x.originalName=x.name;x.purpose=$("purpose").value.trim();x.article=$("article").value==="__custom__"?$("customArticle").value.trim():$("article").value.trim();x.articleSource="manual";x.debit=$("debit").value.trim();x.credit=$("credit").value.trim();x.direction=$("operationDirection").value;x.docType=$("docType").value;x.status=x.name&&x.purpose&&x.article&&x.debit&&x.credit&&x.direction&&x.docType?"ready":x.direction||x.docType?"detected":"review";render();loadEditor();toast("Изменения сохранены в текущей сессии")});
-$("article").addEventListener("change",()=>{$("customArticle").style.display=$("article").value==="__custom__"?"block":"none";if($("article").value==="__custom__")$("customArticle").focus();});
-$("reset").addEventListener("click",loadEditor);$("search").addEventListener("input",render);
-document.querySelectorAll("[data-filter]").forEach(b=>b.addEventListener("click",()=>{filter=b.dataset.filter;document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x===b));render()}));
-document.querySelectorAll("[data-direction]").forEach(b=>b.addEventListener("click",()=>{directionFilter=b.dataset.direction;document.querySelectorAll("[data-direction]").forEach(x=>x.classList.toggle("active",x===b));render()}));
-$("toggleDateCheck").addEventListener("click",()=>{const p=$("dateCheckPanel");p.hidden=!p.hidden;if(!p.hidden){$("checkDate").focus();}});
-$("runDateCheck").addEventListener("click",()=>{
- const raw=$("checkDate").value;
- if(!raw){toast("Выберите дату для проверки");return;}
- const date=raw.slice(8,10)+"."+raw.slice(5,7)+"."+raw.slice(0,4);
- const direction=$("checkDirection").value;
- const found=ops.filter(x=>x.date===date&&(direction==="all"||x.direction===direction));
- const total=found.reduce((sum,x)=>sum+Number(x.amount||0),0);
- const label=direction==="Исходящее"?"Исходящие":direction==="Входящее"?"Входящие":"Все операции";
- const rows=found.map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+esc(x.purpose)+'</td><td class="amount">'+fmt(x.amount)+'</td></tr>').join("");
- $("dateCheckResult").innerHTML='<div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px"><div><span class="muted">Операций</span><div style="font-size:22px;font-weight:800">'+found.length+'</div></div><div><span class="muted">Итого '+label.toLowerCase()+'</span><div style="font-size:22px;font-weight:800">'+fmt(total)+'</div></div></div>'+(found.length?'<div class="tablewrap"><table style="min-width:560px"><thead><tr><th>Контрагент</th><th>Назначение платежа</th><th>Сумма</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<div class="empty">За '+date+' операций этого типа в загруженной выписке нет.</div>');
-});
-$("preview").addEventListener("click",()=>{if(!ops.length)return;toast("Предварительный просмотр операций: "+ops.length)});
-$("export").addEventListener("click",()=>toast("Формат импорта для вашей конфигурации 1С ещё не настроен"));
-function norm(v){return String(v??"").toLowerCase().replace(/[ё]/g,"е").replace(/\s+/g," ").trim()}
-function num(v){if(typeof v==="number")return v;let s=String(v??"").replace(/[₸$€]/g,"").replace(/\s/g,"").replace(/,(?=\d{1,2}$)/,".").replace(/[^0-9.()-]/g,"");if(/^\(.*\)$/.test(s))s="-"+s.slice(1,-1);return Number(s)||0}
-function suggestCashFlowArticle(purpose,direction){
- const p=norm(purpose);
- if(!p||!direction)return "";
- const has=(re)=>re.test(p);
- if(direction==="Исходящее"){
-  if(has(/\b(опв|опвр|со|осмс|восмс|ипн|кпн|ндс|налог|пеня|штраф|бюджет|казначейств|гос доход|налогов)/))return "Налоги и отчисления";
-  if(has(/(заработн\w* плат|выплат\w* зарплат|аванс\w* сотруд|оплата труда|зарплат|з\/п|преми\w* сотруд)/))return "Заработная плата";
-  if(has(/(аренд\w*|арендная плат)/))return "Аренда";
-  if(has(/(комисси\w* банк|банковск\w* комисси|обслуживан\w* счета|эквайринг)/))return "Банковские комиссии";
-  if(has(/(возврат\w* (денежн\w* средств|оплат|платеж)|возврат покупател)/))return "Возврат денежных средств";
-  if(has(/(перевод\w* между собственн\w* счет|между своими счетами|перемещен\w* средств между счет)/))return "Перевод между счетами";
-  if(has(/(погашен\w* кредит|погашен\w* займ|возврат\w* займа|возврат\w* кредита)/))return "Погашение займа";
-  if(has(/(оплата поставщику|оплата за товар|оплата за услуги|за поставленн\w* товар|за оказанн\w* услуг|согласно счет\w* на оплату|по договору поставки)/))return "Оплата поставщику";
-  if(has(/(прочие списания|прочее списание)/))return "Прочие списания";
- }else{
-  if(has(/(оплата от покупател|поступлен\w* от покупател|выручка от реализац|за реализованн\w* товар|за оказанн\w* услуг|оплата по счету от)/))return "Оплата от покупателя";
-  if(has(/(получен\w* займ|получен\w* кредит|предоставлен\w* займ)/))return "Получение займа";
-  if(has(/(возврат\w* от поставщик|возврат\w* переплат|возврат\w* денежных средств)/))return "Возврат денежных средств";
-  if(has(/(перевод\w* между собственн\w* счет|между своими счетами|поступлен\w* со своего счета)/))return "Перевод между счетами";
-  if(has(/(прочие поступления|прочее поступление)/))return "Прочие поступления";
- }
- return "";
-}
-function shortLegalName(value){
- const original=String(value??"").trim();
- const rules=[
-  [/^товарищество\s+с\s+ограниченной\s+ответственностью(?=\s|$)/i,"ТОО"],
-  [/^индивидуальный\s+предприниматель(?=\s|$)/i,"ИП"],
-  [/^товарищество\s+с\s+дополнительной\s+ответственностью(?=\s|$)/i,"ТДО"],
-  [/^акционерное\s+общество(?=\s|$)/i,"АО"],
-  [/^общество\s+с\s+ограниченной\s+ответственностью(?=\s|$)/i,"ООО"],
-  [/^частное\s+учреждение(?=\s|$)/i,"ЧУ"],
-  [/^производственный\s+кооператив(?=\s|$)/i,"ПК"]
- ];
- for(const [pattern,abbr] of rules){if(pattern.test(original))return original.replace(pattern,abbr)}
- return original;
-}
-function dateText(v){if(v instanceof Date)return v.toLocaleDateString("ru-RU");if(typeof v==="number"&&window.XLSX?.SSF){let d=XLSX.SSF.parse_date_code(v);if(d)return [String(d.d).padStart(2,"0"),String(d.m).padStart(2,"0"),d.y].join(".")}let s=String(v??"").trim();if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(8,10)+"."+s.slice(5,7)+"."+s.slice(0,4);return s}
-function parseRows(matrix){
- if(!matrix.length)return[];
- const aliases={
-  date:["дата документа","дата операции","дата платежа","дата валютирования","дата","operation date","transaction date"],
-  payer:["наименование плательщика","плательщик","отправитель","от кого","payer","sender"],
-  receiver:["наименование получателя","получатель","кому","receiver","beneficiary"],
-  name:["наименование контрагента","контрагент","название контрагента","counterparty"],
-  purpose:["назначение платежа","назначение","детали платежа","описание платежа","описание","purpose","details"],
-  amount:["сумма операции","сумма платежа","сумма","amount"],
-  debit:["сумма по дебету","дебетовая сумма","сумма дебет","расход","списание","дебет","debit"],
-  credit:["сумма по кредиту","кредитовая сумма","сумма кредит","приход","поступление","кредит","credit"],
-  direction:["индикатор дебета/кредита","индикатор дебета кредита","дебет/кредит","тип операции","direction"],
-  bankDoc:["тип документа","вид документа","документ","document type"],
-  accountDebit:["счет дебета","счет дебет","дебет счет","счет списания"],
-  accountCredit:["счет кредита","счет кредит","кредит счет","счет зачисления"],
-  bin:["бин/иин контрагента","бин контрагента","иин контрагента","бин","иин","бин/иин","иин/бин"]
- };
- let headerIndex=-1,headers=[];
- for(let r=0;r<Math.min(matrix.length,20);r++){
-  const candidate=(matrix[r]||[]).map(norm);
-  const hasDate=candidate.some(x=>aliases.date.some(a=>x===a||x.includes(a)));
-  const moneyAliases=[...aliases.amount,...aliases.debit,...aliases.credit];
-  const hasMoney=candidate.some(x=>moneyAliases.some(a=>x===a||x.includes(a)));
-  if(hasDate&&hasMoney){headerIndex=r;headers=candidate;break}
- }
- if(headerIndex<0)throw Error("Не найдена строка заголовков. Нужны колонки с датой и суммой, дебетом или кредитом.");
- const col=key=>{const exact=headers.findIndex(h=>aliases[key].includes(h));if(exact>=0)return exact;return key==="amount"?-1:headers.findIndex(h=>aliases[key].some(a=>h.includes(a)));};
- const ix={};Object.keys(aliases).forEach(k=>ix[k]=col(k));
- const out=[];
- for(let r=headerIndex+1;r<matrix.length;r++){
-  const row=matrix[r]||[];if(!row.some(v=>String(v??"").trim()))continue;
-  const get=k=>ix[k]>=0?row[ix[k]]:"";
-  const debit=num(get("debit")),credit=num(get("credit"));
-  let amount=num(get("amount"));
-  const direction=norm(get("direction")).toUpperCase();
-  let doc="";
-  if(credit>0||direction.includes("CREDIT")||direction.includes("КРЕДИТ"))doc="Входящее";
-  else if(debit>0||direction.includes("DEBIT")||direction.includes("ДЕБЕТ"))doc="Исходящее";
-  
-  if(!amount)amount=Math.abs(debit||credit);
-  if(!amount)continue;
-  const name=get("name")||(doc==="Входящее"?get("payer"):get("receiver"))||get("payer")||get("receiver")||"Не указан";
-  const purpose=String(get("purpose")||"").trim();
-  const originalName=String(name).trim();const suggestedArticle=suggestCashFlowArticle(purpose,doc);const item={id:Date.now()+r,date:dateText(get("date")),name:shortLegalName(originalName),originalName,purpose,amount:Math.abs(amount),article:suggestedArticle,articleSource:suggestedArticle?"auto":"",direction:doc,docType:doc==="Входящее"?"Платёжное поручение входящее":doc==="Исходящее"?"Платёжное поручение исходящее":"",sourceDoc:String(get("bankDoc")||""),debit:String(get("accountDebit")||""),credit:String(get("accountCredit")||""),status:doc?"detected":"review"};
-  if(item.direction==="Входящее"){item.debit=item.debit||"1030"}
-  else if(item.direction==="Исходящее"){item.credit=item.credit||"1030"}
-  item.bin=String(get("bin")||"").trim();
-  out.push(item);
- }
- return out;
-}
-async function readStatement(file){
- const ext=file.name.split(".").pop().toLowerCase();
- if(ext==="csv"||ext==="txt"){
-  const text=await file.text();const wb=XLSX.read(text,{type:"string",cellDates:true});return parseRows(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:"",raw:false}));
- }
- if(!window.XLSX)throw Error("Не загрузился модуль Excel. Обновите страницу и попробуйте ещё раз.");
- const data=await file.arrayBuffer(),wb=XLSX.read(data,{type:"array",cellDates:true});
- let best=[];
- for(const name of wb.SheetNames){const rows=XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,defval:"",raw:true});try{const parsed=parseRows(rows);if(parsed.length>best.length)best=parsed}catch(e){}}
- if(!best.length)throw Error("Не удалось найти таблицу операций. Проверьте формат и заголовки файла.");
- return best;
-}
-$("fileInput").addEventListener("change",async e=>{
- const file=e.target.files[0];if(!file)return;
- try{
-  const data=await readStatement(file);
-  if(!data.length)throw Error("В файле не обнаружены банковские операции. Проверьте названия колонок и строки.");
-  ops=data;selected=ops[0].id;filter="all";directionFilter="all";
-  document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x.dataset.filter==="all"));document.querySelectorAll("[data-direction]").forEach(x=>x.classList.toggle("active",x.dataset.direction==="all"));
-  loadEditor();render();$("tableCaption").textContent=file.name;$("shownCount").textContent="Загружено операций: "+ops.length;
-  const detected=ops.filter(x=>x.status!=="review").length,unknown=ops.length-detected;toast("Импортировано: "+ops.length+". Документы определены: "+detected+". Проверить: "+unknown);
- }catch(err){toast(err.message||"Ошибка чтения файла")}e.target.value="";
-});
-loadEditor();render();
-})();
-</script>
+<script src="/vendor/xlsx.full.min.js" defer></script>
+<script src="/workspace-core.js" defer></script>
+<script src="/app.js" defer></script>
 </body></html>
