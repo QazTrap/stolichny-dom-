@@ -27,7 +27,7 @@
     if(!Array.isArray(raw)||raw.length>20000) throw Error("Неверный формат черновика");
     return raw.map((x,i)=>{
       if(!x || typeof x!=="object" || Array.isArray(x)) throw Error("Некорректная операция");
-      const str=k=>String(x[k]??"").slice(0,3000);
+      const str=k=>C.fixTengeText(String(x[k]??"").slice(0,3000));
       const amount=Number(x.amount);
       if(!Number.isFinite(amount)||amount<=0||amount>1e15)throw Error("Некорректная сумма операции");
       return {
@@ -154,9 +154,9 @@
     x.date=C.dateText($("editDate").value);
     x.amount=Math.round(Number($("editAmount").value)*100)/100;
     if(!Number.isFinite(x.amount)||x.amount<=0){toast("Укажите корректную положительную сумму");return;}
-    x.name=$("counterparty").value.trim().slice(0,300);
+    x.name=C.fixTengeText($("counterparty").value.trim().slice(0,300));
     x.originalName=x.name;
-    x.purpose=$("purpose").value.trim().slice(0,3000);
+    x.purpose=C.fixTengeText($("purpose").value.trim().slice(0,3000));
     x.article=($("article").value==="__custom__"?$("customArticle").value:$("article").value).trim().slice(0,300);
     x.articleSource="manual";
     x.debit=$("debit").value.trim();x.credit=$("credit").value.trim();
