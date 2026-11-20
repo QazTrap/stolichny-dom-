@@ -21,7 +21,7 @@ app.use(helmet({
   }
 }));
 
-app.get("/api/health", (_req, res) => {
+app.get("/vendor/xlsx.full.min.js", (_req, res) => {\n  res.set("Cache-Control", "public, max-age=86400");\n  res.sendFile(path.join(__dirname, "node_modules", "xlsx", "dist", "xlsx.full.min.js"));\n});\n\napp.get("/api/health", (_req, res) => {
   res.set("Cache-Control", "no-store");
   res.json({ ok: true, service: "STOLDOM.SITE", module: "bank-statement-workspace" });
 });
