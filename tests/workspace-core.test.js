@@ -279,3 +279,16 @@ test("fuel purchases are recognized from DT-L, DTL and diesel text before generi
   assert.equal(operation.debit,"");
   assert.equal(operation.credit,"1030");
 });
+
+test("diesel grade details distinguish summer, winter, off-season and arctic",()=>{
+  const cases=[
+    ["ДТ-Л","летнее"],["ДТЛ","летнее"],
+    ["ДТ-З-К5","зимнее"],["ДТЗ","зимнее"],
+    ["ДТ-Е","межсезонное"],["ДТ-А","арктическое"]
+  ];
+  for(const [grade,meaning] of cases){
+    const proposal=C.suggestArticleDetailed("Приобретение "+grade,"Исходящее","859");
+    assert.equal(proposal.article,"Приобретение ГСМ");
+    assert.ok(proposal.reason.includes(meaning),grade+" should mean "+meaning);
+  }
+});
