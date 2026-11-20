@@ -1,20 +1,19 @@
 {
   "name": "stoldom-site",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
-  "description": "STOLDOM.SITE — рабочее место бухгалтера для обработки банковских выписок и подготовки импорта в 1С",
+  "description": "STOLDOM.SITE — локальная обработка банковских выписок с контрольным Excel для подготовки 1С",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "test": "node --test"
   },
   "dependencies": {
     "express": "^4.21.2",
     "helmet": "^8.0.0",
-    "express-rate-limit": "^7.5.0",
-    "qrcode": "^1.5.4",
-    "xlsx": "^0.18.5"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   }
 }
