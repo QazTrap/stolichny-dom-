@@ -130,7 +130,7 @@ function parseRows(matrix){
   if(hasDate&&hasMoney){headerIndex=r;headers=candidate;break}
  }
  if(headerIndex<0)throw Error("Не найдена строка заголовков. Нужны колонки с датой и суммой, дебетом или кредитом.");
- const col=key=>headers.findIndex(h=>aliases[key].some(a=>h===a||(key!=="amount"&&h.includes(a))));
+ const col=key=>{const exact=headers.findIndex(h=>aliases[key].includes(h));if(exact>=0)return exact;return key==="amount"?-1:headers.findIndex(h=>aliases[key].some(a=>h.includes(a)));};
  const ix={};Object.keys(aliases).forEach(k=>ix[k]=col(k));
  const out=[];
  for(let r=headerIndex+1;r<matrix.length;r++){
