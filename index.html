@@ -82,7 +82,7 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
     <form class="edit" id="editForm">
      <div class="muted" id="operationMeta"></div>
      <div><label for="operationDirection">Направление операции</label><select id="operationDirection"><option value="">Не определено</option><option value="Входящее">Поступление</option><option value="Исходящее">Списание</option></select></div><div><label for="docType">Тип документа 1С</label><select id="docType"><option value="">Не выбран</option><option>Платёжное поручение входящее</option><option>Платёжное поручение исходящее</option><option>ПКО</option><option>РКО</option></select></div>
-     <div><label for="article">Статья движения денежных средств (ДДС)</label><select id="article"><option>Оплата от покупателя</option><option>Оплата поставщику</option><option>Заработная плата</option><option>Налоги и отчисления</option><option>Возврат денежных средств</option><option>Перевод между счетами</option><option>Прочие поступления</option><option>Прочие списания</option></select></div>
+     <div><label for="article">Статья движения денежных средств (ДДС)</label><input id="article" list="articleOptions" placeholder="Определится по назначению или введите свою статью"><datalist id="articleOptions"><option value="Оплата от покупателя"><option value="Оплата поставщику"><option value="Заработная плата"><option value="Налоги и отчисления"><option value="Аренда"><option value="Банковские комиссии"><option value="Возврат денежных средств"><option value="Перевод между счетами"><option value="Получение займа"><option value="Погашение займа"><option value="Прочие поступления"><option value="Прочие списания"></datalist><div class="notice" id="articleHint">Статья будет предложена по назначению платежа. Её можно изменить или вписать свою.</div></div>
      <div class="twocol"><div><label for="debit">Счёт дебета</label><input id="debit" value="1030"></div><div><label for="credit">Счёт кредита</label><input id="credit" value="1210"></div></div>
      <div><label for="counterparty">Контрагент</label><input id="counterparty"></div>
      <div><label for="purpose">Назначение платежа</label><textarea id="purpose"></textarea></div>
@@ -111,8 +111,8 @@ function render(){
  $("rows").querySelectorAll("tr[data-id]").forEach(tr=>tr.addEventListener("click",()=>{selected=Number(tr.dataset.id);loadEditor();render()}));
 }
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function loadEditor(){let x=ops.find(x=>x.id===selected);if(!x){$("operationNumber").textContent="";$("operationMeta").textContent="";return;}$("operationNumber").textContent="№ "+String(x.id).padStart(3,"0");$("operationMeta").textContent=x.date+" · "+fmt(x.amount);$("counterparty").value=x.name;$("purpose").value=x.purpose;$("article").value=x.article||"Оплата от покупателя";$("debit").value=x.debit;$("credit").value=x.credit;$("operationDirection").value=x.direction||"";$("docType").value=x.docType||""}
-$("editForm").addEventListener("submit",e=>{e.preventDefault();let x=ops.find(x=>x.id===selected);if(!x)return;x.name=$("counterparty").value.trim();x.originalName=x.name;x.purpose=$("purpose").value.trim();x.article=$("article").value;x.debit=$("debit").value.trim();x.credit=$("credit").value.trim();x.direction=$("operationDirection").value;x.docType=$("docType").value;x.status=x.name&&x.purpose&&x.article&&x.debit&&x.credit&&x.direction&&x.docType?"ready":x.direction||x.docType?"detected":"review";render();loadEditor();toast("Изменения сохранены в текущей сессии")});
+function loadEditor(){let x=ops.find(x=>x.id===selected);if(!x){$("operationNumber").textContent="";$("operationMeta").textContent="";return;}$("operationNumber").textContent="№ "+String(x.id).padStart(3,"0");$("operationMeta").textContent=x.date+" · "+fmt(x.amount);$("counterparty").value=x.name;$("purpose").value=x.purpose;$("article").value=x.article||"";$("articleHint").textContent=x.articleSource==="auto"?"Предложено автоматически по назначению платежа. При необходимости измените статью.":"Выберите статью или впишите собственную. Автоматически определить статью по этим данным не удалось.";$("debit").value=x.debit;$("credit").value=x.credit;$("operationDirection").value=x.direction||"";$("docType").value=x.docType||""}
+$("editForm").addEventListener("submit",e=>{e.preventDefault();let x=ops.find(x=>x.id===selected);if(!x)return;x.name=$("counterparty").value.trim();x.originalName=x.name;x.purpose=$("purpose").value.trim();x.article=$("article").value.trim();x.articleSource="manual";x.debit=$("debit").value.trim();x.credit=$("credit").value.trim();x.direction=$("operationDirection").value;x.docType=$("docType").value;x.status=x.name&&x.purpose&&x.article&&x.debit&&x.credit&&x.direction&&x.docType?"ready":x.direction||x.docType?"detected":"review";render();loadEditor();toast("Изменения сохранены в текущей сессии")});
 $("reset").addEventListener("click",loadEditor);$("search").addEventListener("input",render);
 document.querySelectorAll("[data-filter]").forEach(b=>b.addEventListener("click",()=>{filter=b.dataset.filter;document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x===b));render()}));
 document.querySelectorAll("[data-direction]").forEach(b=>b.addEventListener("click",()=>{directionFilter=b.dataset.direction;document.querySelectorAll("[data-direction]").forEach(x=>x.classList.toggle("active",x===b));render()}));
@@ -132,6 +132,29 @@ $("preview").addEventListener("click",()=>{if(!ops.length)return;toast("Пред
 $("export").addEventListener("click",()=>toast("Формат импорта для вашей конфигурации 1С ещё не настроен"));
 function norm(v){return String(v??"").toLowerCase().replace(/[ё]/g,"е").replace(/\s+/g," ").trim()}
 function num(v){if(typeof v==="number")return v;let s=String(v??"").replace(/[₸$€]/g,"").replace(/\s/g,"").replace(/,(?=\d{1,2}$)/,".").replace(/[^0-9.()-]/g,"");if(/^\(.*\)$/.test(s))s="-"+s.slice(1,-1);return Number(s)||0}
+function suggestCashFlowArticle(purpose,direction){
+ const p=norm(purpose);
+ if(!p||!direction)return "";
+ const has=(re)=>re.test(p);
+ if(direction==="Исходящее"){
+  if(has(/\b(опв|опвр|со|осмс|восмс|ипн|кпн|ндс|налог|пеня|штраф|бюджет|казначейств|гос доход|налогов)/))return "Налоги и отчисления";
+  if(has(/(заработн\w* плат|выплат\w* зарплат|аванс\w* сотруд|оплата труда|зарплат|з\/п|преми\w* сотруд)/))return "Заработная плата";
+  if(has(/(аренд\w*|арендная плат)/))return "Аренда";
+  if(has(/(комисси\w* банк|банковск\w* комисси|обслуживан\w* счета|эквайринг)/))return "Банковские комиссии";
+  if(has(/(возврат\w* (денежн\w* средств|оплат|платеж)|возврат покупател)/))return "Возврат денежных средств";
+  if(has(/(перевод\w* между собственн\w* счет|между своими счетами|перемещен\w* средств между счет)/))return "Перевод между счетами";
+  if(has(/(погашен\w* кредит|погашен\w* займ|возврат\w* займа|возврат\w* кредита)/))return "Погашение займа";
+  if(has(/(оплата поставщику|оплата за товар|оплата за услуги|за поставленн\w* товар|за оказанн\w* услуг|согласно счет\w* на оплату|по договору поставки)/))return "Оплата поставщику";
+  if(has(/(прочие списания|прочее списание)/))return "Прочие списания";
+ }else{
+  if(has(/(оплата от покупател|поступлен\w* от покупател|выручка от реализац|за реализованн\w* товар|за оказанн\w* услуг|оплата по счету от)/))return "Оплата от покупателя";
+  if(has(/(получен\w* займ|получен\w* кредит|предоставлен\w* займ)/))return "Получение займа";
+  if(has(/(возврат\w* от поставщик|возврат\w* переплат|возврат\w* денежных средств)/))return "Возврат денежных средств";
+  if(has(/(перевод\w* между собственн\w* счет|между своими счетами|поступлен\w* со своего счета)/))return "Перевод между счетами";
+  if(has(/(прочие поступления|прочее поступление)/))return "Прочие поступления";
+ }
+ return "";
+}
 function shortLegalName(value){
  const original=String(value??"").trim();
  const rules=[
@@ -190,7 +213,7 @@ function parseRows(matrix){
   if(!amount)continue;
   const name=get("name")||(doc==="Входящее"?get("payer"):get("receiver"))||get("payer")||get("receiver")||"Не указан";
   const purpose=String(get("purpose")||"").trim();
-  const originalName=String(name).trim();const item={id:Date.now()+r,date:dateText(get("date")),name:shortLegalName(originalName),originalName,purpose,amount:Math.abs(amount),article:"",direction:doc,docType:doc==="Входящее"?"Платёжное поручение входящее":doc==="Исходящее"?"Платёжное поручение исходящее":"",sourceDoc:String(get("bankDoc")||""),debit:String(get("accountDebit")||""),credit:String(get("accountCredit")||""),status:doc?"detected":"review"};
+  const originalName=String(name).trim();const suggestedArticle=suggestCashFlowArticle(purpose,doc);const item={id:Date.now()+r,date:dateText(get("date")),name:shortLegalName(originalName),originalName,purpose,amount:Math.abs(amount),article:suggestedArticle,articleSource:suggestedArticle?"auto":"",direction:doc,docType:doc==="Входящее"?"Платёжное поручение входящее":doc==="Исходящее"?"Платёжное поручение исходящее":"",sourceDoc:String(get("bankDoc")||""),debit:String(get("accountDebit")||""),credit:String(get("accountCredit")||""),status:doc?"detected":"review"};
   if(item.direction==="Входящее"){item.debit=item.debit||"1030"}
   else if(item.direction==="Исходящее"){item.credit=item.credit||"1030"}
   item.bin=String(get("bin")||"").trim();
