@@ -33,7 +33,7 @@
       return {
         id:i+1,date:C.dateText(str("date")),name:str("name"),originalName:str("originalName")||str("name"),
         purpose:str("purpose"),amount,direction:["Входящее","Исходящее"].includes(str("direction"))?str("direction"):"",
-        docType:str("docType"),article:str("article"),articleSource:str("articleSource"),articleReason:str("articleReason"),articleConfidence:str("articleConfidence"),knp:str("knp"),bankRef:str("bankRef"),debit:str("debit"),credit:str("credit"),
+        docType:str("docType"),docTypeSource:str("docTypeSource"),article:str("article"),articleSource:str("articleSource"),articleReason:str("articleReason"),articleConfidence:str("articleConfidence"),knp:str("knp"),bankRef:str("bankRef"),debit:str("debit"),credit:str("credit"),
         bin:str("bin"),sourceDoc:str("sourceDoc"),docNumber:str("docNumber"),sourceSheet:str("sourceSheet"),
         possibleDuplicate:false,duplicateConfirmed:!!x.duplicateConfirmed,status:"review"
       };
@@ -47,6 +47,7 @@
       if(parsed.version!==2)return;
       ops=sanitizeImported(parsed.ops);
       ops.forEach(recomputeArticle);
+      ops.forEach(C.refreshSuggestedDocument);
       C.markDuplicates(ops);
       selected=ops[0]?.id??null;
       fileLabel=String(parsed.fileLabel||"Черновик").slice(0,200);
@@ -62,8 +63,9 @@
     x.articleSource=x.article?"auto":"";
     x.articleReason=proposal.reason;
     x.articleConfidence=proposal.confidence;
+    const docChanged=C.refreshSuggestedDocument(x);
     x.status=C.validateOperation(x);
-    return changed;
+    return changed||docChanged;
   }
   function currentRows(){
     const query=C.norm($("search").value);
@@ -129,6 +131,9 @@
     $("editAmount").value=Number(x.amount)||"";
     $("operationDirection").value=x.direction||"";
     $("docType").value=x.docType||"";
+    $("operationKindHint").textContent=C.suggestDocumentOperation(x.article,x.docType)
+      ? "Вид операции в 1С: "+C.suggestDocumentOperation(x.article,x.docType)+" (проверьте настройки своей базы)."
+      : "Тип документа можно изменить вручную.";
     $("counterparty").value=x.name;
     $("purpose").value=x.purpose;
     $("debit").value=x.debit;
@@ -161,6 +166,7 @@
     x.articleSource="manual";
     x.debit=$("debit").value.trim();x.credit=$("credit").value.trim();
     x.direction=$("operationDirection").value;x.docType=$("docType").value;
+    x.docTypeSource="manual";
     x.duplicateConfirmed=$("confirmDuplicate").checked;
     C.markDuplicates(ops);
     render();loadEditor();scheduleSave();
@@ -169,6 +175,14 @@
   $("article").addEventListener("change",()=>{
     $("customArticle").style.display=$("article").value==="__custom__"?"block":"none";
     if($("article").value==="__custom__")$("customArticle").focus();
+    const x=ops.find(v=>v.id===selected);
+    if(x && $("article").value==="Банковские комиссии" &&
+       x.direction==="Исходящее" &&
+       $("docType").value==="Платёжное поручение исходящее" &&
+       x.docTypeSource!=="manual") {
+      $("docType").value=C.BANK_FEE_DOCUMENT;
+      $("operationKindHint").textContent="Вид операции в 1С: Прочее списание безналичных денежных средств (проверьте настройки своей базы).";
+    }
   });
   $("reset").addEventListener("click",loadEditor);
   $("search").addEventListener("input",render);
@@ -176,8 +190,9 @@
     if(!ops.length){toast("Сначала загрузите выписку");return;}
     const eligible=ops.filter(x=>x.articleSource!=="manual");
     const changed=eligible.filter(recomputeArticle).length;
+    const documentUpdates=ops.filter(C.refreshSuggestedDocument).length;
     C.markDuplicates(ops);loadEditor();render();scheduleSave();
-    toast("Статьи ДДС пересчитаны: "+changed+" изменено из "+eligible.length+" автоматических/пустых. Ручные значения сохранены.");
+    toast("ДДС обновлено: "+changed+"; типов документов обновлено: "+documentUpdates+". Ручные значения сохранены.");
   });
   document.querySelectorAll("[data-filter]").forEach(button=>button.addEventListener("click",()=>{
     filter=button.dataset.filter;
@@ -222,6 +237,9 @@
     if(!x.docType)a.push("Документ 1С");
     else if(!["Платёжное поручение входящее","ПКО","Поступление на расчётный счёт"].includes(x.docType)&&x.direction==="Входящее" ||
       !["Платёжное поручение исходящее","РКО","Списание с расчётного счёта"].includes(x.docType)&&x.direction==="Исходящее")a.push("Направление не совпадает с документом 1С");
+    if(x.article==="Банковские комиссии" && x.direction==="Исходящее" &&
+       x.docType==="Платёжное поручение исходящее")
+      a.push("Комиссия банка: проверьте платёжный ордер (списание денежных средств)");
     if(x.docType==="ПКО"&&x.debit!=="1010")a.push("Для ПКО проверьте счёт дебета 1010");
     if(x.docType==="РКО"&&x.credit!=="1010")a.push("Для РКО проверьте счёт кредита 1010");
     if(x.possibleDuplicate&&!x.duplicateConfirmed)a.push("Возможный дубль");
@@ -255,13 +273,13 @@
   $("export").addEventListener("click",()=>{
     if(!ops.length)return;
     if(!window.XLSX){toast("Не удалось загрузить библиотеку Excel");return;}
-    const headers=["№","Дата","Направление","Контрагент","БИН/ИИН","Назначение платежа","Сумма, ₸","Статья ДДС","Основание подбора ДДС","КНП","Документ 1С","Дебет","Кредит","Номер документа","Статус","Что проверить","Лист источника"];
-    const rows=ops.map((x,i)=>[i+1,x.date,x.direction,safeText(x.name),safeText(x.bin),safeText(x.purpose),Number(x.amount),safeText(x.article),safeText(x.articleReason),safeText(x.knp),x.docType,x.debit,x.credit,safeText(x.docNumber),
+    const headers=["№","Дата","Направление","Контрагент","БИН/ИИН","Назначение платежа","Сумма, ₸","Статья ДДС","Основание подбора ДДС","КНП","Документ 1С","Вид операции в 1С (предложение)","Дебет","Кредит","Номер документа","Статус","Что проверить","Лист источника"];
+    const rows=ops.map((x,i)=>[i+1,x.date,x.direction,safeText(x.name),safeText(x.bin),safeText(x.purpose),Number(x.amount),safeText(x.article),safeText(x.articleReason),safeText(x.knp),x.docType,safeText(C.suggestDocumentOperation(x.article,x.docType)),x.debit,x.credit,safeText(x.docNumber),
       x.status==="ready"?"Готово":"Проверить",issues(x).join("; "),safeText(x.sourceSheet)]);
     const workbook=XLSX.utils.book_new();
     function sheet(name,data,widths){
       const ws=XLSX.utils.aoa_to_sheet(data);
-      ws["!cols"]=(widths||[8,14,18,28,17,56,18,25,50,10,34,11,11,18,17,50,20]).map(w=>({wch:w}));
+      ws["!cols"]=(widths||[8,14,18,28,17,56,18,25,50,10,44,50,11,11,18,17,50,20]).map(w=>({wch:w}));
       XLSX.utils.book_append_sheet(workbook,ws,name);
     }
     sheet("Все операции",[headers,...rows]);
@@ -289,7 +307,7 @@
       if(file.size>20*1024*1024)throw Error("Черновик слишком большой");
       const data=JSON.parse(await file.text());
       if(data.version!==2)throw Error("Этот формат черновика не поддерживается");
-      ops=sanitizeImported(data.ops);ops.forEach(recomputeArticle);C.markDuplicates(ops);
+      ops=sanitizeImported(data.ops);ops.forEach(recomputeArticle);ops.forEach(C.refreshSuggestedDocument);C.markDuplicates(ops);
       selected=ops[0]?.id??null;fileLabel=String(data.fileLabel||file.name).slice(0,200);
       filter="all";directionFilter="all";resetFilters();
       loadEditor();render();scheduleSave();toast("Черновик загружен: "+ops.length+" операций");
