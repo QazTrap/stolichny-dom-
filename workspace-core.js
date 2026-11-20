@@ -135,6 +135,62 @@
     return suggestArticleDetailed(purpose,direction,knp,counterparty).article;
   }
 
+
+  // Draft postings only; ambiguous account correspondences are left blank.
+  function suggestPosting(x) {
+    const p=norm(x.purpose), article=x.article||"", direction=x.direction;
+    const result={debit:"",credit:"",debitReason:"",creditReason:""};
+    if(direction==="Исходящее") {
+      result.credit="1030";
+      result.creditReason="Списание денежных средств с расчётного счёта";
+      if(article==="Банковские комиссии") {
+        result.debit="7210";
+        result.debitReason="Предполагаемые административные расходы на банковскую комиссию; сверьте счёт затрат";
+      } else if(article==="Алименты" && /алимент/.test(p)) {
+        result.debit="3390";
+        result.debitReason="Перечисление ранее удержанных алиментов; проверьте счёт задолженности";
+      } else if(article==="Заработная плата" && /(зарплат|заработн.{0,9}плат|з\\/п|выплат.{0,20}сотруд)/.test(p)) {
+        result.debit="3350";
+        result.debitReason="Выплата ранее начисленной заработной платы";
+      } else if(article==="Оплата поставщику" && /(аванс|предоплат|предварительн.{0,10}оплат)/.test(p)) {
+        result.debit="1610";
+        result.debitReason="Аванс поставщику; проверьте договор и аналитику";
+      } else if(article==="Оплата поставщику" && /(погашен.{0,24}задолжен|оплат.{0,25}ранее (поставлен|получен|оказан)|погашени.{0,15}кредитор)/.test(p)) {
+        result.debit="3310";
+        result.debitReason="Погашение задолженности поставщику; проверьте обязательство";
+      }
+    } else if(direction==="Входящее") {
+      result.debit="1030";
+      result.debitReason="Поступление денежных средств на расчётный счёт";
+      if(article==="Оплата от покупателя" && /(аванс|предоплат|предварительн.{0,10}оплат)/.test(p)) {
+        result.credit="3510";
+        result.creditReason="Полученный аванс покупателя; проверьте договор";
+      } else if(article==="Оплата от покупателя" && /(погашен.{0,24}задолжен|оплат.{0,25}ранее (отгружен|поставлен|оказан)|погашени.{0,15}дебитор)/.test(p)) {
+        result.credit="1210";
+        result.creditReason="Погашение задолженности покупателя; проверьте дебиторскую задолженность";
+      }
+    }
+    return result;
+  }
+  // Recalculate suggestions only for fields that were empty or auto-filled.
+  // Explicitly entered numbers, including edits from old drafts, always win.
+  function refreshSuggestedPosting(x) {
+    const proposal=suggestPosting(x);
+    let changed=false;
+    for(const side of ["debit","credit"]) {
+      const source=side+"Source", reason=side+"Reason";
+      if(["manual","statement"].includes(x[source]))continue;
+      if(x[side] && x[source]!=="auto")continue;
+      const newValue=proposal[side]||"";
+      if(x[side]!==newValue)changed=true;
+      x[side]=newValue;
+      x[source]=newValue?"auto":"";
+      x[reason]=newValue?proposal[reason]:"";
+    }
+    x.status=validateOperation(x);
+    return changed;
+  }
+
   const BANK_FEE_DOCUMENT="Платёжный ордер (списание денежных средств)";
   function suggestDocumentType(direction,article) {
     if(direction==="Входящее")return "Платёжное поручение входящее";
@@ -234,13 +290,14 @@
         id:0, date:dateText(get("date")), name:shortLegalName(companyName), originalName:companyName, purpose,
         amount:roundMoney(Math.abs(amount)), direction, docType, docTypeSource:docType?"auto":"", article, articleSource:article?"auto":"",
         articleReason:articleSuggestion.reason,articleConfidence:articleSuggestion.confidence,knp,bankRef:String(get("bankRef")??"").trim(),
-        debit:/^\d{4}$/.test(bankDebit)?bankDebit:(direction==="Входящее"?"1030":""),
-        credit:/^\d{4}$/.test(bankCredit)?bankCredit:(direction==="Исходящее"?"1030":""),
+        debit:/^\\d{4}$/.test(bankDebit)?bankDebit:"", debitSource:/^\\d{4}$/.test(bankDebit)?"statement":"",
+        credit:/^\\d{4}$/.test(bankCredit)?bankCredit:"", creditSource:/^\\d{4}$/.test(bankCredit)?"statement":"",
+        debitReason:"",creditReason:"",
         bin:String(get("bin")||"").trim(), sourceDoc:String(get("bankDoc")||"").trim(),
         docNumber:String(get("number")||"").trim(), sourceSheet:sheetName,
         possibleDuplicate:false, duplicateConfirmed:false, status:"review"
       };
-      entry.status=validateOperation(entry);
+      refreshSuggestedPosting(entry);
       result.push(entry);
     }
     return result;
@@ -284,5 +341,5 @@
     const outgoing=roundMoney(rows.filter(x=>x.direction==="Исходящее").reduce((s,x)=>s+Number(x.amount||0),0));
     return {incoming,outgoing,net:roundMoney(incoming-outgoing),count:rows.length,unknown:rows.filter(x=>!x.direction).length};
   }
-  return {norm,fixTengeText,escapeHtml,money,dateText,shortLegalName,suggestArticle,suggestArticleDetailed,suggestDocumentType,suggestDocumentOperation,refreshSuggestedDocument,parseRows,markDuplicates,validateOperation,totals,BANK_FEE_DOCUMENT};
+  return {norm,fixTengeText,escapeHtml,money,dateText,shortLegalName,suggestArticle,suggestArticleDetailed,suggestPosting,refreshSuggestedPosting,suggestDocumentType,suggestDocumentOperation,refreshSuggestedDocument,parseRows,markDuplicates,validateOperation,totals,BANK_FEE_DOCUMENT};
 });
