@@ -249,3 +249,33 @@ test("filled-out operations still flag unverified automatic postings for 1C reco
   assert.ok(!manualNotes.some(note=>note.includes("Автоматический Дт/Кт")));
   assert.ok(manualNotes.some(note=>note.includes("задолженность")));
 });
+
+test("fuel purchases are recognized from DT-L, DTL and diesel text before generic KNP",()=>{
+  const examples=[
+    "Приобретение ДТ-Л дизельное топливо по договору",
+    "Приобретение ДТЛ 500 литров",
+    "Покупка дизтоплива на АЗС",
+    "Оплата ГСМ за ноябрь",
+    "Оплата АИ-92 по карте"
+  ];
+  for(const purpose of examples){
+    const match=C.suggestArticleDetailed(purpose,"Исходящее","859");
+    assert.equal(match.article,"Приобретение ГСМ",purpose);
+    assert.equal(match.confidence,"review",purpose);
+    const posting=C.suggestPosting({purpose,direction:"Исходящее",article:match.article,knp:"859"});
+    assert.equal(posting.credit,"1030");
+    assert.equal(posting.debit,"", "Don't invent a debit for fuel without supporting documents");
+  }
+  assert.equal(C.suggestArticle("Комиссия банка за оплату ДТ-Л","Исходящее","841"),"Банковские комиссии");
+  assert.notEqual(C.suggestArticle("Приобретение ДТЛ","Входящее","859"),"Приобретение ГСМ");
+  const notes=C.reconciliationNotes({article:"Приобретение ГСМ",purpose:"Приобретение ДТ-Л"});
+  assert.ok(notes.some(x=>x.includes("Покупка ГСМ")));
+  const rows=[
+    ["Дата","Дебет","Кредит","КНП","Назначение платежа","Контрагент"],
+    ["20.11.2026",15000,"",859,"Приобретение ДТ-Л дизельное топливо","АЗС"]
+  ];
+  const [operation]=C.parseRows(rows);
+  assert.equal(operation.article,"Приобретение ГСМ");
+  assert.equal(operation.debit,"");
+  assert.equal(operation.credit,"1030");
+});
