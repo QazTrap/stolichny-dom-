@@ -92,8 +92,13 @@
     $("netTotal").textContent=fmt(t.net);
     $("filteredCount").textContent=t.count;
     $("filteredTotalLabel").textContent="Поступления по фильтру";
+    const pendingCount=ops.length-ready;
+    const complete=ops.length>0&&pendingCount===0;
     $("bottomMessage").textContent=!ops.length?"Загрузите банковскую выписку, чтобы начать работу.":
-      review?review+" операций требуют проверки перед переносом в 1С.":ready+" операций подготовлено; проверьте Excel перед импортом в 1С.";
+      "Заполнены необходимые реквизиты: "+ready+" из "+ops.length+". "+
+      (pendingCount>0?"Остальные операции требуют проверки.":"Сверьте Excel с учётными данными перед переносом в 1С.");
+    $("bottomStatusIcon").textContent=complete?"✓":"!";
+    $("bottomStatusIcon").parentElement.classList.toggle("pending",!complete);
     $("export").disabled=ops.length===0;
     $("preview").disabled=ops.length===0;
     $("editorPanel").hidden=ops.length===0;
