@@ -49,6 +49,21 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
 .account-missing{font-size:12px;font-weight:600;color:#b27512}
 .account-present{color:#234667}
 @media(max-width:720px){.posting-info{padding:10px 12px;font-size:11px}}
+
+/* Mobile actions must remain in the document flow: a fixed bar covered
+   draft controls and caused the Excel action to extend off screen. */
+@media(max-width:720px){
+  main{padding-bottom:24px}
+  .bottom{position:static;bottom:auto;left:auto;right:auto;z-index:auto;width:100%;padding:16px 14px 18px;box-shadow:none;align-items:stretch;gap:12px}
+  .bottom .ready{min-width:0;align-items:flex-start;overflow-wrap:anywhere}
+  .bottom .check{flex:0 0 25px}
+  .bottomactions{display:flex;flex-direction:column;gap:10px;width:100%;min-width:0}
+  .bottomactions .btn{width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere;text-align:center;min-height:46px;line-height:1.35}
+  #draftControls{display:grid!important;grid-template-columns:minmax(0,1fr);width:auto;margin:12px 14px 32px!important;gap:10px!important}
+  #draftControls .btn{width:100%;min-width:0;white-space:normal;justify-content:center;min-height:44px}
+  #draftStatus{max-width:100%;overflow-wrap:anywhere}
+}
+
 </style>
 </head>
 <body>
@@ -140,7 +155,7 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
  </main>
 </div>
 <div class="bottom"><div class="ready"><span class="check" id="bottomStatusIcon"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-help"></use></svg></span><span id="bottomMessage">Загрузите банковскую выписку, чтобы начать работу.</span></div><div class="bottomactions"><button class="btn outline" id="preview" disabled><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-eye"></use></svg> Предварительный просмотр</button><button class="btn primary" id="export" disabled><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-download"></use></svg> Скачать Excel для подготовки 1С</button></div></div>
-<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:12px 24px 24px">
+<div id="draftControls" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:12px 24px 24px">
   <button class="btn outline" id="saveDraftFile" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-save"></use></svg> Сохранить черновик</button>
   <button class="btn outline" id="restoreDraftFile" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-folderup"></use></svg> Открыть черновик</button>
   <input type="file" id="draftInput" accept=".json,application/json" hidden>
