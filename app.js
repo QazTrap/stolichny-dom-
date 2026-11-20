@@ -113,19 +113,17 @@
     const shown=visible.slice(0,400);
     $("rows").innerHTML=shown.length?shown.map(x=>
       '<tr data-id="'+x.id+'" class="'+(x.id===selected?"selected":"")+'">'+
-      '<td class="op-date" data-label="Дата">'+show(x.date||"Проверить дату")+'</td>'+
-      '<td class="op-direction" data-label="Направление">'+show(x.direction==="Входящее"?"Входящие":x.direction==="Исходящее"?"Исходящие":"Не определено")+'</td>'+
-      '<td class="op-counterparty" data-label="Контрагент"><strong>'+show(x.name||"Не указан")+'</strong>'+(x.possibleDuplicate&&!x.duplicateConfirmed?'<div class="notice">Возможный дубль</div>':"")+'</td>'+
-      '<td class="amount op-amount" data-label="Сумма">'+fmt(x.amount)+'</td>'+
-      '<td class="op-posting" data-label="Проводка"><div class="posting-pair">'+
-        '<span class="posting-account'+(x.debit?"":' missing')+'"><span class="posting-label">Дт</span>'+(x.debit?show(x.debit):"Указать")+'</span>'+
-        '<span class="posting-account'+(x.credit?"":' missing')+'"><span class="posting-label">Кт</span>'+(x.credit?show(x.credit):"Указать")+'</span>'+
-      '</div></td>'+
-      '<td class="op-article" data-label="Статья ДДС">'+show(x.article||"Не указана")+'</td>'+
-      '<td class="op-doc" data-label="Документ 1С">'+show(x.docType||"Не выбран")+'</td>'+
-      '<td class="op-status" data-label="Статус"><span class="pill '+(x.status==="ready"?"good":x.status==="detected"?"info":"warn")+'">'+
+      '<td>'+show(x.date||"Проверить дату")+'</td>'+
+      '<td>'+show(x.direction==="Входящее"?"Входящие":x.direction==="Исходящее"?"Исходящие":"Не определено")+'</td>'+
+      '<td><strong>'+show(x.name||"Не указан")+'</strong>'+(x.possibleDuplicate&&!x.duplicateConfirmed?'<div class="notice">Возможный дубль</div>':"")+'</td>'+
+      '<td class="amount">'+fmt(x.amount)+'</td>'+
+      '<td class="account-cell">'+(x.debit?'<span class="account-present">'+show(x.debit)+'</span>':'<span class="account-missing" title="Заполните счёт дебета в редакторе">Указать</span>')+'</td>'+
+      '<td class="account-cell">'+(x.credit?'<span class="account-present">'+show(x.credit)+'</span>':'<span class="account-missing" title="Заполните счёт кредита в редакторе">Указать</span>')+'</td>'+
+      '<td>'+show(x.article||"Не указана")+'</td>'+
+      '<td>'+show(x.docType||"Не выбран")+'</td>'+
+      '<td><span class="pill '+(x.status==="ready"?"good":x.status==="detected"?"info":"warn")+'">'+
       (x.status==="ready"?"Готово":x.status==="detected"?"Документ определён":"Проверить")+"</span></td></tr>"
-    ).join(""):'<tr><td colspan="8" class="empty">Операции не найдены</td></tr>';
+    ).join(""):'<tr><td colspan="9" class="empty">Операции не найдены</td></tr>';
     $("shownCount").textContent=ops.length?"Показано "+shown.length+" из "+visible.length+" по фильтру (всего "+ops.length+")":"Операций пока нет";
     $("rows").querySelectorAll("tr[data-id]").forEach(tr=>tr.addEventListener("click",()=>{
       selected=Number(tr.dataset.id);loadEditor();render();
