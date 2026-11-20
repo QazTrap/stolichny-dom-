@@ -43,13 +43,9 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
 .bottom .check .ui-icon{width:16px;height:16px}
 @media(max-width:720px){.search-field{width:100%}.chip{min-height:38px}}
 
-.posting-info{padding:9px 16px;border-bottom:1px solid var(--line);background:#f8fbff;color:#526581;font-size:12px}
-.posting-info strong{color:#294467}
 .account-cell{font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.1px}
 .account-missing{font-size:12px;font-weight:600;color:#b27512}
 .account-present{color:#234667}
-@media(max-width:720px){.posting-info{padding:10px 12px;font-size:11px}}
-
 /* Mobile actions must remain in the document flow: a fixed bar covered
    draft controls and caused the Excel action to extend off screen. */
 @media(max-width:720px){
@@ -64,6 +60,37 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
   #draftStatus{max-width:100%;overflow-wrap:anywhere}
 }
 
+
+/* Account correspondence is visible inside every operation row. */
+.operations-table{min-width:1000px}
+.posting-pair{display:flex;align-items:center;gap:10px;flex-wrap:wrap;white-space:nowrap}
+.posting-account{display:inline-flex;align-items:baseline;gap:5px;font-weight:750;font-variant-numeric:tabular-nums;color:#183a67}
+.posting-account .posting-label{font-size:11px;font-weight:650;color:#6a7c94}
+.posting-account.missing{color:#a76c0f}
+.operations-table td{min-width:0}
+@media(max-width:720px){
+  .operations-tablewrap{overflow:visible}
+  .operations-table{display:block;width:100%;min-width:0}
+  .operations-table thead{display:none}
+  .operations-table tbody{display:grid;gap:10px;padding:10px;background:#f5f8fd}
+  .operations-table tbody tr[data-id]{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:9px 12px;border:1px solid var(--line);background:white;border-radius:12px;padding:13px;box-shadow:0 1px 3px #1732520a}
+  .operations-table tbody tr.selected{border-color:#79aef0;background:#f7fbff}
+  .operations-table tbody tr[data-id] td{display:block;min-width:0;white-space:normal;overflow-wrap:anywhere;border:0;padding:0}
+  .operations-table tbody tr[data-id] td::before{content:attr(data-label);display:block;margin-bottom:3px;color:#7a8aa0;font-size:11px;font-weight:600}
+  .operations-table .op-counterparty{grid-column:1/-1;order:1;font-size:15px}
+  .operations-table .op-counterparty::before{display:none}
+  .operations-table .op-date{order:2}
+  .operations-table .op-direction{order:3;text-align:right}
+  .operations-table .op-amount{order:4;font-size:16px}
+  .operations-table .op-status{order:5;text-align:right}
+  .operations-table .op-posting{order:6;grid-column:1/-1;background:#edf4fe;padding:10px 12px!important;border-radius:9px}
+  .operations-table .op-posting::before{color:#4d6e9c!important}
+  .operations-table .posting-pair{gap:15px;white-space:normal}
+  .operations-table .posting-account{font-size:15px}
+  .operations-table .op-article{order:7;grid-column:1/-1}
+  .operations-table .op-doc{order:8;grid-column:1/-1;color:#394b64}
+  .operations-table tbody tr:not([data-id]) td{display:block;padding:25px 12px;white-space:normal}
+}
 </style>
 </head>
 <body>
@@ -128,8 +155,7 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
   <div class="workspace">
    <section class="tablecard">
     <div class="tabletop"><strong>Операции</strong><span class="muted" id="tableCaption">Сначала загрузите банковскую выписку</span></div>
-    <div class="posting-info">Дт / Кт — <strong>проект проводки</strong>, не проведённый документ 1С. Если счёт неизвестен, нажмите на строку и укажите его в редакторе.</div>
-    <div class="tablewrap"><table><thead><tr><th>Дата</th><th>Направление</th><th>Контрагент</th><th>Сумма</th><th title="Счёт дебета (предварительно)">Дт</th><th title="Счёт кредита (предварительно)">Кт</th><th>Статья ДДС</th><th>Тип документа 1С</th><th>Статус</th></tr></thead><tbody id="rows"></tbody></table></div>
+    <div class="tablewrap operations-tablewrap"><table class="operations-table"><thead><tr><th>Дата</th><th>Направление</th><th>Контрагент</th><th>Сумма</th><th title="Предварительная проводка Дт / Кт">Проводка</th><th>Статья ДДС</th><th>Тип документа 1С</th><th>Статус</th></tr></thead><tbody id="rows"></tbody></table></div>
     <div class="pagination"><span id="shownCount">Операций пока нет</span></div>
    </section>
    <section class="editor" id="editorPanel" hidden>
