@@ -5,7 +5,14 @@
   else root.STOLDOM_CORE = api;
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
-  const norm = value => String(value ?? "").toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").trim();
+  // Some bank exports replace the Kazakh ң with '?' or U+FFFD (те?ге).
+  // Correct only this unambiguous currency word; do not alter unrelated '?'
+  // or Russian spelling "тенге".
+  function fixTengeText(value) {
+    return String(value ?? "").replace(/(^|[^\p{L}])те[?\uFFFD□]ге(?=$|[^\p{L}])/giu,
+      (_match, prefix) => prefix + "теңге");
+  }
+  const norm = value => fixTengeText(value).toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").trim();
   const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
   function money(value) {
     if (typeof value === "number") return Number.isFinite(value) ? value : NaN;
@@ -49,7 +56,7 @@
     return [String(d).padStart(2,"0"),String(m).padStart(2,"0"),y].join(".");
   }
   function shortLegalName(value) {
-    const name = String(value ?? "").trim();
+    const name = fixTengeText(value).trim();
     const rules = [
       [/^товарищество\s+с\s+ограниченной\s+ответственностью(?=\s|$)/i,"ТОО"],
       [/^индивидуальный\s+предприниматель(?=\s|$)/i,"ИП"],
@@ -186,8 +193,8 @@
       const amount=Number.isFinite(originalAmount)&&originalAmount!==0?originalAmount:(hasDebit?debit:hasCredit?credit:NaN);
       if(!Number.isFinite(amount)||!amount) continue;
       const payer=String(get("payer")||"").trim(), receiver=String(get("receiver")||"").trim();
-      const companyName=String(get("name")||(direction==="Входящее"?payer:receiver)||payer||receiver||"").trim();
-      const purpose=String(get("purpose")||"").trim();
+      const companyName=fixTengeText(get("name")||(direction==="Входящее"?payer:receiver)||payer||receiver||"").trim();
+      const purpose=fixTengeText(get("purpose")||"").trim();
       const knp=String(get("knp")??"").trim().padStart(3,"0");
       const articleSuggestion=suggestArticleDetailed(purpose,direction,knp,companyName);
       const article=articleSuggestion.article;
@@ -247,5 +254,5 @@
     const outgoing=roundMoney(rows.filter(x=>x.direction==="Исходящее").reduce((s,x)=>s+Number(x.amount||0),0));
     return {incoming,outgoing,net:roundMoney(incoming-outgoing),count:rows.length,unknown:rows.filter(x=>!x.direction).length};
   }
-  return {norm,escapeHtml,money,dateText,shortLegalName,suggestArticle,suggestArticleDetailed,parseRows,markDuplicates,validateOperation,totals};
+  return {norm,fixTengeText,escapeHtml,money,dateText,shortLegalName,suggestArticle,suggestArticleDetailed,parseRows,markDuplicates,validateOperation,totals};
 });
