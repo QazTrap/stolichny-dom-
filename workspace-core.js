@@ -152,6 +152,31 @@
       } else if(article==="Заработная плата" && /(зарплат|заработн.{0,9}плат|з\/п|выплат.{0,20}сотруд)/.test(p)) {
         result.debit="3350";
         result.debitReason="Выплата ранее начисленной заработной платы";
+      } else if(article==="Налоги и отчисления") {
+        // KNP and explicit payment purpose determine the *liability* account,
+        // not the expense account. A generic "tax payment" is left unresolved.
+        // Particular subaccounts (3211/3212/3213/3250) must be checked in 1C.
+        const knp=/^\d{1,3}$/.test(String(x.knp||"").trim())?String(x.knp).trim().padStart(3,"0"):"";
+        const candidates=[
+          ["3250","Обязательные пенсионные взносы работодателя",/(опвр|пенсионн.{0,20}взнос.{0,20}работодател)/,["089"]],
+          ["3220","Обязательные пенсионные взносы работников",/(опв(?!р)|обязательн.{0,12}пенсионн.{0,12}взнос)/,["010"]],
+          ["3211","Социальные отчисления",/(социальн.{0,12}отчислен|соц\.?\s*отчислен)/,["012"]],
+          ["3212","Взносы на ОСМС",/(восмс|взнос.{0,30}(медицинск|осмс))/,["122"]],
+          ["3213","Отчисления на ОСМС",/(оосмс|отчислен.{0,30}(медицинск|осмс))/,["121"]],
+          ["3120","Индивидуальный подоходный налог",/(индивидуальн.{0,15}подоходн.{0,12}налог|(?:^|[^а-я])ипн(?:$|[^а-я]))/,[]],
+          ["3110","Корпоративный подоходный налог",/(корпоративн.{0,15}подоходн.{0,12}налог|(?:^|[^а-я])кпн(?:$|[^а-я]))/,[]],
+          ["3130","НДС к уплате в бюджет",/(налог.{0,20}добавленн.{0,16}стоим|(?:^|[^а-я])ндс(?:$|[^а-я]))/,[]],
+          ["3150","Социальный налог",/социальн.{0,8}налог/,[]],
+          ["3160","Земельный налог",/земельн.{0,8}налог/,[]],
+          ["3170","Налог на транспорт",/налог.{0,12}транспорт/,[]],
+          ["3180","Налог на имущество",/налог.{0,12}имуществ/,[]]
+        ];
+        const matches=candidates.filter(([, ,re,knps])=>re.test(p)||(knp&&knps.includes(knp)));
+        if(matches.length===1) {
+          const [account,label]=matches[0];
+          result.debit=account;
+          result.debitReason="Предполагаемое погашение обязательства: "+label+"; проверьте счёт и аналитику в своей базе 1С"+(knp?" (КНП "+knp+")":"");
+        }
       } else if(article==="Оплата поставщику" && /(аванс|предоплат|предварительн.{0,10}оплат)/.test(p)) {
         result.debit="1610";
         result.debitReason="Аванс поставщику; проверьте договор и аналитику";
@@ -281,7 +306,8 @@
       const payer=String(get("payer")||"").trim(), receiver=String(get("receiver")||"").trim();
       const companyName=fixTengeText(get("name")||(direction==="Входящее"?payer:receiver)||payer||receiver||"").trim();
       const purpose=fixTengeText(get("purpose")||"").trim();
-      const knp=String(get("knp")??"").trim().padStart(3,"0");
+      const rawKnp=String(get("knp")??"").trim();
+      const knp=/^\d{1,3}$/.test(rawKnp)?rawKnp.padStart(3,"0"):rawKnp;
       const articleSuggestion=suggestArticleDetailed(purpose,direction,knp,companyName);
       const article=articleSuggestion.article;
       const bankDebit=String(get("accountDebit")||"").trim(),bankCredit=String(get("accountCredit")||"").trim();
