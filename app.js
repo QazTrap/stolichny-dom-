@@ -97,7 +97,8 @@
     $("bottomMessage").textContent=!ops.length?"Загрузите банковскую выписку, чтобы начать работу.":
       "Заполнены необходимые реквизиты: "+ready+" из "+ops.length+". "+
       (pendingCount>0?"Остальные операции требуют проверки.":"Сверьте Excel с учётными данными перед переносом в 1С.");
-    $("bottomStatusIcon").textContent=complete?"✓":"!";
+    const statusIcon=$("bottomStatusIcon").querySelector("use");
+    if(statusIcon)statusIcon.setAttribute("href",complete?"#ic-check":"#ic-alert");
     $("bottomStatusIcon").parentElement.classList.toggle("pending",!complete);
     $("export").disabled=ops.length===0;
     $("preview").disabled=ops.length===0;
