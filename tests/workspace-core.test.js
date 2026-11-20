@@ -119,3 +119,18 @@ test("identifies taxes, social payments, alimony and enforcement payments by con
 test("does not guess cashflow articles for ambiguous KNP",()=>{
   assert.equal(C.suggestArticle("Внутреннее распоряжение","Исходящее","999"),"");
 });
+
+test("repairs Kazakh ң corrupted in bank currency text without changing other words",()=>{
+  assert.equal(C.fixTengeText("Оплата в те?ге за услуги"),"Оплата в теңге за услуги");
+  assert.equal(C.fixTengeText("Сумма: ТЕ�ГЕ"),"Сумма: теңге");
+  assert.equal(C.fixTengeText("1000 те□ге"),"1000 теңге");
+  assert.equal(C.fixTengeText("Сумма в тенге; что?"),"Сумма в тенге; что?");
+  const rows=[
+    ["Дата","Дебет","Назначение платежа","Получатель"],
+    ["20.11.2026",500,"Возврат в те?ге","ТОО Те?ге"]
+  ];
+  const ops=C.parseRows(rows);
+  assert.equal(ops.length,1);
+  assert.equal(ops[0].purpose,"Возврат в теңге");
+  assert.equal(ops[0].name,"ТОО Теңге");
+});
