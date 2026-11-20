@@ -50,9 +50,18 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
     <button class="chip active" data-filter="all">Все (<span id="allChip">0</span>)</button>
     <button class="chip" data-filter="review">На проверке (<span id="reviewChip">0</span>)</button>
     <button class="chip" data-filter="ready">Готовы (<span id="readyChip">0</span>)</button>
+    <button class="chip" id="toggleDateCheck" type="button">▦ Проверить сумму за дату</button>
    </div>
    <input class="search" id="search" placeholder="⌕　Поиск по контрагенту, назначению...">
   </div>
+  <section class="tablecard" id="dateCheckPanel" style="margin-bottom:14px;padding:16px" hidden>
+   <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
+    <div><label for="checkDate" style="display:block;font-size:12px;font-weight:750;margin-bottom:6px">Дата проверки</label><input id="checkDate" type="date" class="search" style="width:190px"></div>
+    <div><label for="checkDirection" style="display:block;font-size:12px;font-weight:750;margin-bottom:6px">Тип операции</label><select id="checkDirection" class="search" style="width:180px"><option value="Исходящее">Исходящие</option><option value="Входящее">Входящие</option><option value="all">Все операции</option></select></div>
+    <button class="btn primary" id="runDateCheck" type="button">Проверить дату</button>
+   </div>
+   <div id="dateCheckResult" style="margin-top:14px"></div>
+  </section>
   <div class="workspace">
    <section class="tablecard">
     <div class="tabletop"><strong>Операции</strong><span class="muted" id="tableCaption">Сначала загрузите банковскую выписку</span></div>
@@ -96,6 +105,18 @@ function loadEditor(){let x=ops.find(x=>x.id===selected);if(!x){$("operationNumb
 $("editForm").addEventListener("submit",e=>{e.preventDefault();let x=ops.find(x=>x.id===selected);if(!x)return;x.name=$("counterparty").value.trim();x.originalName=x.name;x.purpose=$("purpose").value.trim();x.article=$("article").value;x.debit=$("debit").value.trim();x.credit=$("credit").value.trim();x.doc=document.querySelector('[name="docType"]:checked')?.value||x.doc;x.status=x.name&&x.purpose&&x.article&&x.debit&&x.credit?"ready":"review";render();loadEditor();toast("Изменения сохранены в текущей сессии")});
 $("reset").addEventListener("click",loadEditor);$("search").addEventListener("input",render);
 document.querySelectorAll("[data-filter]").forEach(b=>b.addEventListener("click",()=>{filter=b.dataset.filter;document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x===b));render()}));
+$("toggleDateCheck").addEventListener("click",()=>{const p=$("dateCheckPanel");p.hidden=!p.hidden;if(!p.hidden){$("checkDate").focus();}});
+$("runDateCheck").addEventListener("click",()=>{
+ const raw=$("checkDate").value;
+ if(!raw){toast("Выберите дату для проверки");return;}
+ const date=raw.slice(8,10)+"."+raw.slice(5,7)+"."+raw.slice(0,4);
+ const direction=$("checkDirection").value;
+ const found=ops.filter(x=>x.date===date&&(direction==="all"||x.doc===direction));
+ const total=found.reduce((sum,x)=>sum+Number(x.amount||0),0);
+ const label=direction==="Исходящее"?"Исходящие":direction==="Входящее"?"Входящие":"Все операции";
+ const rows=found.map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+esc(x.purpose)+'</td><td class="amount">'+fmt(x.amount)+'</td></tr>').join("");
+ $("dateCheckResult").innerHTML='<div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px"><div><span class="muted">Операций</span><div style="font-size:22px;font-weight:800">'+found.length+'</div></div><div><span class="muted">Итого '+label.toLowerCase()+'</span><div style="font-size:22px;font-weight:800">'+fmt(total)+'</div></div></div>'+(found.length?'<div class="tablewrap"><table style="min-width:560px"><thead><tr><th>Контрагент</th><th>Назначение платежа</th><th>Сумма</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<div class="empty">За '+date+' операций этого типа в загруженной выписке нет.</div>');
+});
 $("preview").addEventListener("click",()=>{if(!ops.length)return;toast("Предварительный просмотр операций: "+ops.length)});
 $("export").addEventListener("click",()=>toast("Формат импорта для вашей конфигурации 1С ещё не настроен"));
 function norm(v){return String(v??"").toLowerCase().replace(/[ё]/g,"е").replace(/\s+/g," ").trim()}
