@@ -177,10 +177,13 @@
     x.purpose=C.fixTengeText($("purpose").value.trim().slice(0,3000));
     x.article=($("article").value==="__custom__"?$("customArticle").value:$("article").value).trim().slice(0,300);
     x.articleSource="manual";
+    const debitEdited=$("debit").value.trim()!==x.debit;
+    const creditEdited=$("credit").value.trim()!==x.credit;
     x.debit=$("debit").value.trim();x.credit=$("credit").value.trim();
-    x.debitSource="manual";x.creditSource="manual";
-    x.debitReason="Счёт выбран или оставлен пустым бухгалтером";x.creditReason="Счёт выбран или оставлен пустым бухгалтером";
+    if(debitEdited){x.debitSource="manual";x.debitReason="Счёт изменён бухгалтером";}
+    if(creditEdited){x.creditSource="manual";x.creditReason="Счёт изменён бухгалтером";}
     x.direction=$("operationDirection").value;x.docType=$("docType").value;
+    C.refreshSuggestedPosting(x);
     x.docTypeSource="manual";
     x.duplicateConfirmed=$("confirmDuplicate").checked;
     C.markDuplicates(ops);
