@@ -95,13 +95,13 @@
     $("filteredCount").textContent=t.count;
     $("filteredTotalLabel").textContent="Поступления по фильтру";
     const pendingCount=ops.length-ready;
-    const complete=ops.length>0&&pendingCount===0;
     $("bottomMessage").textContent=!ops.length?"Загрузите банковскую выписку, чтобы начать работу.":
-      "Заполнены необходимые реквизиты: "+ready+" из "+ops.length+". "+
-      (pendingCount>0?"Остальные операции требуют проверки.":"Сверьте Excel с учётными данными перед переносом в 1С.");
+      "Реквизиты заполнены: "+ready+" из "+ops.length+". "+
+      (pendingCount>0?"Ещё "+pendingCount+" операций требуют заполнения. ":"")+
+      "Перед переносом обязательно сверьте Дт/Кт, ДДС и документы с 1С.";
     const statusIcon=$("bottomStatusIcon").querySelector("use");
-    if(statusIcon)statusIcon.setAttribute("href",complete?"#ic-check":"#ic-alert");
-    $("bottomStatusIcon").parentElement.classList.toggle("pending",!complete);
+    if(statusIcon)statusIcon.setAttribute("href","#ic-alert");
+    $("bottomStatusIcon").parentElement.classList.add("pending");
     $("export").disabled=ops.length===0;
     $("preview").disabled=ops.length===0;
     $("editorPanel").hidden=ops.length===0;
@@ -121,8 +121,8 @@
       '<td class="account-cell">'+(x.credit?'<span class="account-present">'+show(x.credit)+'</span>':'<span class="account-missing" title="Заполните счёт кредита в редакторе">Указать</span>')+'</td>'+
       '<td>'+show(x.article||"Не указана")+'</td>'+
       '<td>'+show(x.docType||"Не выбран")+'</td>'+
-      '<td><span class="pill '+(x.status==="ready"?"good":x.status==="detected"?"info":"warn")+'">'+
-      (x.status==="ready"?"Готово":x.status==="detected"?"Документ определён":"Проверить")+"</span></td></tr>"
+      '<td><span class="pill '+(x.status==="ready"?"info":x.status==="detected"?"info":"warn")+'">'+
+      (x.status==="ready"?"Реквизиты заполнены":x.status==="detected"?"Документ определён":"Проверить")+"</span></td></tr>"
     ).join(""):'<tr><td colspan="9" class="empty">Операции не найдены</td></tr>';
     $("shownCount").textContent=ops.length?"Показано "+shown.length+" из "+visible.length+" по фильтру (всего "+ops.length+")":"Операций пока нет";
     $("rows").querySelectorAll("tr[data-id]").forEach(tr=>tr.addEventListener("click",()=>{
@@ -188,7 +188,7 @@
     x.duplicateConfirmed=$("confirmDuplicate").checked;
     C.markDuplicates(ops);
     render();loadEditor();scheduleSave();
-    toast(x.status==="ready"?"Операция готова для подготовки файла":"Изменения сохранены. Проверьте оставшиеся поля или возможный дубль.");
+    toast(x.status==="ready"?"Реквизиты заполнены. Проводку необходимо сверить с 1С.":"Изменения сохранены. Проверьте оставшиеся поля или возможный дубль.");
   });
   $("article").addEventListener("change",()=>{
     $("customArticle").style.display=$("article").value==="__custom__"?"block":"none";
@@ -263,15 +263,20 @@
     if(x.possibleDuplicate&&!x.duplicateConfirmed)a.push("Возможный дубль");
     return a;
   }
+  function reviewNotes(x){return [...issues(x),...C.reconciliationNotes(x)];}
   function renderPreview(){
-    const review=ops.filter(x=>x.status!=="ready");
-    $("previewContent").innerHTML='<p><strong>Всего: '+ops.length+
-      ' · Готовы: '+ops.filter(x=>x.status==="ready").length+
-      ' · Нужна проверка: '+review.length+'</strong></p>'+
-      '<p class="notice">Предварительная подготовка: Excel не является проверенным форматом прямой загрузки в 1С. Сверьте счета и ДДС перед использованием.</p>'+
-      (review.length?'<div class="tablewrap"><table><thead><tr><th>№</th><th>Контрагент</th><th>Что проверить</th></tr></thead><tbody>'+
-      review.slice(0,100).map(x=>'<tr><td>'+String(ops.indexOf(x)+1)+'</td><td>'+show(x.name)+'</td><td>'+show(issues(x).join(", "))+'</td></tr>').join("")+
-      '</tbody></table></div>':"<p>Все операции заполнены для подготовки файла. Проверьте реквизиты и сопоставление с 1С.</p>");
+    const unfinished=ops.filter(x=>x.status!=="ready");
+    const filled=ops.filter(x=>x.status==="ready");
+    const checks=[...unfinished,...filled].slice(0,200);
+    $("previewContent").innerHTML='<p><strong>Всего операций: '+ops.length+
+      ' · Реквизиты заполнены: '+filled.length+
+      ' · Требуют заполнения: '+unfinished.length+'</strong></p>'+
+      '<p class="notice"><strong>Все '+ops.length+' операций требуют бухгалтерской сверки с 1С.</strong> Заполненные поля и автоматические предложения не подтверждают правильность проводок. Excel — контрольный файл, а не готовая загрузка в 1С.</p>'+
+      '<div class="tablewrap"><table style="min-width:750px"><thead><tr><th>№</th><th>Контрагент</th><th>Дт</th><th>Кт</th><th>Что проверить</th></tr></thead><tbody>'+
+      checks.map(x=>'<tr><td>'+String(ops.indexOf(x)+1)+'</td><td>'+show(x.name||"Не указан")+'</td><td>'+show(x.debit||"—")+'</td><td>'+show(x.credit||"—")+'</td><td>'+
+        show(reviewNotes(x).length?reviewNotes(x).join("; "):"Сверить проводку, статью ДДС и документы с базой 1С")+'</td></tr>').join("")+
+      '</tbody></table></div>'+
+      (ops.length>checks.length?'<p class="notice">Показаны первые '+checks.length+' операций. Все '+ops.length+' строк и замечаний будут в Excel.</p>':"");
   }
   $("preview").addEventListener("click",()=>{
     if(!ops.length)return;
@@ -290,10 +295,17 @@
   }
   $("export").addEventListener("click",()=>{
     if(!ops.length)return;
+    if($("previewPanel").hidden){
+      $("previewPanel").hidden=false;
+      renderPreview();
+      $("previewPanel").scrollIntoView({behavior:"smooth",block:"start"});
+      toast("Перед скачиванием просмотрите список для сверки с 1С, затем нажмите «Скачать Excel» ещё раз.");
+      return;
+    }
     if(!window.XLSX){toast("Не удалось загрузить библиотеку Excel");return;}
     const headers=["№","Дата","Направление","Контрагент","БИН/ИИН","Назначение платежа","Сумма, ₸","Статья ДДС","Основание подбора ДДС","КНП","Документ 1С","Вид операции в 1С (предложение)","Дебет","Кредит","Номер документа","Статус","Что проверить","Лист источника"];
     const rows=ops.map((x,i)=>[i+1,x.date,x.direction,safeText(x.name),safeText(x.bin),safeText(x.purpose),Number(x.amount),safeText(x.article),safeText(x.articleReason),safeText(x.knp),x.docType,safeText(C.suggestDocumentOperation(x.article,x.docType)),x.debit,x.credit,safeText(x.docNumber),
-      x.status==="ready"?"Готово":"Проверить",issues(x).join("; "),safeText(x.sourceSheet)]);
+      x.status==="ready"?"Реквизиты заполнены":"Требует заполнения",safeText(reviewNotes(x).join("; ")||"Сверить с 1С"),safeText(x.sourceSheet)]);
     const workbook=XLSX.utils.book_new();
     function sheet(name,data,widths){
       const ws=XLSX.utils.aoa_to_sheet(data);
@@ -301,15 +313,17 @@
       XLSX.utils.book_append_sheet(workbook,ws,name);
     }
     sheet("Все операции",[headers,...rows]);
-    sheet("Готовые",[headers,...rows.filter((r,i)=>ops[i].status==="ready")]);
-    sheet("На проверку",[headers,...rows.filter((r,i)=>ops[i].status!=="ready")]);
+    sheet("Поля заполнены",[headers,...rows.filter((r,i)=>ops[i].status==="ready")]);
+    sheet("Нужно заполнить",[headers,...rows.filter((r,i)=>ops[i].status!=="ready")]);
+    sheet("Сверка с 1С",[headers,...rows]);
     const t=C.totals(ops);
     sheet("Контроль",[["Показатель","Значение"],["Количество",t.count],["Поступления",t.incoming],["Списания",t.outgoing],["Чистое движение",t.net],
-      ["Готово",ops.filter(x=>x.status==="ready").length],["Требуют проверки",ops.filter(x=>x.status!=="ready").length],
-      ["Примечание","Это контрольный Excel, не файл прямого обмена с 1С."]],[32,72]);
+      ["Реквизиты заполнены (не сверены с 1С)",ops.filter(x=>x.status==="ready").length],["Требуют заполнения",ops.filter(x=>x.status!=="ready").length],
+      ["Бухгалтерская сверка с 1С",ops.length],
+      ["Примечание","Это контрольный Excel, не файл прямого обмена с 1С. Статус заполненности не подтверждает корректность проводок."]],[32,72]);
     try{
       XLSX.writeFile(workbook,"STOLDOM_подготовка_1С_"+new Date().toISOString().slice(0,10)+".xlsx",{compression:true});
-      toast("Excel сформирован. Для прямой загрузки в 1С потребуется согласованный формат обмена.");
+      toast("Контрольный Excel скачан. Все проводки и статьи ДДС необходимо сверить с 1С.");
     }catch(e){toast("Не удалось сформировать Excel: "+e.message);}
   });
   $("saveDraftFile").addEventListener("click",()=>{
