@@ -64,16 +64,16 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
     <button class="chip" data-filter="detected">Документы определены (<span id="detectedChip">0</span>)</button>
     <button class="chip" data-filter="review">Проверить (<span id="reviewChip">0</span>)</button>
     <button class="chip" data-filter="ready">Поля заполнены (<span id="readyChip">0</span>)</button>
-    <button class="chip" id="toggleDateCheck" type="button">▦ Проверить сумму за дату</button>
+    <button class="chip" id="toggleDateCheck" type="button">▦ Итоги за дату</button>
     <button class="chip" id="reclassifyDDS" type="button">↻ Пересчитать ДДС</button>
    </div>
    <input class="search" id="search" placeholder="⌕　Поиск по контрагенту, назначению...">
   </div>
   <section class="tablecard" id="dateCheckPanel" style="margin-bottom:14px;padding:16px" hidden>
    <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
-    <div><label for="checkDate" style="display:block;font-size:12px;font-weight:750;margin-bottom:6px">Дата проверки</label><input id="checkDate" type="date" class="search" style="width:190px"></div>
-    <div><label for="checkDirection" style="display:block;font-size:12px;font-weight:750;margin-bottom:6px">Тип операции</label><select id="checkDirection" class="search" style="width:180px"><option value="Исходящее">Исходящие</option><option value="Входящее">Входящие</option><option value="all">Все операции</option></select></div>
-    <button class="btn primary" id="runDateCheck" type="button">Проверить дату</button>
+    <div><label for="checkDate" style="display:block;font-size:12px;font-weight:750;margin-bottom:6px">Дата операции</label><input id="checkDate" type="date" class="search" style="width:190px"></div>
+    <div><label for="checkDirection" style="display:block;font-size:12px;font-weight:750;margin-bottom:6px">Направление</label><select id="checkDirection" class="search" style="width:180px"><option value="Исходящее">Исходящие</option><option value="Входящее">Входящие</option><option value="all">Все операции</option></select></div>
+    <button class="btn primary" id="runDateCheck" type="button">Показать итоги</button>
    </div>
    <div id="dateCheckResult" style="margin-top:14px"></div>
   </section>
