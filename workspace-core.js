@@ -130,6 +130,31 @@
     return suggestArticleDetailed(purpose,direction,knp,counterparty).article;
   }
 
+  const BANK_FEE_DOCUMENT="Платёжный ордер (списание денежных средств)";
+  function suggestDocumentType(direction,article) {
+    if(direction==="Входящее")return "Платёжное поручение входящее";
+    if(direction==="Исходящее")return article==="Банковские комиссии"
+      ?BANK_FEE_DOCUMENT:"Платёжное поручение исходящее";
+    return "";
+  }
+  function suggestDocumentOperation(article,docType) {
+    if(article==="Банковские комиссии" && docType===BANK_FEE_DOCUMENT)
+      return "Прочее списание безналичных денежных средств";
+    return "";
+  }
+  // Respect explicitly saved 1C document choices when DDS rules are updated.
+  // Legacy drafts lack docTypeSource; only migrate the original default documents.
+  function refreshSuggestedDocument(x) {
+    if(x.docTypeSource==="manual")return false;
+    const ordinary=suggestDocumentType(x.direction,"");
+    if(!x.docTypeSource && x.docType && x.docType!==ordinary)return false;
+    const proposal=suggestDocumentType(x.direction,x.article);
+    if(!proposal)return false;
+    const changed=x.docType!==proposal;
+    x.docType=proposal;
+    x.docTypeSource="auto";
+    return changed;
+  }
   const aliases = {
     date:["дата операции","дата документа","дата платежа","дата валютирования","дата проводки","дата","operation date","transaction date"],
     payer:["наименование плательщика","плательщик","отправитель","от кого","payer","sender"],
@@ -199,10 +224,10 @@
       const articleSuggestion=suggestArticleDetailed(purpose,direction,knp,companyName);
       const article=articleSuggestion.article;
       const bankDebit=String(get("accountDebit")||"").trim(),bankCredit=String(get("accountCredit")||"").trim();
-      const docType=direction==="Входящее"?"Платёжное поручение входящее":direction==="Исходящее"?"Платёжное поручение исходящее":"";
+      const docType=suggestDocumentType(direction,article);
       const entry={
         id:0, date:dateText(get("date")), name:shortLegalName(companyName), originalName:companyName, purpose,
-        amount:roundMoney(Math.abs(amount)), direction, docType, article, articleSource:article?"auto":"",
+        amount:roundMoney(Math.abs(amount)), direction, docType, docTypeSource:docType?"auto":"", article, articleSource:article?"auto":"",
         articleReason:articleSuggestion.reason,articleConfidence:articleSuggestion.confidence,knp,bankRef:String(get("bankRef")??"").trim(),
         debit:/^\d{4}$/.test(bankDebit)?bankDebit:(direction==="Входящее"?"1030":""),
         credit:/^\d{4}$/.test(bankCredit)?bankCredit:(direction==="Исходящее"?"1030":""),
@@ -240,7 +265,7 @@
   function validateOperation(x) {
     const dir=x.direction, type=x.docType||"";
     const compatible=dir==="Входящее" ? ["Платёжное поручение входящее","ПКО","Поступление на расчётный счёт"].includes(type) :
-      dir==="Исходящее" ? ["Платёжное поручение исходящее","РКО","Списание с расчётного счёта"].includes(type) : false;
+      dir==="Исходящее" ? ["Платёжное поручение исходящее","РКО","Списание с расчётного счёта",BANK_FEE_DOCUMENT].includes(type) : false;
     const cashAccountValid=(type==="ПКО")?String(x.debit)==="1010":
       (type==="РКО")?String(x.credit)==="1010":true;
     const ready=!!(x.date && x.name?.trim() && x.purpose?.trim() && Number(x.amount)>0 &&
@@ -254,5 +279,5 @@
     const outgoing=roundMoney(rows.filter(x=>x.direction==="Исходящее").reduce((s,x)=>s+Number(x.amount||0),0));
     return {incoming,outgoing,net:roundMoney(incoming-outgoing),count:rows.length,unknown:rows.filter(x=>!x.direction).length};
   }
-  return {norm,fixTengeText,escapeHtml,money,dateText,shortLegalName,suggestArticle,suggestArticleDetailed,parseRows,markDuplicates,validateOperation,totals};
+  return {norm,fixTengeText,escapeHtml,money,dateText,shortLegalName,suggestArticle,suggestArticleDetailed,suggestDocumentType,suggestDocumentOperation,refreshSuggestedDocument,parseRows,markDuplicates,validateOperation,totals,BANK_FEE_DOCUMENT};
 });
