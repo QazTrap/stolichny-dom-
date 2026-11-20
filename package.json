@@ -2,7 +2,7 @@
   "name": "stoldom-site",
   "version": "1.0.0",
   "private": true,
-  "description": "STOLDOM.SITE — проверка контрагентов через открытые данные КГД РК",
+  "description": "STOLDOM.SITE — рабочее место бухгалтера для обработки банковских выписок и подготовки импорта в 1С",
   "engines": {
     "node": ">=20"
   },
