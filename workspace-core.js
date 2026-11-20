@@ -10,7 +10,12 @@
   // or Russian spelling "тенге".
   function fixTengeText(value) {
     return String(value ?? "").replace(/(^|[^\p{L}])те[?\uFFFD□]ге(?=$|[^\p{L}])/giu,
-      (_match, prefix) => prefix + "теңге");
+      (match, prefix) => {
+        const word=match.slice(prefix.length);
+        const fixed=word===word.toUpperCase()?"ТЕҢГЕ":
+          /^Т/.test(word)?"Теңге":"теңге";
+        return prefix+fixed;
+      });
   }
   const norm = value => fixTengeText(value).toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").trim();
   const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
