@@ -103,15 +103,15 @@ function num(v){if(typeof v==="number")return v;let s=String(v??"").replace(/[�
 function shortLegalName(value){
  const original=String(value??"").trim();
  const rules=[
-  [/^товарищество\\s+с\\s+ограниченной\\s+ответственностью\\b/i,"ТОО"],
-  [/^индивидуальный\\s+предприниматель\\b/i,"ИП"],
-  [/^товарищество\\s+с\\s+дополнительной\\s+ответственностью\\b/i,"ТДО"],
-  [/^акционерное\\s+общество\\b/i,"АО"],
-  [/^общество\\s+с\\s+ограниченной\\s+ответственностью\\b/i,"ООО"],
-  [/^частное\\s+учреждение\\b/i,"ЧУ"],
-  [/^производственный\\s+кооператив\\b/i,"ПК"]
+  [/^товарищество\s+с\s+ограниченной\s+ответственностью(?=\s|$)/i,"ТОО"],
+  [/^индивидуальный\s+предприниматель(?=\s|$)/i,"ИП"],
+  [/^товарищество\s+с\s+дополнительной\s+ответственностью(?=\s|$)/i,"ТДО"],
+  [/^акционерное\s+общество(?=\s|$)/i,"АО"],
+  [/^общество\s+с\s+ограниченной\s+ответственностью(?=\s|$)/i,"ООО"],
+  [/^частное\s+учреждение(?=\s|$)/i,"ЧУ"],
+  [/^производственный\s+кооператив(?=\s|$)/i,"ПК"]
  ];
- for(const [pattern,abbr] of rules){if(pattern.test(original))return original.replace(pattern,abbr).replace(/^([А-ЯЁA-Z]{2,})\\s+/,(m,p)=>p+" ")}
+ for(const [pattern,abbr] of rules){if(pattern.test(original))return original.replace(pattern,abbr)}
  return original;
 }
 function dateText(v){if(v instanceof Date)return v.toLocaleDateString("ru-RU");if(typeof v==="number"&&window.XLSX?.SSF){let d=XLSX.SSF.parse_date_code(v);if(d)return [String(d.d).padStart(2,"0"),String(d.m).padStart(2,"0"),d.y].join(".")}let s=String(v??"").trim();if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(8,10)+"."+s.slice(5,7)+"."+s.slice(0,4);return s}
