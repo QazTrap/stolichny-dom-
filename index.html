@@ -47,7 +47,11 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
   </div>
   <div class="toolbar">
    <div class="filters">
-    <button class="chip active" data-filter="all">Все (<span id="allChip">0</span>)</button>
+    <button class="chip active" data-direction="all">Все операции (<span id="directionAllChip">0</span>)</button>
+    <button class="chip" data-direction="Исходящее">Исходящие (<span id="outgoingChip">0</span>)</button>
+    <button class="chip" data-direction="Входящее">Входящие (<span id="incomingChip">0</span>)</button>
+    <span style="width:1px;background:var(--line);margin:3px 2px"></span>
+    <button class="chip active" data-filter="all">Все статусы (<span id="allChip">0</span>)</button>
     <button class="chip" data-filter="detected">Документ определён (<span id="detectedChip">0</span>)</button>
     <button class="chip" data-filter="review">Проверить (<span id="reviewChip">0</span>)</button>
     <button class="chip" data-filter="ready">Готовы к 1С (<span id="readyChip">0</span>)</button>
@@ -90,13 +94,13 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
 <script src="/vendor/xlsx.full.min.js" onerror="(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';s.onerror=function(){var f=document.createElement('script');f.src='https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js';document.head.appendChild(f)};document.head.appendChild(s)})()"></script>
 <script>
 (()=>{
-let ops=[],selected=null,filter="all";
+let ops=[],selected=null,filter="all",directionFilter="all";
 
 const $=id=>document.getElementById(id),fmt=n=>new Intl.NumberFormat("ru-RU").format(n)+" ₸";
 function toast(s){$("toast").textContent=s;$("toast").style.display="block";setTimeout(()=>$("toast").style.display="none",2600)}
-function counts(){let ready=ops.filter(x=>x.status==="ready").length,detected=ops.filter(x=>x.status==="detected").length,review=ops.filter(x=>x.status==="review").length;$("totalCount").textContent=ops.length;$("detectedCount").textContent=detected+ready;$("reviewCount").textContent=review;$("allChip").textContent=ops.length;$("detectedChip").textContent=detected;$("reviewChip").textContent=review;$("readyChip").textContent=ready;$("bottomMessage").textContent=!ops.length?"Загрузите банковскую выписку, чтобы начать работу.":review?review+" операций не удалось определить — нужна проверка.":detected+ready+" документов определены; заполните остальные реквизиты для экспорта.";$("export").disabled=ready!==ops.length||ops.length===0;$("preview").disabled=ops.length===0;$("editorPanel").hidden=ops.length===0;}
+function counts(){let ready=ops.filter(x=>x.status==="ready").length,detected=ops.filter(x=>x.status==="detected").length,review=ops.filter(x=>x.status==="review").length;$("totalCount").textContent=ops.length;$("detectedCount").textContent=detected+ready;$("reviewCount").textContent=review;$("allChip").textContent=ops.length;$("detectedChip").textContent=detected;$("reviewChip").textContent=review;$("readyChip").textContent=ready;$("directionAllChip").textContent=ops.length;$("outgoingChip").textContent=ops.filter(x=>x.doc==="Исходящее").length;$("incomingChip").textContent=ops.filter(x=>x.doc==="Входящее").length;$("bottomMessage").textContent=!ops.length?"Загрузите банковскую выписку, чтобы начать работу.":review?review+" операций не удалось определить — нужна проверка.":detected+ready+" документов определены; заполните остальные реквизиты для экспорта.";$("export").disabled=ready!==ops.length||ops.length===0;$("preview").disabled=ops.length===0;$("editorPanel").hidden=ops.length===0;}
 function render(){
- counts();let q=$("search").value.toLowerCase(),visible=ops.filter(x=>(filter==="all"||x.status===filter)&&(x.name+" "+x.purpose+" "+x.article).toLowerCase().includes(q));
+ counts();let q=$("search").value.toLowerCase(),visible=ops.filter(x=>(filter==="all"||x.status===filter)&&(directionFilter==="all"||x.doc===directionFilter)&&(x.name+" "+x.purpose+" "+x.article).toLowerCase().includes(q));
  $("rows").innerHTML=visible.length?visible.map(x=>'<tr data-id="'+x.id+'" class="'+(x.id===selected?'selected':'')+'"><td>'+x.date+'</td><td><strong>'+esc(x.name)+'</strong></td><td class="amount">'+fmt(x.amount)+'</td><td>'+esc(x.article||"Не указана")+'</td><td>'+esc(x.doc==="Входящее"?"Платёжное поручение входящее":x.doc==="Исходящее"?"Платёжное поручение исходящее":"Не определён")+'</td><td><span class="pill '+(x.status==="ready"?"good":x.status==="detected"?"info":"warn")+'">'+(x.status==="ready"?"Готово":x.status==="detected"?"Документ определён":"Проверить")+'</span></td></tr>').join(""):'<tr><td colspan="6" class="empty">Операции не найдены</td></tr>';
  $("shownCount").textContent=ops.length?"Показано "+visible.length+" из "+ops.length:"Операций пока нет";
  $("rows").querySelectorAll("tr[data-id]").forEach(tr=>tr.addEventListener("click",()=>{selected=Number(tr.dataset.id);loadEditor();render()}));
@@ -106,6 +110,7 @@ function loadEditor(){let x=ops.find(x=>x.id===selected);if(!x){$("operationNumb
 $("editForm").addEventListener("submit",e=>{e.preventDefault();let x=ops.find(x=>x.id===selected);if(!x)return;x.name=$("counterparty").value.trim();x.originalName=x.name;x.purpose=$("purpose").value.trim();x.article=$("article").value;x.debit=$("debit").value.trim();x.credit=$("credit").value.trim();x.doc=document.querySelector('[name="docType"]:checked')?.value||x.doc;x.status=x.name&&x.purpose&&x.article&&x.debit&&x.credit?"ready":x.doc?"detected":"review";render();loadEditor();toast("Изменения сохранены в текущей сессии")});
 $("reset").addEventListener("click",loadEditor);$("search").addEventListener("input",render);
 document.querySelectorAll("[data-filter]").forEach(b=>b.addEventListener("click",()=>{filter=b.dataset.filter;document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x===b));render()}));
+document.querySelectorAll("[data-direction]").forEach(b=>b.addEventListener("click",()=>{directionFilter=b.dataset.direction;document.querySelectorAll("[data-direction]").forEach(x=>x.classList.toggle("active",x===b));render()}));
 $("toggleDateCheck").addEventListener("click",()=>{const p=$("dateCheckPanel");p.hidden=!p.hidden;if(!p.hidden){$("checkDate").focus();}});
 $("runDateCheck").addEventListener("click",()=>{
  const raw=$("checkDate").value;
@@ -205,8 +210,8 @@ $("fileInput").addEventListener("change",async e=>{
  try{
   const data=await readStatement(file);
   if(!data.length)throw Error("В файле не обнаружены банковские операции. Проверьте названия колонок и строки.");
-  ops=data;selected=ops[0].id;filter="all";
-  document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x.dataset.filter==="all"));
+  ops=data;selected=ops[0].id;filter="all";directionFilter="all";
+  document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x.dataset.filter==="all"));document.querySelectorAll("[data-direction]").forEach(x=>x.classList.toggle("active",x.dataset.direction==="all"));
   loadEditor();render();$("tableCaption").textContent=file.name;$("shownCount").textContent="Загружено операций: "+ops.length;
   const detected=ops.filter(x=>x.status!=="review").length,unknown=ops.length-detected;toast("Импортировано: "+ops.length+". Документы определены: "+detected+". Проверить: "+unknown);
  }catch(err){toast(err.message||"Ошибка чтения файла")}e.target.value="";
