@@ -21,59 +21,81 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
 [hidden]{display:none!important}
  #duplicateWarning{border:1px solid #f1c26f;padding:12px;border-radius:8px}
  #duplicateWarning input{width:auto;display:inline}
+
+/* Lightweight, crisp vector icon system. No external icon font or image download. */
+.ui-icon{width:18px;height:18px;display:inline-block;flex:0 0 auto;vertical-align:middle;stroke-width:1.85}
+.ui-icon.icon-lg{width:24px;height:24px}
+.ui-icon.icon-xl{width:27px;height:27px}
+.ui-icon.icon-sm{width:15px;height:15px}
+.btn .ui-icon,.chip .ui-icon{flex-shrink:0}
+.chip{display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:background .15s,border-color .15s,box-shadow .15s}
+.chip:hover{border-color:#98b8e3;box-shadow:0 2px 8px #1478e812}
+.btn{transition:background .15s,border-color .15s,box-shadow .15s}
+.logo .ui-icon{width:24px;height:24px}
+.folder .ui-icon{width:25px;height:25px}
+.nav .ico{display:grid;place-items:center;flex:0 0 20px}
+.nav .ico .ui-icon{width:19px;height:19px}
+.staticon .ui-icon{width:23px;height:23px}
+.profile>.ui-icon{color:#7c8ca4}
+.search-field{position:relative;display:flex;width:min(320px,100%);align-items:center}
+.search-field>.ui-icon{position:absolute;left:13px;color:#8191a9;pointer-events:none}
+.search-field .search{padding-left:40px;width:100%}
+.bottom .check .ui-icon{width:16px;height:16px}
+@media(max-width:720px){.search-field{width:100%}.chip{min-height:38px}}
 </style>
 </head>
 <body>
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false"><defs><symbol id="ic-landmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7"/><path d="M4 10h16M5 10v9m5-9v9m4-9v9m5-9v9M3 21h18M2 10h20"/></symbol><symbol id="ic-dashboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></symbol><symbol id="ic-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></symbol><symbol id="ic-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2a2 2 0 0 1 1.9 1.4l.3 1.1 1.1.6 1.2-.3a2 2 0 0 1 2 .8l1.1 1.8a2 2 0 0 1-.3 2.1l-.8.9v1.3l.8.9a2 2 0 0 1 .3 2.1l-1.1 1.8a2 2 0 0 1-2 .8l-1.2-.3-1.1.6-.3 1.1a2 2 0 0 1-1.9 1.4h-2a2 2 0 0 1-1.9-1.4l-.3-1.1-1.1-.6-1.2.3a2 2 0 0 1-2-.8l-1.1-1.8a2 2 0 0 1 .3-2.1l.8-.9v-1.3l-.8-.9a2 2 0 0 1-.3-2.1l1.1-1.8a2 2 0 0 1 2-.8l1.2.3 1.1-.6.3-1.1a2 2 0 0 1 1.9-1.4z"/><circle cx="12" cy="12" r="3"/></symbol><symbol id="ic-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 2.6-6.4L3 8"/><path d="M3 3v5h5M12 7v5l3.5 2"/></symbol><symbol id="ic-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 11h18"/></symbol><symbol id="ic-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V3m-5 5 5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></symbol><symbol id="ic-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m-5-5 5 5 5-5"/><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></symbol><symbol id="ic-arrows" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h14m-5-5 5 5-5 5M17 17H3m5-5-5 5 5 5"/></symbol><symbol id="ic-arrowup" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></symbol><symbol id="ic-arrowdown" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7 17 17m-9 0h9V8"/></symbol><symbol id="ic-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18M7 14h3m-3 4h3m4-4h3"/></symbol><symbol id="ic-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5 9a8 8 0 0 1 13.5-2L20 12M4 12l1.5 5A8 8 0 0 0 19 15"/></symbol><symbol id="ic-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol><symbol id="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></symbol><symbol id="ic-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="m10 3-8.3 14.5A2 2 0 0 0 3.4 20h17.2a2 2 0 0 0 1.7-2.5L14 3a2.3 2.3 0 0 0-4 0z"/><path d="M12 9v4m0 4h.01"/></symbol><symbol id="ic-sigma" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M18 4H6l7 8-7 8h12"/></symbol><symbol id="ic-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><path d="m3 6 .5.5L5 5m-2 7 .5.5L5 11m-2 7 .5.5L5 17"/></symbol><symbol id="ic-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol><symbol id="ic-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M15 5 19 9 9 19l-5 1 1-5z"/><path d="m13 7 4 4"/></symbol><symbol id="ic-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol><symbol id="ic-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 3v7h10V3M7 21v-8h10v8"/></symbol><symbol id="ic-folderup" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 17v-7m-3 3 3-3 3 3"/></symbol><symbol id="ic-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2m3 0-1 15H6L5 6m5 4v7m4-7v7"/></symbol><symbol id="ic-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></symbol><symbol id="ic-allstatus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 8h10m-10 4h10m-10 4h7"/></symbol><symbol id="ic-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.7 2.7 0 1 1 4.2 2.3c-1 .8-1.7 1.2-1.7 2.7m0 3.5h.01"/></symbol><symbol id="ic-undo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-2"/></symbol></defs></svg>
 <header class="top">
- <div class="brand"><div class="logo">▥</div><div>STOLDOM.SITE<small>Бухгалтерский кабинет</small></div></div>
- <div class="profile"><span>♧</span><div class="avatar">Б</div><span class="username">Бухгалтер　⌄</span></div>
+ <div class="brand"><div class="logo"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-landmark"></use></svg></div><div>STOLDOM.SITE<small>Бухгалтерский кабинет</small></div></div>
+ <div class="profile"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-user"></use></svg><div class="avatar">Б</div><span class="username">Бухгалтер　⌄</span></div>
 </header>
 <div class="layout">
  <aside>
   <div class="navlabel">РАБОЧЕЕ МЕСТО</div>
-  <button class="nav"><span class="ico">⌂</span>Главная</button>
-  <button class="nav active"><span class="ico">▤</span>Выписки</button>
-  <button class="nav"><span class="ico">⚙</span>Правила</button>
-  <button class="nav"><span class="ico">◷</span>История</button>
+  <button class="nav"><span class="ico"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-dashboard"></use></svg></span>Главная</button>
+  <button class="nav active"><span class="ico"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-file"></use></svg></span>Выписки</button>
+  <button class="nav"><span class="ico"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-settings"></use></svg></span>Правила</button>
+  <button class="nav"><span class="ico"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-history"></use></svg></span>История</button>
   <div class="company"><strong>ТОО «Моя компания»</strong><span class="muted">Выбранная организация</span></div>
   <div class="support">Поддержка<br>support@stoldom.site</div>
  </aside>
  <main>
   <div class="heading">
-   <div class="titlewrap"><div class="folder">▰</div><div><h1>Обработка банковской выписки</h1><p>Проверьте и при необходимости отредактируйте операции перед загрузкой в 1С</p></div></div>
-   <label class="btn primary" for="fileInput">⇧　Загрузить выписку</label><input id="fileInput" type="file" accept=".xlsx,.xls,.csv,.txt">
+   <div class="titlewrap"><div class="folder"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-folder"></use></svg></div><div><h1>Обработка банковской выписки</h1><p>Проверьте и при необходимости отредактируйте операции перед загрузкой в 1С</p></div></div>
+   <label class="btn primary" for="fileInput"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-upload"></use></svg> Загрузить выписку</label><input id="fileInput" type="file" accept=".xlsx,.xls,.csv,.txt">
   </div>
   <div class="stats">
-   <div class="stat"><div class="staticon blue">▤</div><div><strong id="totalCount">0</strong><span>Всего операций</span></div></div>
-   <div class="stat"><div class="staticon green">✓</div><div><strong id="detectedCount">0</strong><span>Документы определены</span></div></div>
-   <div class="stat"><div class="staticon yellow">!</div><div><strong id="reviewCount">0</strong><span>Нужна проверка</span></div></div>
+   <div class="stat"><div class="staticon blue"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-file"></use></svg></div><div><strong id="totalCount">0</strong><span>Всего операций</span></div></div>
+   <div class="stat"><div class="staticon green"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-check"></use></svg></div><div><strong id="detectedCount">0</strong><span>Документы определены</span></div></div>
+   <div class="stat"><div class="staticon yellow"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-alert"></use></svg></div><div><strong id="reviewCount">0</strong><span>Нужна проверка</span></div></div>
   </div>
   <div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin:0 0 16px">
-   <div class="stat"><div class="staticon green">↓</div><div><strong id="filteredTotal">0 ₸</strong><span id="filteredTotalLabel">Поступления по фильтру</span></div></div>
-   <div class="stat"><div class="staticon yellow">↑</div><div><strong id="outgoingTotal">0 ₸</strong><span>Списания по фильтру</span></div></div>
-   <div class="stat"><div class="staticon blue">∑</div><div><strong id="netTotal">0 ₸</strong><span>Разница (поступления − списания)</span></div></div>
-   <div class="stat"><div class="staticon blue">▤</div><div><strong id="filteredCount">0</strong><span>Операций по фильтру</span></div></div>
+   <div class="stat"><div class="staticon green"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-arrowdown"></use></svg></div><div><strong id="filteredTotal">0 ₸</strong><span id="filteredTotalLabel">Поступления по фильтру</span></div></div>
+   <div class="stat"><div class="staticon yellow"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-arrowup"></use></svg></div><div><strong id="outgoingTotal">0 ₸</strong><span>Списания по фильтру</span></div></div>
+   <div class="stat"><div class="staticon blue"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-sigma"></use></svg></div><div><strong id="netTotal">0 ₸</strong><span>Разница (поступления − списания)</span></div></div>
+   <div class="stat"><div class="staticon blue"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-list"></use></svg></div><div><strong id="filteredCount">0</strong><span>Операций по фильтру</span></div></div>
   </div>
   <div class="toolbar">
    <div class="filters">
-    <button class="chip active" data-direction="all">Все операции (<span id="directionAllChip">0</span>)</button>
-    <button class="chip" data-direction="Исходящее">Исходящие (<span id="outgoingChip">0</span>)</button>
-    <button class="chip" data-direction="Входящее">Входящие (<span id="incomingChip">0</span>)</button>
+    <button class="chip active" data-direction="all"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-list"></use></svg>Все операции (<span id="directionAllChip">0</span>)</button>
+    <button class="chip" data-direction="Исходящее"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-arrowup"></use></svg>Исходящие (<span id="outgoingChip">0</span>)</button>
+    <button class="chip" data-direction="Входящее"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-arrowdown"></use></svg>Входящие (<span id="incomingChip">0</span>)</button>
     <span style="width:1px;background:var(--line);margin:3px 2px"></span>
-    <button class="chip active" data-filter="all">Все статусы (<span id="allChip">0</span>)</button>
-    <button class="chip" data-filter="detected">Документы определены (<span id="detectedChip">0</span>)</button>
-    <button class="chip" data-filter="review">Проверить (<span id="reviewChip">0</span>)</button>
-    <button class="chip" data-filter="ready">Поля заполнены (<span id="readyChip">0</span>)</button>
-    <button class="chip" id="toggleDateCheck" type="button">▦ Итоги за дату</button>
-    <button class="chip" id="reclassifyDDS" type="button">↻ Пересчитать ДДС</button>
+    <button class="chip active" data-filter="all"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-allstatus"></use></svg>Все статусы (<span id="allChip">0</span>)</button>
+    <button class="chip" data-filter="detected"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-file"></use></svg>Документы определены (<span id="detectedChip">0</span>)</button>
+    <button class="chip" data-filter="review"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-alert"></use></svg>Проверить (<span id="reviewChip">0</span>)</button>
+    <button class="chip" data-filter="ready"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-check"></use></svg>Поля заполнены (<span id="readyChip">0</span>)</button>
+    <button class="chip" id="toggleDateCheck" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-calendar"></use></svg> Итоги за дату</button>
+    <button class="chip" id="reclassifyDDS" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-refresh"></use></svg> Пересчитать ДДС</button>
    </div>
-   <input class="search" id="search" placeholder="⌕　Поиск по контрагенту, назначению...">
+   <div class="search-field"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-search"></use></svg><input class="search" id="search" placeholder="Поиск по контрагенту, назначению..."></div>
   </div>
   <section class="tablecard" id="dateCheckPanel" style="margin-bottom:14px;padding:16px" hidden>
    <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
     <div><label for="checkDate" style="display:block;font-size:12px;font-weight:750;margin-bottom:6px">Дата операции</label><input id="checkDate" type="date" class="search" style="width:190px"></div>
     <div><label for="checkDirection" style="display:block;font-size:12px;font-weight:750;margin-bottom:6px">Направление</label><select id="checkDirection" class="search" style="width:180px"><option value="Исходящее">Исходящие</option><option value="Входящее">Входящие</option><option value="all">Все операции</option></select></div>
-    <button class="btn primary" id="runDateCheck" type="button">Показать итоги</button>
+    <button class="btn primary" id="runDateCheck" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-list"></use></svg> Показать итоги</button>
    </div>
    <div id="dateCheckResult" style="margin-top:14px"></div>
   </section>
@@ -88,7 +110,7 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
     <div class="pagination"><span id="shownCount">Операций пока нет</span></div>
    </section>
    <section class="editor" id="editorPanel" hidden>
-    <div class="editorhead"><strong>✎　Редактирование операции</strong><span class="muted" id="operationNumber">№ 001</span></div>
+    <div class="editorhead"><strong style="display:flex;align-items:center;gap:8px"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-edit"></use></svg> Редактирование операции</strong><span class="muted" id="operationNumber">№ 001</span></div>
     <form class="edit" id="editForm">
      <div class="muted" id="operationMeta"></div>
      <div class="twocol"><div><label for="editDate">Дата операции</label><input id="editDate" type="date" required></div><div><label for="editAmount">Сумма, ₸</label><input id="editAmount" type="number" step="0.01" min="0.01" required></div></div>
@@ -102,19 +124,19 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
       <p id="duplicateHint"></p>
       <label><input type="checkbox" id="confirmDuplicate"> Это отдельная операция, сверено с банком</label>
      </div>
-     <div class="editactions"><button class="btn outline" type="button" id="reset">Отменить</button><button class="btn primary" type="submit">✓　Сохранить</button></div>
+     <div class="editactions"><button class="btn outline" type="button" id="reset"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-undo"></use></svg> Отменить</button><button class="btn primary" type="submit"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-save"></use></svg> Сохранить</button></div>
      <p class="notice">Данные обрабатываются в браузере. Автосохранение действует только в текущей вкладке. Для надёжного хранения скачайте черновик. ДДС и счета обязательно сверьте с 1С.</p>
     </form>
    </section>
   </div>
  </main>
 </div>
-<div class="bottom"><div class="ready"><span class="check" id="bottomStatusIcon">•</span><span id="bottomMessage">Загрузите банковскую выписку, чтобы начать работу.</span></div><div class="bottomactions"><button class="btn outline" id="preview" disabled>◉　Предварительный просмотр</button><button class="btn primary" id="export" disabled>⇩　Скачать Excel для подготовки 1С</button></div></div>
+<div class="bottom"><div class="ready"><span class="check" id="bottomStatusIcon"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-help"></use></svg></span><span id="bottomMessage">Загрузите банковскую выписку, чтобы начать работу.</span></div><div class="bottomactions"><button class="btn outline" id="preview" disabled><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-eye"></use></svg> Предварительный просмотр</button><button class="btn primary" id="export" disabled><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-download"></use></svg> Скачать Excel для подготовки 1С</button></div></div>
 <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:12px 24px 24px">
-  <button class="btn outline" id="saveDraftFile" type="button">↓ Сохранить черновик</button>
-  <button class="btn outline" id="restoreDraftFile" type="button">↑ Открыть черновик</button>
+  <button class="btn outline" id="saveDraftFile" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-save"></use></svg> Сохранить черновик</button>
+  <button class="btn outline" id="restoreDraftFile" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-folderup"></use></svg> Открыть черновик</button>
   <input type="file" id="draftInput" accept=".json,application/json" hidden>
-  <button class="btn outline" id="clearDraft" type="button">Очистить сессию</button>
+  <button class="btn outline" id="clearDraft" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-trash"></use></svg> Очистить сессию</button>
   <span class="muted" id="draftStatus">Данные не отправляются на сервер</span>
  </div>
 <div class="toast" id="toast"></div>
