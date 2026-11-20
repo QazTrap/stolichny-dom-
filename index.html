@@ -77,7 +77,7 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
 </div>
 <div class="bottom"><div class="ready"><span class="check">✓</span><span id="bottomMessage">Проверьте операции перед подготовкой импорта.</span></div><div class="bottomactions"><button class="btn outline" id="preview">◉　Предварительный просмотр</button><button class="btn primary" id="export" disabled>⇩　Сформировать файл для 1С</button></div></div>
 <div class="toast" id="toast"></div>
-<script src="/vendor/xlsx.full.min.js"></script>
+<script src="/vendor/xlsx.full.min.js" onerror="(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';s.onerror=function(){var f=document.createElement('script');f.src='https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js';document.head.appendChild(f)};document.head.appendChild(s)})()"></script>
 <script>
 (()=>{
 const seed=[
