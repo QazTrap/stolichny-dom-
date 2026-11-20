@@ -12,7 +12,18 @@
     let s = String(value ?? "").replace(/[\s\u00a0\u202f₸$€]/g, "").trim();
     if (!s) return NaN;
     if (/^\(.*\)$/.test(s)) s = "-" + s.slice(1, -1);
-    s = s.replace(/,/g, ".").replace(/[^0-9.+-]/g, "");
+    s=s.replace(/[^0-9.,+-]/g,"");
+    const comma=s.lastIndexOf(","),dot=s.lastIndexOf(".");
+    if(comma>=0&&dot>=0){
+      const decimal=comma>dot?",":".";
+      const thousands=decimal===","?".":",";
+      s=s.split(thousands).join("").replace(decimal,".");
+    } else if(comma>=0){
+      if(/^[-+]?\d{1,3}(?:,\d{3})+$/.test(s))s=s.replace(/,/g,"");
+      else s=s.replace(",",".");
+    } else if(dot>=0 && /^[-+]?\d{1,3}(?:\.\d{3})+$/.test(s)){
+      s=s.replace(/\./g,"");
+    }
     if (!/^[+-]?\d+(?:\.\d+)?$/.test(s)) return NaN;
     return Number(s);
   }
@@ -119,8 +130,8 @@
       if(hasDebit&&hasCredit) direction="";
       else if(hasCredit) direction="Входящее";
       else if(hasDebit) direction="Исходящее";
-      else if(/^(вход|приход|поступ|credit|кредит|к\b)/.test(rawDirection)) direction="Входящее";
-      else if(/^(исход|расход|спис|debit|дебет|д\b)/.test(rawDirection)) direction="Исходящее";
+      else if(/^(вход|приход|поступ|credit|crdt|кредит|кт$|к$|c$)/.test(rawDirection)) direction="Входящее";
+      else if(/^(исход|расход|спис|debit|dbit|дебет|дт$|д$|d$)/.test(rawDirection)) direction="Исходящее";
       else if(Number.isFinite(originalAmount)&&originalAmount<0) direction="Исходящее";
       const amount=Number.isFinite(originalAmount)&&originalAmount!==0?originalAmount:(hasDebit?debit:hasCredit?credit:NaN);
       if(!Number.isFinite(amount)||!amount) continue;
@@ -170,8 +181,10 @@
     const dir=x.direction, type=x.docType||"";
     const compatible=dir==="Входящее" ? ["Платёжное поручение входящее","ПКО","Поступление на расчётный счёт"].includes(type) :
       dir==="Исходящее" ? ["Платёжное поручение исходящее","РКО","Списание с расчётного счёта"].includes(type) : false;
+    const cashAccountValid=(type==="ПКО")?String(x.debit)==="1010":
+      (type==="РКО")?String(x.credit)==="1010":true;
     const ready=!!(x.date && x.name?.trim() && x.purpose?.trim() && Number(x.amount)>0 &&
-      dir && compatible && x.article?.trim() && /^\d{4}$/.test(String(x.debit||"")) &&
+      dir && compatible && cashAccountValid && x.article?.trim() && /^\d{4}$/.test(String(x.debit||"")) &&
       /^\d{4}$/.test(String(x.credit||"")) && (!x.possibleDuplicate||x.duplicateConfirmed));
     if(ready) return "ready";
     return compatible && x.date && !x.possibleDuplicate ? "detected":"review";
