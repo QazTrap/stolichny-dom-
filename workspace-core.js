@@ -62,30 +62,67 @@
     for (const [re,short] of rules) if (re.test(name)) return name.replace(re,short);
     return name;
   }
-  function suggestArticle(purpose, direction) {
-    const p = norm(purpose);
-    if (!p || !direction) return "";
-    const taxAbbr = /(?:^|[^a-zа-я0-9])(опв|опвр|осмс|восмс|ипн|кпн|ндс|со|ооc)(?=$|[^a-zа-я0-9])/i;
-    if (direction === "Исходящее") {
-      if (taxAbbr.test(p) || /(налог|пен[ия]|штраф|бюджет|казначейств|гос.?доход|соц.?отчислен)/.test(p)) return "Налоги и отчисления";
-      if (/(заработн.{0,8} плат|зарплат|з\/п|оплата труда|премия сотруд|аванс сотруд)/.test(p)) return "Заработная плата";
-      if (/(аренд|арендная плата)/.test(p)) return "Аренда";
-      if (/(комисси.{0,8} банк|банковск.{0,12} комисси|обслуживани.{0,8} счет|эквайринг)/.test(p)) return "Банковские комиссии";
-      if (/(возврат.{0,20}(денежн|оплат|платеж|покупател))/.test(p)) return "Возврат денежных средств";
-      if (/(перевод.{0,15}(между|своими|собственн).{0,20} счет|перемещени.{0,20} счет)/.test(p)) return "Перевод между счетами";
-      if (/(погашени.{0,12}(кредит|займ)|возврат.{0,12}(кредит|займ))/.test(p)) return "Погашение займа";
-      if (/(оплат|поставщик|за товар|за услуг|за работ|по договору|согласно счет)/.test(p)) return "Оплата поставщику";
-      if (/прочие списания|прочее списание/.test(p)) return "Прочие списания";
+  // КНП is a useful signal, but the payment description and direction take priority.
+  // All results remain suggestions, never verified 1C catalogue entries.
+  function suggestArticleDetailed(purpose,direction,knp="",counterparty="") {
+    const p=norm(purpose),cp=norm(counterparty);
+    const raw=String(knp??"").trim();
+    const code=/^\d{1,3}$/.test(raw)?raw.padStart(3,"0"):raw;
+    if(!direction||!p)return {article:"",reason:"Недостаточно данных",confidence:"none"};
+    const suggestion=(article,reason,confidence="high")=>({article,reason,confidence});
+    const isOutgoing=direction==="Исходящее";
+    const isIncoming=direction==="Входящее";
+    if(!isOutgoing&&!isIncoming)return {article:"",reason:"Неизвестное направление",confidence:"none"};
+
+    // Bank charges often mention НДС, ОПВ, штрафы or пени of the *underlying*
+    // transaction, so recognize the charge before any tax rules.
+    const bankFee=/(комисси.{0,25}(банк|операц|перевод)|банк.{0,25}комисси|обслуживани.{0,12}(счет|счёт)|согласно тарифам банка|эквайрингов.{0,12}комисси)/.test(p);
+    if(isOutgoing&&(bankFee||(code==="841"&&/(комисси|тариф|банковск)/.test(p))))
+      return suggestion("Банковские комиссии","Комиссия банка"+(code==="841"?" · КНП 841":""));
+
+    if(isOutgoing&&(/алимент/.test(p)||(code==="118"&&/дет|содержани|алим/.test(p))))
+      return suggestion("Алименты","Алименты"+(code==="118"?" · КНП 118":""),"review");
+    if(isOutgoing&&/(исполнительн.{0,30}(производств|лист)|судебн.{0,20}исполн|взыскани.{0,20}по исполнительн)/.test(p))
+      return suggestion("Исполнительные документы","Перечисление по исполнительному документу; сверьте статью с 1С","review");
+
+    if(isOutgoing&&/(возврат.{0,24}(денежн|оплат|платеж|покупател)|возврат покупателю)/.test(p))
+      return suggestion("Возврат денежных средств","Возврат платежа");
+    if(isIncoming&&/(возврат.{0,25}(от поставщик|переплат|денежн|платеж)|возврат поставщиком)/.test(p))
+      return suggestion("Возврат денежных средств","Возврат поступления");
+    if(/(между своими счетами|между собственными счетами|со своего счета|на свой счет|внутренн.{0,10}перевод|перемещени.{0,22}(счет|счёт))/.test(p))
+      return suggestion("Перевод между счетами","Перемещение собственных денежных средств","review");
+
+    if(isOutgoing){
+      const social=/(обязательн.{0,12}пенсионн.{0,12}взнос|пенсионн.{0,12}взнос работодател|обязательн.{0,15}социальн.{0,15}отчислен|взнос.{0,30}социальн.{0,20}медицинск|отчислен.{0,30}социальн.{0,20}медицинск|обязательн.{0,12}социальн.{0,12}медицинск|социальн.{0,12}отчислен)/.test(p);
+      const tax=/(социальн.{0,6}налог|индивидуальн.{0,12}подоходн.{0,6}налог|корпоративн.{0,12}подоходн.{0,6}налог|налог на добавленн.{0,12}стоим|уплат.{0,15}налог|налог.{0,12}в бюджет|обязательств.{0,12}в бюджет)/.test(p);
+      const taxAbbr=/(?:^|[^a-zа-я0-9])(опв|опвр|осмс|восмс|ипн|кпн)(?=$|[^a-zа-я0-9])/.test(p);
+      if(social||tax||taxAbbr||(code==="911"&&/налог|бюджет/.test(p))||
+        (["010","012","089","121","122"].includes(code)&&/взнос|отчислен|страхован/.test(p)))
+        return suggestion("Налоги и отчисления","Налоги, взносы или отчисления"+(code?" · КНП "+code:""));
+      if(/(зарплат|заработн.{0,9}плат|з\/п|оплата труда|аванс сотруд|преми.{0,12}сотруд)/.test(p))
+        return suggestion("Заработная плата","Выплата заработной платы");
+      if(/(аренд|арендная плата)/.test(p))
+        return suggestion("Аренда","Арендный платёж");
+      if(/(погашен.{0,15}(кредит|займ)|возврат.{0,15}(кредит|займ))/.test(p))
+        return suggestion("Погашение займа","Погашение обязательства по займу");
+      if(["710","819","859","854"].includes(code))
+        return suggestion("Оплата поставщику","Оплата товаров или услуг · КНП "+code,"medium");
+      if(/(оплат|приобретен|счет на оплату|счёта на оплату|поставщик|за товар|за услуг|за работ|по договору)/.test(p))
+        return suggestion("Оплата поставщику","Оплата товаров или услуг по назначению","medium");
+    } else {
+      if(/(получен.{0,15}(займ|кредит)|выдач.{0,10}займ|поступлен.{0,15}заемн)/.test(p))
+        return suggestion("Получение займа","Получение займа");
+      if(["710","819","859"].includes(code))
+        return suggestion("Оплата от покупателя","Поступление за товары или услуги · КНП "+code,"medium");
+      if(/(оплат|покупател|выручк|реализац|оказанн.{0,10}услуг|за товар|за услуг|за работ|по счету|по сч)/.test(p))
+        return suggestion("Оплата от покупателя","Оплата покупателя по назначению","medium");
     }
-    if (direction === "Входящее") {
-      if (/(получен.{0,12}(займ|кредит)|предоставлен.{0,12} займ)/.test(p)) return "Получение займа";
-      if (/(возврат.{0,15}(от поставщик|переплат|денежн))/.test(p)) return "Возврат денежных средств";
-      if (/(перевод.{0,15}(между|своими|собственн).{0,20} счет|поступлен.{0,15} со своего счет)/.test(p)) return "Перевод между счетами";
-      if (/(оплат|покупател|выручк|реализац|за товар|за услуг|за работ|по счету)/.test(p)) return "Оплата от покупателя";
-      if (/прочие поступления|прочее поступление/.test(p)) return "Прочие поступления";
-    }
-    return "";
+    return {article:"",reason:code?"Неоднозначное назначение · КНП "+code:"Неоднозначное назначение",confidence:"none"};
   }
+  function suggestArticle(purpose,direction,knp="",counterparty=""){
+    return suggestArticleDetailed(purpose,direction,knp,counterparty).article;
+  }
+
   const aliases = {
     date:["дата операции","дата документа","дата платежа","дата валютирования","дата проводки","дата","operation date","transaction date"],
     payer:["наименование плательщика","плательщик","отправитель","от кого","payer","sender"],
@@ -100,11 +137,24 @@
     number:["номер документа","№ документа","номер платежа","референс","reference","document number"],
     accountDebit:["счет дебета","счёт дебета","счет дебет","дебет счет","счет списания"],
     accountCredit:["счет кредита","счёт кредита","счет кредит","кредит счет","счет зачисления"],
-    bin:["бин/иин контрагента","бин контрагента","иин контрагента","бин","иин","бин/иин","иин/бин"]
+    bin:["бин/иин контрагента","бин контрагента","иин контрагента","бин","иин","бин/иин","иин/бин"],
+    knp:["кнп","код назначения платежа"],
+    bankRef:["референс операции абис","референс операции","идентификатор транзакции","transaction id"]
   };
   function colIndex(headers,key) {
-    const exact = headers.findIndex(h=>aliases[key].includes(h));
-    return exact>=0 ? exact : headers.findIndex(h=>aliases[key].some(a=>h.includes(a)));
+    if(key==="date") {
+      // "Дата выписки" is the export generation date, not the payment date.
+      for(const wanted of ["дата документа","дата операции","дата платежа","дата валютирования","дата проводки","operation date","transaction date","дата"]){
+        const i=headers.indexOf(wanted);
+        if(i>=0)return i;
+      }
+      return -1;
+    }
+    const exact=headers.findIndex(h=>aliases[key].includes(h));
+    if(exact>=0)return exact;
+    // Never accidentally treat "Сумма НДС", debit or credit as total amount.
+    if(key==="amount")return -1;
+    return headers.findIndex(h=>aliases[key].some(a=>h.includes(a)));
   }
   function parseRows(matrix, sheetName="") {
     if (!Array.isArray(matrix) || !matrix.length) return [];
@@ -138,12 +188,15 @@
       const payer=String(get("payer")||"").trim(), receiver=String(get("receiver")||"").trim();
       const companyName=String(get("name")||(direction==="Входящее"?payer:receiver)||payer||receiver||"").trim();
       const purpose=String(get("purpose")||"").trim();
-      const article=suggestArticle(purpose,direction);
+      const knp=String(get("knp")??"").trim().padStart(3,"0");
+      const articleSuggestion=suggestArticleDetailed(purpose,direction,knp,companyName);
+      const article=articleSuggestion.article;
       const bankDebit=String(get("accountDebit")||"").trim(),bankCredit=String(get("accountCredit")||"").trim();
       const docType=direction==="Входящее"?"Платёжное поручение входящее":direction==="Исходящее"?"Платёжное поручение исходящее":"";
       const entry={
         id:0, date:dateText(get("date")), name:shortLegalName(companyName), originalName:companyName, purpose,
         amount:roundMoney(Math.abs(amount)), direction, docType, article, articleSource:article?"auto":"",
+        articleReason:articleSuggestion.reason,articleConfidence:articleSuggestion.confidence,knp,bankRef:String(get("bankRef")??"").trim(),
         debit:/^\d{4}$/.test(bankDebit)?bankDebit:(direction==="Входящее"?"1030":""),
         credit:/^\d{4}$/.test(bankCredit)?bankCredit:(direction==="Исходящее"?"1030":""),
         bin:String(get("bin")||"").trim(), sourceDoc:String(get("bankDoc")||"").trim(),
@@ -194,5 +247,5 @@
     const outgoing=roundMoney(rows.filter(x=>x.direction==="Исходящее").reduce((s,x)=>s+Number(x.amount||0),0));
     return {incoming,outgoing,net:roundMoney(incoming-outgoing),count:rows.length,unknown:rows.filter(x=>!x.direction).length};
   }
-  return {norm,escapeHtml,money,dateText,shortLegalName,suggestArticle,parseRows,markDuplicates,validateOperation,totals};
+  return {norm,escapeHtml,money,dateText,shortLegalName,suggestArticle,suggestArticleDetailed,parseRows,markDuplicates,validateOperation,totals};
 });
