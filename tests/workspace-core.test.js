@@ -169,3 +169,45 @@ test("corrects previously inferred fee documents but keeps accountant-selected d
   assert.equal(C.refreshSuggestedDocument(incoming),false);
   assert.equal(incoming.docType,"Платёжное поручение входящее");
 });
+
+test("prefills draft accounts for clear payment categories without requiring apply",()=>{
+  const header=["Дата","Дебет","Кредит","КНП","Назначение платежа","Контрагент"];
+  const rows=[
+    ["20.11.2026",50000,"","118","Перечисление удержанных алиментов за октябрь","Получатель"],
+    ["20.11.2026",100000,"","","Выплата заработной платы за октябрь","Сотрудник"],
+    ["20.11.2026",350,"","841","Комиссия за перевод согласно тарифам банка","Банк"],
+    ["20.11.2026",120000,"","859","Аванс поставщику за материалы","ТОО Материалы"],
+    ["20.11.2026",75000,"","859","Оплата по договору на услуги","ТОО Услуги"],
+    ["20.11.2026","",250000,"859","Предоплата от покупателя за работы","ТОО Клиент"],
+    ["20.11.2026","",85000,"859","Оплата покупателем по договору","ТОО Клиент"]
+  ];
+  const ops=C.parseRows([header,...rows]);
+  assert.equal(ops.length,7);
+  assert.deepEqual(ops.map(x=>[x.debit,x.credit]),[
+    ["3390","1030"],["3350","1030"],["7210","1030"],["1610","1030"],
+    ["","1030"],["1030","3510"],["1030",""]
+  ]);
+  assert.equal(ops[0].debitSource,"auto");
+  assert.match(ops[0].debitReason,/алимент/);
+  assert.equal(ops[4].status,"detected");
+  assert.equal(ops[3].status,"ready");
+});
+test("manual posting edits and existing statement accounts survive recalculation",()=>{
+  const x={purpose:"Аванс поставщику за товар",direction:"Исходящее",article:"Оплата поставщику",debit:"",credit:""};
+  assert.equal(C.refreshSuggestedPosting(x),true);
+  assert.equal(x.debit,"1610");
+  assert.equal(x.credit,"1030");
+  x.debit="3310";x.debitSource="manual";
+  x.purpose="Комиссия за перевод";x.article="Банковские комиссии";
+  C.refreshSuggestedPosting(x);
+  assert.equal(x.debit,"3310");
+  assert.equal(x.credit,"1030");
+  const existing={...x,debit:"3390",debitSource:"statement",credit:"1030",creditSource:"statement"};
+  C.refreshSuggestedPosting(existing);
+  assert.equal(existing.debit,"3390");
+  assert.equal(existing.credit,"1030");
+  const oldDraft={purpose:"Банковская комиссия",direction:"Исходящее",article:"Банковские комиссии",debit:"3310",credit:"1030"};
+  C.refreshSuggestedPosting(oldDraft);
+  assert.equal(oldDraft.debit,"3310");
+  assert.equal(oldDraft.credit,"1030");
+});
