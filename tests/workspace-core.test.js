@@ -211,3 +211,28 @@ test("manual posting edits and existing statement accounts survive recalculation
   assert.equal(oldDraft.debit,"3310");
   assert.equal(oldDraft.credit,"1030");
 });
+
+test("detects specific tax and social-payment ledger accounts but not generic descriptions",()=>{
+  const rows=[
+    ["Обязательные пенсионные взносы за октябрь","010","3220"],
+    ["Обязательные пенсионные взносы работодателя за октябрь","089","3250"],
+    ["Социальные отчисления за октябрь, НДС не облагается","012","3211"],
+    ["Взносы на обязательное социальное медицинское страхование","122","3212"],
+    ["Отчисления на обязательное социальное медицинское страхование","121","3213"],
+    ["Индивидуальный подоходный налог за полугодие, НДС не облагается","911","3120"],
+    ["Корпоративный подоходный налог за год","911","3110"],
+    ["Налог на добавленную стоимость, подлежащий уплате в бюджет","911","3130"],
+    ["Социальный налог, подлежащий уплате в бюджет","911","3150"],
+    ["Земельный налог за период","911","3160"]
+  ];
+  for(const [purpose,knp,expected] of rows) {
+    const article=C.suggestArticle(purpose,"Исходящее",knp);
+    const posting=C.suggestPosting({purpose,direction:"Исходящее",article,knp});
+    assert.equal(posting.debit,expected,purpose);
+    assert.equal(posting.credit,"1030",purpose);
+    assert.match(posting.debitReason,/проверьте/i);
+  }
+  assert.equal(C.suggestPosting({purpose:"Уплата налогов в бюджет",direction:"Исходящее",article:"Налоги и отчисления",knp:"911"}).debit,"");
+  assert.equal(C.suggestPosting({purpose:"Комиссия за перевод ОПВ, НДС 16%",direction:"Исходящее",article:"Банковские комиссии",knp:"841"}).debit,"7210");
+  assert.equal(C.suggestPosting({purpose:"Услуги погрузчика, в т.ч. НДС 16%",direction:"Входящее",article:"Оплата от покупателя",knp:"859"}).credit,"");
+});
