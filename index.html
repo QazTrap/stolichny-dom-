@@ -203,10 +203,8 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
     <div class="pagination"><span id="shownCount">Операций пока нет</span></div>
    </section>
    <div id="rowEditStorage" hidden>
-    <input id="editDate" form="editForm" aria-label="Дата операции" class="cell-field" type="date" required>
     <select id="operationDirection" form="editForm" aria-label="Направление" class="cell-field"><option value="">Не определено</option><option value="Входящее">Входящие</option><option value="Исходящее">Исходящие</option></select>
     <input id="counterparty" form="editForm" aria-label="Контрагент" class="cell-field">
-    <input id="editAmount" form="editForm" aria-label="Сумма, ₸" class="cell-field" type="number" step="0.01" min="0.01" required>
     <input id="debit" form="editForm" aria-label="Счёт дебета" class="cell-field" value="" list="ledgerCodes" pattern="[0-9]{4}" inputmode="numeric" autocomplete="off" placeholder="Например, 3390">
     <input id="credit" form="editForm" aria-label="Счёт кредита" class="cell-field" value="" list="ledgerCodes" pattern="[0-9]{4}" inputmode="numeric" autocomplete="off" placeholder="Например, 1030">
     <select id="article" form="editForm" aria-label="Статья ДДС" class="cell-field"><option value="">Выберите статью ДДС</option><option>Оплата от покупателя</option><option>Оплата поставщику</option><option>Заработная плата</option><option>Налоги и отчисления</option><option>Аренда</option><option>Приобретение ГСМ</option><option>Банковские комиссии</option><option>Возврат денежных средств</option><option>Перевод между счетами</option><option>Получение займа</option><option>Погашение займа</option><option>Прочие поступления</option><option>Прочие списания</option><option>Алименты</option><option>Исполнительные документы</option><option value="__custom__">＋ Своя статья…</option></select>
@@ -260,7 +258,7 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="/workspace-core.js?v=kaspi-alatau" defer></script>
-<script src="/app.js?v=inline-operation-edit" defer></script>
+<script src="/app.js?v=bank-fields-readonly" defer></script>
 </body></html>
 
 
