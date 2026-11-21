@@ -163,6 +163,35 @@
     input.select();
   }
 
+  // The top scroll track mirrors the actual scroll width of the table.
+  // Both scrollbars remain usable; no duplicate or independent table is created.
+  function syncTableScrollWidth(){
+    const upper=$("tableScrollTop"),lower=$("tableScrollBottom");
+    const spacer=$("tableScrollTopSpacer");
+    if(!upper||!lower||!spacer)return;
+    const fullWidth=lower.scrollWidth;
+    spacer.style.width=fullWidth+"px";
+    upper.hidden=fullWidth<=lower.clientWidth+1;
+    if(!upper.hidden&&upper.scrollLeft!==lower.scrollLeft)
+      upper.scrollLeft=lower.scrollLeft;
+  }
+  function initTableScroll(){
+    const upper=$("tableScrollTop"),lower=$("tableScrollBottom");
+    upper.addEventListener("scroll",()=>{
+      if(lower.scrollLeft!==upper.scrollLeft)lower.scrollLeft=upper.scrollLeft;
+    },{passive:true});
+    lower.addEventListener("scroll",()=>{
+      if(upper.scrollLeft!==lower.scrollLeft)upper.scrollLeft=lower.scrollLeft;
+    },{passive:true});
+    window.addEventListener("resize",syncTableScrollWidth,{passive:true});
+    if(typeof ResizeObserver!=="undefined"){
+      const observer=new ResizeObserver(syncTableScrollWidth);
+      observer.observe(lower);
+      observer.observe(lower.querySelector("table"));
+    }
+    syncTableScrollWidth();
+  }
+
   function render(){
     const visible=currentRows();
     updateStats(visible);
@@ -180,6 +209,7 @@
       '<td><span class="pill '+(x.status==="ready"?"info":x.status==="detected"?"info":"warn")+'">'+
       (x.status==="ready"?"Реквизиты заполнены":x.status==="detected"?"Документ определён":"Проверить")+"</span></td></tr>"
     ).join(""):'<tr><td colspan="9" class="empty">Операции не найдены</td></tr>';
+    syncTableScrollWidth();
     $("shownCount").textContent=ops.length?"Показано "+shown.length+" из "+visible.length+" по фильтру (всего "+ops.length+")":"Операций пока нет";
 
     if(!$("dateCheckPanel").hidden&&$("checkDate").value)renderDateCheck();
@@ -481,5 +511,6 @@
     }catch(err){toast(err.message||"Ошибка чтения файла");}
     e.target.value="";
   });
+  initTableScroll();
   restoreDraft();loadEditor();render();
 })();
