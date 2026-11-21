@@ -330,6 +330,7 @@
     const isInput=anchor.matches("input[list]");
     const options=quick?.options||(isInput?anchor.list?.options:anchor.options);
     const current=quick?quick.value:anchor.value;
+    const isArticleChoice=!!quick?.customArticle||anchor.id==="article"||anchor.dataset.field==="article";
     if(!options)return;
     const popup=document.createElement("div");
     popup.className="choice-popup";
@@ -383,7 +384,10 @@
       list.replaceChildren(fragment);
       popup.querySelector(".choice-empty").hidden=matches.length>0;
       list.scrollTop=0;active=-1;
-      highlight(matches.length?Math.max(0,matches.findIndex(opt=>opt.value===current)):-1,true);
+      // DDS article menus always open at the beginning of the list, even when
+      // the current article is further down. Other menus retain their position.
+      if(isArticleChoice)highlight(matches.length?0:-1,false);
+      else highlight(matches.length?Math.max(0,matches.findIndex(opt=>opt.value===current)):-1,true);
     }
     function choose(i){
       const opt=matches[i];if(!opt)return;
