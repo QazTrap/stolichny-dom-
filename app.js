@@ -11,7 +11,7 @@
   const balanceLabels=["Вх.остаток на начало периода в нац.валюте","Исх.остаток на конец периода в нац.валюте"].map(C.norm);
   let balances=[];
   const sessionKey="stoldom.workspace.v2";
-  let ops=[],selected=null,filter="all",directionFilter="all",fileLabel="",saveTimer=0,selectedMonth="";
+  let ops=[],selected=null,filter="all",directionFilter="all",fileLabel="",saveTimer=0,selectedMonth="",periodFrom="",periodTo="";
   function toast(message){
     $("toast").textContent=String(message);
     $("toast").style.display="block";
@@ -119,7 +119,7 @@
     }
   }
   function rowsForDate(){
-    const rows=C.filterPeriod(ops,{date:$("checkDate").value,month:selectedMonth});
+    const rows=C.filterPeriod(ops,{date:$("checkDate").value,month:selectedMonth,from:periodFrom,to:periodTo});
     const counterparty=$("counterpartyFilter")?.value;
     const amount=$("amountColumnFilter")?.value;
     if(!counterparty&&!amount)return rows;
@@ -322,13 +322,14 @@
   function syncDateTrigger(){
     const iso=$("checkDate").value;
     let display="дд.мм.гггг";
-    if(selectedMonth){
+    if(periodFrom&&periodTo)display=periodFrom.split("-").reverse().join(".")+" — "+periodTo.split("-").reverse().join(".");
+    else if(selectedMonth){
       display=new Intl.DateTimeFormat("ru-RU",{month:"long",year:"numeric"})
         .format(new Date(Number(selectedMonth.slice(0,4)),Number(selectedMonth.slice(5,7))-1,1));
     }else if(iso)display=iso.split("-").reverse().join(".");
     $("dateTriggerLabel").textContent=display;
     $("dateTrigger").disabled=!ops.some(x=>!!C.dateText(x.date));
-    $("dateTrigger").setAttribute("aria-label",iso||selectedMonth?"Итоги за "+display+", выбрать другой период":"Выбрать день или месяц из выписки");
+    $("dateTrigger").setAttribute("aria-label",iso||selectedMonth||periodFrom?"Итоги за "+display+", выбрать другой период":"Выбрать дату, месяц или период из выписки");
   }
   function closeDateCalendar(restoreFocus=false){
     if(!datePopup)return;
@@ -346,8 +347,9 @@
     if(!dates.length)return;
     const available=new Set(dates);
     const earliest=dates[0],latest=dates[dates.length-1];
-    const current=$("checkDate").value||(selectedMonth?selectedMonth+"-01":earliest);
+    const current=$("checkDate").value||(selectedMonth?selectedMonth+"-01":periodFrom||earliest);
     let year=Number(current.slice(0,4)),month=Number(current.slice(5,7))-1;
+    let draftFrom=periodFrom||earliest,draftTo=periodTo||latest;
     const pad=n=>String(n).padStart(2,"0");
     const popup=document.createElement("div");
     popup.className="statement-date-popup";
@@ -367,8 +369,9 @@
         const iso=monthKey+"-"+pad(day);
         const has=available.has(iso);
         const selected=$("checkDate").value===iso;
+        const inRange=!!(periodFrom&&periodTo&&iso>=periodFrom&&iso<=periodTo);
         cells+='<button type="button" data-calendar-day="'+iso+'" class="'+
-          (has?"has-operations ":"")+(selected?"selected":"")+
+          (has?"has-operations ":"")+(selected?"selected ":"")+(inRange?"in-range":"")+
           '" aria-label="'+pad(day)+"."+pad(month+1)+"."+year+'">'+day+'</button>';
       }
       popup.innerHTML='<div class="statement-date-head"><strong>'+title+'</strong>'+
@@ -376,16 +379,39 @@
         '<button type="button" data-calendar-next aria-label="Следующий месяц">›</button></div></div>'+
         '<div class="statement-date-weekdays">'+["Пн","Вт","Ср","Чт","Пт","Сб","Вс"].map(x=>"<span>"+x+"</span>").join("")+'</div>'+
         '<div class="statement-date-days">'+cells+'</div>'+
-        '<div class="statement-date-footer"><button type="button" data-calendar-month="'+monthKey+'" class="statement-month-select'+
-          (selectedMonth===monthKey?" active":"")+'">Показать весь месяц</button></div>';
+        '<div class="statement-date-footer"><p class="statement-date-legend"><span class="date-dot" aria-hidden="true"></span>Точка — день с операциями</p>'+
+        '<button type="button" data-calendar-month="'+monthKey+'" class="statement-month-select'+
+          (selectedMonth===monthKey?" active":"")+'">Показать весь месяц</button>'+
+        '<div class="statement-range-header">Установить период</div>'+
+        '<div class="statement-range-fields">'+
+        '<label>С<input data-range-from type="date" min="'+earliest+'" max="'+latest+'" value="'+draftFrom+'"></label>'+
+        '<label>По<input data-range-to type="date" min="'+earliest+'" max="'+latest+'" value="'+draftTo+'"></label></div>'+
+        '<button type="button" data-range-apply class="statement-range-apply">Применить период</button></div>';
       popup.querySelector("[data-calendar-prev]").disabled=monthKey<=earliest.slice(0,7);
       popup.querySelector("[data-calendar-next]").disabled=monthKey>=latest.slice(0,7);
     }
+    popup.addEventListener("change",event=>{
+      if(event.target.matches("[data-range-from]"))draftFrom=event.target.value;
+      if(event.target.matches("[data-range-to]"))draftTo=event.target.value;
+    });
     popup.addEventListener("click",event=>{
+      if(event.target.closest("[data-range-apply]")){
+        const from=popup.querySelector("[data-range-from]"),to=popup.querySelector("[data-range-to]");
+        draftFrom=from.value;draftTo=to.value;
+        if(!draftFrom||!draftTo||draftFrom>draftTo||draftFrom<earliest||draftTo>latest){
+          toast("Укажите корректный период: дата «С» должна быть не позже даты «По» и в пределах выписки.");
+          if(!draftFrom||draftFrom>draftTo)from.focus();else to.focus();
+          return;
+        }
+        periodFrom=draftFrom;periodTo=draftTo;
+        selectedMonth="";$("checkDate").value="";$("dateColumnFilter").value="";
+        closeDateCalendar();render();anchor.focus({preventScroll:true});return;
+      }
       if(event.target.closest("[data-calendar-prev]")){month--;if(month<0){month=11;year--;}drawCalendar();return;}
       if(event.target.closest("[data-calendar-next]")){month++;if(month>11){month=0;year++;}drawCalendar();return;}
       const monthButton=event.target.closest("[data-calendar-month]");
       if(monthButton){
+        periodFrom="";periodTo="";
         selectedMonth=monthButton.dataset.calendarMonth;
         $("checkDate").value="";
         $("dateColumnFilter").value="";
@@ -396,6 +422,7 @@
       }
       const day=event.target.closest("[data-calendar-day]");
       if(!day)return;
+      periodFrom="";periodTo="";
       selectedMonth="";
       $("checkDate").value=day.dataset.calendarDay;
       closeDateCalendar();
@@ -406,8 +433,12 @@
     const box=anchor.getBoundingClientRect();
     const left=Math.max(8,Math.min(box.right-popup.offsetWidth,innerWidth-popup.offsetWidth-8));
     popup.style.left=left+"px";
+    popup.style.maxHeight=Math.max(230,innerHeight-24)+"px";
+    popup.style.overflowY="auto";
     popup.style.top=(box.bottom+popup.offsetHeight+8>innerHeight && box.top>popup.offsetHeight+8
-      ?box.top-popup.offsetHeight-5:box.bottom+5)+"px";
+      ?Math.max(8,box.top-popup.offsetHeight-5):box.bottom+5)+"px";
+    if(parseFloat(popup.style.top)+popup.offsetHeight>innerHeight-8)
+      popup.style.top=Math.max(8,innerHeight-popup.offsetHeight-8)+"px";
   }
   $("dateTrigger").addEventListener("click",()=>{
     if(datePopup)closeDateCalendar();
@@ -576,7 +607,7 @@
     syncTableScrollWidth();
     $("shownCount").textContent=ops.length?"Показано "+shown.length+" из "+visible.length+" по фильтру (всего "+ops.length+")":"Операций пока нет";
 
-    if($("clearDateFilter"))$("clearDateFilter").hidden=!$("checkDate").value&&!selectedMonth;
+    if($("clearDateFilter"))$("clearDateFilter").hidden=!$("checkDate").value&&!selectedMonth&&!periodFrom;
     syncDateTrigger();
     if(!$("previewPanel").hidden)renderPreview();
   }
@@ -743,6 +774,7 @@
   $("amountColumnFilter")?.addEventListener("change",render);
   $("dateColumnFilter")?.addEventListener("change",()=>{
     const date=$("dateColumnFilter").value;
+    periodFrom="";periodTo="";
     selectedMonth="";
     $("checkDate").value=date?date.split(".").reverse().join("-"):"";
     render();
@@ -764,11 +796,13 @@
     document.querySelectorAll("[data-direction]").forEach(b=>b.classList.toggle("active",b===button));render();
   }));
   $("checkDate").addEventListener("change",()=>{
+    periodFrom="";periodTo="";
     selectedMonth="";
     $("dateColumnFilter").value=C.dateText($("checkDate").value);
     render();
   });
   $("clearDateFilter")?.addEventListener("click",()=>{
+    periodFrom="";periodTo="";
     selectedMonth="";
     $("checkDate").value="";
     $("dateColumnFilter").value="";
@@ -856,6 +890,7 @@
   });
   function resetFilters(){
     lastRowTap=null;
+    periodFrom="";periodTo="";
     selectedMonth="";
     closeDateCalendar();
     $("search").value="";
