@@ -39,8 +39,8 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 
 /* A brief light sweep across the brand name, with a long calm pause. */
 .brand-name{display:inline-block;position:relative;line-height:1.2;white-space:nowrap}
-.brand-name::after{content:attr(data-title);position:absolute;inset:0;pointer-events:none;white-space:nowrap;color:transparent;background:linear-gradient(105deg,transparent 38%,rgba(82,153,240,.42) 46%,#d8f2ff 50%,rgba(82,153,240,.42) 54%,transparent 62%);background-size:280% 100%;background-repeat:no-repeat;background-position:220% 0;-webkit-background-clip:text;background-clip:text;animation:brand-light-sweep 12s ease-in-out infinite}
-@keyframes brand-light-sweep{0%,79%{background-position:220% 0}91%,100%{background-position:-160% 0}}
+.brand-name::after{content:attr(data-title);position:absolute;inset:0;pointer-events:none;white-space:nowrap;color:transparent;background:linear-gradient(105deg,transparent 38%,rgba(82,153,240,.32) 46%,#d7ecff 50%,rgba(82,153,240,.32) 54%,transparent 62%);background-size:280% 100%;background-repeat:no-repeat;background-position:220% 0;-webkit-background-clip:text;background-clip:text;animation:brand-light-sweep 8s linear infinite}
+@keyframes brand-light-sweep{0%,8%{background-position:220% 0}82%,100%{background-position:-160% 0}}
 @media(prefers-reduced-motion:reduce){.brand-name::after{animation:none;content:none}}
 /* Lightweight, crisp vector icon system. No external icon font or image download. */
 .ui-icon{width:18px;height:18px;display:inline-block;flex:0 0 auto;vertical-align:middle;stroke-width:1.85}
