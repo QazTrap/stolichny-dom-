@@ -163,15 +163,15 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
       <label><input type="checkbox" id="confirmDuplicate"> Это отдельная операция, сверено с банком</label>
      </div>
      <div class="editactions"><button class="btn outline" type="button" id="reset"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-undo"></use></svg> Отменить</button><button class="btn primary" type="submit"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-save"></use></svg> Сохранить</button></div>
-     <p class="notice">Данные обрабатываются в браузере. Автосохранение действует только в текущей вкладке. Для надёжного хранения скачайте черновик. ДДС и счета обязательно сверьте с 1С.</p>
+     <p class="notice">Данные обрабатываются в браузере. Автосохранение действует только в текущей вкладке. ДДС и счета обязательно сверьте с 1С.</p>
     </form>
    </section>
   </div>
  </main>
 </div>
-<div class="bottom"><div class="ready"><span class="check" id="bottomStatusIcon"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-help"></use></svg></span><span id="bottomMessage">Загрузите банковскую выписку, чтобы начать работу.</span></div><div class="bottomactions"><button class="btn outline" id="preview" disabled><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-eye"></use></svg> Предварительный просмотр</button><button class="btn primary" id="export" disabled><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-download"></use></svg> Скачать Excel для подготовки 1С</button><button type="button" class="btn outline" disabled>Отправить в 1С · Скоро</button></div></div>
+<div class="bottom"><div class="ready"><span class="check" id="bottomStatusIcon"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-help"></use></svg></span><span id="bottomMessage">Загрузите банковскую выписку, чтобы начать работу.</span></div><div class="bottomactions"><button class="btn outline" id="preview" disabled><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-eye"></use></svg> Предварительный просмотр</button><button class="btn primary" id="export" disabled><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-download"></use></svg> Скачать Excel для подготовки 1С · Скоро</button><button type="button" class="btn outline" disabled>Отправить в 1С · Скоро</button></div></div>
 <div id="draftControls" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:12px 24px 24px">
-  <button class="btn outline" id="saveDraftFile" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-save"></use></svg> Сохранить черновик</button>
+  <button class="btn outline" id="saveDraftFile" type="button" disabled><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-save"></use></svg> Скачать черновик · Скоро</button>
   <button class="btn outline" id="restoreDraftFile" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-folderup"></use></svg> Открыть черновик</button>
   <input type="file" id="draftInput" accept=".json,application/json" hidden>
   <button class="btn outline" id="clearDraft" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-trash"></use></svg> Очистить сессию</button>
@@ -180,5 +180,5 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="/workspace-core.js" defer></script>
-<script src="/app.js" defer></script>
+<script src="/app.js?v=downloads-paused" defer></script>
 </body></html>
