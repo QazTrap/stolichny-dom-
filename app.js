@@ -23,7 +23,7 @@
       sessionStorage.setItem(sessionKey, JSON.stringify({version:2,ops,fileLabel,balances,savedAt:new Date().toISOString()}));
       if($("draftStatus")) $("draftStatus").textContent="Черновик в этой вкладке сохранён";
     } catch {
-      if($("draftStatus")) $("draftStatus").textContent="Автосохранение недоступно — скачайте черновик";
+      if($("draftStatus")) $("draftStatus").textContent="Автосохранение в этой вкладке недоступно";
     }
   }
   function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveDraft,200);}
@@ -107,7 +107,6 @@
     if(statusIcon)statusIcon.setAttribute("href","#ic-alert");
     $("bottomStatusIcon").parentElement.classList.add("pending");
     $("export").disabled=!downloadsEnabled || ops.length===0;
-    $("saveDraftFile").disabled=!downloadsEnabled;
     $("preview").disabled=ops.length===0;
     $("editorPanel").hidden=ops.length===0;
     ["openingBalance","closingBalance"].forEach((id,index)=>{
@@ -453,12 +452,6 @@
     $("previewPanel").hidden=!$("previewPanel").hidden;
     if(!$("previewPanel").hidden)renderPreview();
   });
-  const download=(data,name,mime)=>{
-    const blob=new Blob([data],{type:mime});
-    const url=URL.createObjectURL(blob),a=document.createElement("a");
-    a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),2000);
-  };
   function safeText(value){
     const text=String(value??"");
     return /^[\s]*[=+@-]/.test(text)?"'"+text:text;
@@ -495,12 +488,6 @@
       XLSX.writeFile(workbook,"STOLDOM_подготовка_1С_"+new Date().toISOString().slice(0,10)+".xlsx",{compression:true});
       toast("Контрольный Excel скачан. Все проводки и статьи ДДС необходимо сверить с 1С.");
     }catch(e){toast("Не удалось сформировать Excel: "+e.message);}
-  });
-  $("saveDraftFile").addEventListener("click",()=>{
-    if(!downloadsEnabled)return;
-    if(!ops.length){toast("Нет операций для сохранения");return;}
-    const data=JSON.stringify({version:2,fileLabel,balances,savedAt:new Date().toISOString(),ops},null,2);
-    download(data,"STOLDOM_черновик_"+new Date().toISOString().slice(0,10)+".json","application/json;charset=utf-8");
   });
   $("restoreDraftFile").addEventListener("click",()=>$("draftInput").click());
   $("draftInput").addEventListener("change",async e=>{
