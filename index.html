@@ -68,7 +68,7 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
 
 .inline-ledger-picker{display:inline-flex;position:relative;align-items:center;min-width:60px;min-height:36px;cursor:pointer}
 .inline-ledger-picker.unset,#rows input[list="ledgerCodes"]::placeholder{color:#b45309;opacity:1}
-.statement-comment{max-width:300px;overflow:hidden;text-overflow:ellipsis;color:var(--muted);cursor:default}
+.statement-comment{max-width:360px;min-width:220px;white-space:normal;color:var(--muted);cursor:default}.statement-comment .comment-preview{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden;overflow-wrap:anywhere;line-height:1.45}
 .inline-ledger-picker:has(select:focus-visible),.column-filter:has(select:focus-visible){outline:2px solid var(--blue);outline-offset:2px}
 .inline-ledger-current{font-variant-numeric:tabular-nums;pointer-events:none}
 .inline-ledger-select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px}
@@ -264,8 +264,8 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
 </dialog>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
-<script src="/workspace-core.js?v=kaspi-alatau" defer></script>
-<script src="/app.js?v=statement-comments" defer></script>
+<script src="/workspace-core.js?v=bank-comments-20261121-v3" defer></script>
+<script src="/app.js?v=bank-comments-20261121-v3" defer></script>
 </body></html>
 
 
