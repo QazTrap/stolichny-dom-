@@ -923,7 +923,7 @@
     for(const sheet of book.SheetNames){
       const rows=XLSX.utils.sheet_to_json(book.Sheets[sheet],{header:1,defval:"",raw:true});
       if(!rows.some(row=>row.some(value=>String(value).trim())))continue;
-      let operations=$("manualImport").checked?[]:C.parseRows(rows,sheet);
+      let operations=C.parseRows(rows,sheet);
       if(!operations.length)operations=await mapSheet(rows,sheet);
       if(!operations.length)continue;
       const kaspiHeader=rows.find(row=>row.some(cell=>C.norm(cell)==="наименование бенефициара / отправителя денег"));
