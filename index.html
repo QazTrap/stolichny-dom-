@@ -138,6 +138,13 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
 .statement-date-days button.selected{color:#fff;background:var(--blue)}
 .statement-date-days button.selected::after{background:#fff}
 .statement-date-days button:focus-visible{outline:2px solid #65a9ed;outline-offset:1px}
+.statement-reconcile{display:flex;align-items:center;flex-wrap:wrap;gap:5px 12px;font-size:13px;color:#405574;margin:0 0 11px;padding:0 2px}
+.statement-reconcile strong{color:#243b59;white-space:nowrap}
+.statement-reconcile .balance-check{font-size:12px;color:#277752}
+.statement-reconcile .balance-check.mismatch{color:#ba4c18;font-weight:650}
+.active-filter-notice{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:0 0 13px;padding:10px 12px;border:1px solid #d8e4f1;border-radius:9px;background:#eff5fb;color:#415a77;font-size:13px}
+.active-filter-notice button{border:0;border-radius:7px;background:#fff;color:#1365c5;font-weight:700;padding:6px 10px}
+.active-filter-notice button:hover{background:#e5f1ff}
 .statement-date-empty{height:34px}
 .statement-date-footer{border-top:1px solid #e5ecf4;margin-top:10px;padding-top:10px}
 .statement-month-select{width:100%;min-height:36px;border:1px solid #bfd8f5;background:#eff6ff;color:#1567c3;border-radius:8px;font-weight:650;font:inherit;cursor:pointer}
@@ -249,7 +256,16 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
    <div class="stat"><div class="staticon blue"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-sigma"></use></svg></div><div><strong id="netTotal">0 ₸</strong><span>Разница (поступления − списания)</span></div></div>
    <div class="stat"><div class="staticon blue"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-list"></use></svg></div><div><strong id="filteredCount">0</strong><span>Операций по фильтру</span></div></div>
   </div>
-  <div class="workspace">
+  <div id="statementReconcile" class="statement-reconcile" hidden>
+    <strong>Итого по всей выписке</strong>
+    <span id="statementReconcileNumbers"></span>
+    <span id="statementBalanceCheck" class="balance-check" hidden></span>
+   </div>
+   <div id="activeFilterNotice" class="active-filter-notice" hidden>
+    <span id="activeFilterText"></span>
+    <button id="showAllFilters" type="button">Показать все операции</button>
+   </div>
+   <div class="workspace">
    <section class="tablecard">
     <div class="tabletop">
      <strong>Операции</strong>
@@ -314,7 +330,7 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="/workspace-core.js?v=bulk-kaspi-20261121-v1" defer></script>
-<script src="/app.js?v=bulk-kaspi-20261121-v1" defer></script>
+<script src="/app.js?v=filter-totals-20261121-v1" defer></script>
 </body></html>
 
 
