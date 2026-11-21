@@ -76,6 +76,9 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
 .inline-ledger-custom [data-inline-save]{background:#eaf3ff;color:#0867d5}
 .inline-ledger-custom input:focus{outline:2px solid #9dcaff;outline-offset:0}
 
+.table-scroll-top{height:19px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;border-bottom:1px solid var(--line);background:#f7faff;scrollbar-gutter:stable}
+.table-scroll-top>div{height:1px}
+.table-scroll-top:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
 </style>
 </head>
 <body>
@@ -140,7 +143,8 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
   <div class="workspace">
    <section class="tablecard">
     <div class="tabletop"><strong>Операции</strong><span class="muted" id="tableCaption">Сначала загрузите банковскую выписку</span></div>
-    <div class="tablewrap"><table><thead><tr><th>Дата</th><th>Направление</th><th>Контрагент</th><th>Сумма</th><th title="Предварительный счёт дебета">Дт</th><th title="Предварительный счёт кредита">Кт</th><th>Статья ДДС</th><th>Тип документа 1С</th><th>Статус</th></tr></thead><tbody id="rows"></tbody></table></div>
+    <div class="table-scroll-top" id="tableScrollTop" aria-label="Горизонтальная прокрутка таблицы операций" role="region" tabindex="0"><div id="tableScrollTopSpacer"></div></div>
+    <div class="tablewrap" id="tableScrollBottom"><table><thead><tr><th>Дата</th><th>Направление</th><th>Контрагент</th><th>Сумма</th><th title="Предварительный счёт дебета">Дт</th><th title="Предварительный счёт кредита">Кт</th><th>Статья ДДС</th><th>Тип документа 1С</th><th>Статус</th></tr></thead><tbody id="rows"></tbody></table></div>
     <div class="pagination"><span id="shownCount">Операций пока нет</span></div>
    </section>
    <section class="editor" id="editorPanel" hidden>
