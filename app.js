@@ -74,9 +74,32 @@
     x.status=C.validateOperation(x);
     return changed||docChanged||postingChanged;
   }
+  function counterpartyKey(operation){
+    return C.norm(operation.name)+"|"+(operation.bin||"");
+  }
+  function updateCounterpartyFilter(){
+    const select=$("counterpartyFilter");
+    if(!select)return;
+    const selectedKey=select.value;
+    const names=new Map();
+    for(const operation of ops){
+      if(operation.name?.trim())names.set(counterpartyKey(operation),operation.name.trim());
+    }
+    const entries=[...names].sort((a,b)=>a[1].localeCompare(b[1],"ru"));
+    const labels=new Map();
+    for(const [,name] of entries)labels.set(name,(labels.get(name)||0)+1);
+    select.replaceChildren(new Option("Все контрагенты",""),...entries.map(([key,name])=>{
+      const bin=key.slice(key.lastIndexOf("|")+1);
+      return new Option(labels.get(name)>1&&bin?name+" · "+bin:name,key);
+    }));
+    select.value=names.has(selectedKey)?selectedKey:"";
+    select.disabled=!entries.length;
+  }
   function rowsForDate(){
     const date=C.dateText($("checkDate").value);
-    return date?ops.filter(x=>x.date===date):ops;
+    const counterparty=$("counterpartyFilter")?.value;
+    if(!date&&!counterparty)return ops;
+    return ops.filter(x=>(!date||x.date===date)&&(!counterparty||counterpartyKey(x)===counterparty));
   }
   function currentRows(dateRows){
     const query=C.norm($("search").value);
@@ -359,8 +382,10 @@
     x.date=C.dateText($("editDate").value);
     x.amount=Math.round(Number($("editAmount").value)*100)/100;
     if(!Number.isFinite(x.amount)||x.amount<=0){toast("Укажите корректную положительную сумму");return;}
+    const previousCounterparty=counterpartyKey(x);
     x.name=C.fixTengeText($("counterparty").value.trim().slice(0,300));
     x.originalName=x.name;
+    if(previousCounterparty!==counterpartyKey(x))updateCounterpartyFilter();
     x.purpose=C.fixTengeText($("purpose").value.trim().slice(0,3000));
     x.article=($("article").value==="__custom__"?$("customArticle").value:$("article").value).trim().slice(0,300);
     x.articleSource="manual";
@@ -391,6 +416,7 @@
   });
   $("reset").addEventListener("click",loadEditor);
   $("search").addEventListener("input",render);
+  $("counterpartyFilter")?.addEventListener("change",render);
   $("reclassifyDDS").addEventListener("click",()=>{
     if(!ops.length){toast("Сначала загрузите выписку");return;}
     const eligible=ops.filter(x=>x.articleSource!=="manual");
@@ -515,6 +541,8 @@
   });
   function resetFilters(){
     $("search").value="";
+    if($("counterpartyFilter"))$("counterpartyFilter").value="";
+    updateCounterpartyFilter();
     $("checkDate").value="";
     document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x.dataset.filter==="all"));
     document.querySelectorAll("[data-direction]").forEach(x=>x.classList.toggle("active",x.dataset.direction==="all"));
@@ -563,5 +591,5 @@
     e.target.value="";
   });
   initTableScroll();
-  restoreDraft();loadEditor();render();
+  restoreDraft();updateCounterpartyFilter();loadEditor();render();
 })();
