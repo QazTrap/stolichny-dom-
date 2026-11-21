@@ -252,7 +252,7 @@
     date:["дата операции","дата документа","дата платежа","дата валютирования","дата проводки","дата","operation date","transaction date"],
     payer:["наименование плательщика","плательщик","отправитель","от кого","payer","sender"],
     receiver:["наименование получателя","получатель","кому","receiver","beneficiary"],
-    name:["наименование контрагента","контрагент","название контрагента","counterparty","контрагент атауы","корреспондент"],
+    name:["наименование бенефициара / отправителя денег","наименование контрагента","контрагент","название контрагента","counterparty","контрагент атауы","корреспондент"],
     purpose:["назначение платежа","назначение","детали платежа","описание платежа","описание","purpose","details","description","төлем мақсаты"],
     amount:["сумма операции","сумма платежа","сумма в валюте счета","сумма","amount","сумма в тенге","сомасы"],
     debit:["сумма по дебету","дебетовая сумма","сумма дебет","расход","списание","дебет","debit","withdrawal","money out","шығыс"],
@@ -306,6 +306,7 @@
     for(let rowIdx=header+1;rowIdx<matrix.length;rowIdx++){
       const row=matrix[rowIdx]||[];
       if(!row.some(v=>String(v??"").trim()))continue;
+      if(rowIdx===header+1 && row.length>=3 && row.every((v,i)=>String(v).trim()===String(i+1)))continue;
       const get=key=>cols[key]>=0?row[cols[key]]:"";
       if(!dateText(get("date")) && row.some(cell=>/^(итого|всего|обороты|сальдо|остаток|total)(?:$|[ :])/i.test(String(cell).trim())))continue;
       const debit=money(get("debit")),credit=money(get("credit")),originalAmount=money(get("amount"));
@@ -321,7 +322,9 @@
       const amount=Number.isFinite(originalAmount)&&originalAmount!==0?originalAmount:(hasDebit?debit:hasCredit?credit:NaN);
       if(!Number.isFinite(amount)||!amount) continue;
       const payer=String(get("payer")||"").trim(), receiver=String(get("receiver")||"").trim();
-      const companyName=fixTengeText(get("name")||(direction==="Входящее"?payer:receiver)||payer||receiver||"").trim();
+      const partyText=fixTengeText(get("name")||(direction==="Входящее"?payer:receiver)||payer||receiver||"").trim();
+      const embeddedBin=partyText.match(/\s+(?:ИИН\s*\/\s*БИН|БИН\s*\/\s*ИИН)[:\s]+(\d{12})\s*$/i);
+      const companyName=embeddedBin?partyText.slice(0,embeddedBin.index).trim():partyText;
       const purpose=fixTengeText(get("purpose")||"").trim();
       const rawKnp=String(get("knp")??"").trim();
       const knp=/^\d{1,3}$/.test(rawKnp)?rawKnp.padStart(3,"0"):rawKnp;
@@ -336,7 +339,7 @@
         debit:/^\d{4}$/.test(bankDebit)?bankDebit:"", debitSource:/^\d{4}$/.test(bankDebit)?"statement":"",
         credit:/^\d{4}$/.test(bankCredit)?bankCredit:"", creditSource:/^\d{4}$/.test(bankCredit)?"statement":"",
         debitReason:"",creditReason:"",
-        bin:String(get("bin")||"").trim(), sourceDoc:String(get("bankDoc")||"").trim(),
+        bin:String(get("bin")||embeddedBin?.[1]||"").trim(), sourceDoc:String(get("bankDoc")||"").trim(),
         docNumber:String(get("number")||"").trim(), sourceSheet:sheetName,
         possibleDuplicate:false, duplicateConfirmed:false, status:"review"
       };
@@ -419,3 +422,4 @@
   }
   return {norm,fixTengeText,escapeHtml,money,dateText,shortLegalName,suggestArticle,suggestArticleDetailed,suggestPosting,refreshSuggestedPosting,suggestDocumentType,suggestDocumentOperation,refreshSuggestedDocument,parseRows,markDuplicates,validateOperation,reconciliationNotes,setManualPostingAccount,totals,BANK_FEE_DOCUMENT};
 });
+
