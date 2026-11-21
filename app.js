@@ -558,17 +558,137 @@
       }
     }
   }
+  function decodeBankText(buffer){
+    const bytes=new Uint8Array(buffer);
+    if(bytes[0]===255&&bytes[1]===254)return new TextDecoder("utf-16le").decode(bytes);
+    if(bytes[0]===254&&bytes[1]===255)return new TextDecoder("utf-16be").decode(bytes);
+    try{return new TextDecoder("utf-8",{fatal:true}).decode(bytes);}
+    catch{return new TextDecoder("windows-1251").decode(bytes);}
+  }
+  function readClientBank(text){
+    const accounts=new Set(), documents=[];
+    let section="",fields={};
+    for(const line of text.split(/\r\n|\r|\n/)){
+      const separator=line.indexOf("=");
+      const key=(separator<0?line:line.slice(0,separator)).trim();
+      const value=separator<0?"":line.slice(separator+1).trim();
+      if(key==="СекцияДокумент"||key==="СекцияРасчСчет"){
+        section=key;
+        fields=Object.create(null);
+      }else if(key==="КонецРасчСчет"&&section==="СекцияРасчСчет"){
+        if(fields.РасчСчет)accounts.add(fields.РасчСчет);
+        section="";
+      }else if(key==="КонецДокумента"&&section==="СекцияДокумент"){
+        documents.push(fields);
+        if(documents.length>20000)throw Error("Слишком много операций (максимум 20 000)");
+        section="";
+      }else if(separator>=0){
+        if(section)fields[key]=value;
+        else if(key==="РасчСчет"&&value)accounts.add(value);
+      }
+    }
+    if(section)throw Error("Файл обмена обрывается внутри раздела. Выгрузите его полностью.");
+    if(accounts.size!==1)throw Error("Для обмена 1С нужна выписка с одним расчётным счётом. Выгрузите один счёт за период.");
+    const rows=[["Дата операции","Сумма","Направление","Контрагент","БИН/ИИН контрагента","Назначение платежа","Номер документа","КНП"]];
+    for(const doc of documents){
+      const outgoing=accounts.has(doc.ПлательщикСчет),incoming=accounts.has(doc.ПолучательСчет);
+      if(outgoing===incoming)throw Error("В файле 1С есть документ с неоднозначным направлением. Выгрузите табличную выписку.");
+      const party=outgoing?"Получатель":"Плательщик";
+      rows.push([(outgoing?doc.ДатаСписано:doc.ДатаПоступило)||doc.Дата,doc.Сумма,outgoing?"Исходящее":"Входящее",
+        doc[party+"1"]||doc[party]||"",doc[party+"БИН"]||doc[party+"ИНН"]||"",
+        doc.НазначениеПлатежа||[1,2,3,4,5,6].map(n=>doc["НазначениеПлатежа"+n]).filter(Boolean).join(" "),
+        doc.Номер,doc.КНП]);
+    }
+    const operations=C.parseRows(rows,"Клиент-банк");
+    if(!operations.length||operations.length!==documents.length)throw Error("Не все документы файла 1С содержат сумму операции. Проверьте выгрузку.");
+    // The exchange file does not reliably identify the balance currency.
+    return {operations,balances:[]};
+  }
+  function mapSheet(rows,sheet){
+    const dialog=$("importMapping"), header=$("mappingHeader"), fields=$("mappingColumns");
+    const feedback=$("mappingFeedback");
+    const labels={date:"Дата операции",debit:"Списания",credit:"Поступления",amount:"Сумма операции",direction:"Направление",name:"Контрагент",purpose:"Назначение платежа",bin:"БИН/ИИН",number:"Номер документа",knp:"КНП",payer:"Плательщик",receiver:"Получатель"};
+    $("mappingSheet").textContent="Лист «"+sheet+"». Укажите дату и сумму или колонки списаний и поступлений.";
+    header.max=rows.length;
+    header.value=Math.max(1,rows.findIndex(row=>row.filter(value=>String(value).trim()).length>=3)+1);
+    function showFields(){
+      fields.replaceChildren();
+      feedback.textContent="";
+      const cells=rows[Number(header.value)-1]||[];
+      for(const [key,title] of Object.entries(labels)){
+        const label=document.createElement("label"), select=document.createElement("select");
+        label.textContent=title;
+        select.name=key;
+        select.add(new Option("Не выбрано",""));
+        cells.forEach((cell,index)=>{
+          const letter=XLSX.utils.encode_col(index);
+          select.add(new Option(letter+" · "+(String(cell||"").slice(0,90)||"Без названия"),String(index)));
+        });
+        label.append(select);
+        fields.append(label);
+      }
+    }
+    header.onchange=showFields;
+    showFields();
+    let operations=[];
+    const form=dialog.querySelector("form");
+    form.onsubmit=event=>{
+      if(event.submitter?.value!=="apply")return;
+      const columns={};
+      for(const select of fields.querySelectorAll("select")){
+        if(select.value!=="")columns[select.name]=Number(select.value);
+      }
+      if(columns.date===undefined||[columns.debit,columns.credit,columns.amount].every(v=>v===undefined)){
+        event.preventDefault();
+        feedback.textContent="Укажите дату и хотя бы одну колонку с суммой.";
+        return;
+      }
+      if(new Set(Object.values(columns)).size!==Object.keys(columns).length){
+        event.preventDefault();
+        feedback.textContent="Каждому полю нужна отдельная колонка.";
+        return;
+      }
+      operations=C.parseRows(rows,sheet,{header:Number(header.value)-1,columns});
+      if(!operations.some(op=>op.date)){
+        event.preventDefault();
+        feedback.textContent="Нет операций с датой и суммой. Проверьте строку заголовков и колонки.";
+      }
+    };
+    dialog.returnValue="";
+    return new Promise((resolve,reject)=>{
+      dialog.onclose=()=>{
+        if(dialog.returnValue==="apply")resolve(operations);
+        else if(dialog.returnValue==="skip")resolve([]);
+        else reject(Error("Импорт отменён"));
+      };
+      dialog.showModal();
+    });
+  }
   async function readStatement(file){
-    if(!window.XLSX)throw Error("Библиотека Excel не загрузилась. Проверьте соединение и обновите страницу.");
+    const requireExcel=()=>{if(!window.XLSX)throw Error("Библиотека Excel не загрузилась. Проверьте соединение и обновите страницу.");};
     const ext=file.name.split(".").pop().toLowerCase();
     let book;
-    if(ext==="csv"||ext==="txt")book=XLSX.read(await file.text(),{type:"string",cellDates:true});
-    else book=XLSX.read(await file.arrayBuffer(),{type:"array",cellDates:true});
+    if(["csv","tsv","txt"].includes(ext)){
+      const text=decodeBankText(await file.arrayBuffer());
+      if(/^1CClientBankExchange/i.test(text.trimStart()))return readClientBank(text);
+      requireExcel();
+      const options={type:"string",raw:true};
+      if(ext==="tsv")options.FS="\t";
+      book=XLSX.read(text,options);
+    }
+    else {
+      requireExcel();
+      book=XLSX.read(await file.arrayBuffer(),{type:"array",cellDates:true});
+    }
     const all=[];
     const balanceValues=balanceLabels.map(()=>new Set());
     for(const sheet of book.SheetNames){
       const rows=XLSX.utils.sheet_to_json(book.Sheets[sheet],{header:1,defval:"",raw:true});
-      all.push(...C.parseRows(rows,sheet));
+      if(!rows.some(row=>row.some(value=>String(value).trim())))continue;
+      let operations=$("manualImport").checked?[]:C.parseRows(rows,sheet);
+      if(!operations.length)operations=await mapSheet(rows,sheet);
+      if(!operations.length)continue;
+      all.push(...operations);
       collectStatementBalances(rows,balanceValues);
       if(all.length>20000)throw Error("Слишком много операций (максимум 20 000)");
     }
@@ -579,8 +699,9 @@
     const file=e.target.files?.[0];
     if(!file)return;
     try{
-      if(!/\.(xlsx|xls|csv|txt)$/i.test(file.name))throw Error("Поддерживаются только XLSX, XLS, CSV и TXT");
+      if(!/\.(xlsx|xls|xlsm|xlsb|ods|csv|tsv|txt)$/i.test(file.name))throw Error("Выберите выписку Excel, ODS, CSV, TSV или табличный TXT");
       if(file.size>20*1024*1024)throw Error("Файл больше 20 МБ");
+      e.target.disabled=true;
       const data=await readStatement(file);
       ops=data.operations.map((x,i)=>({...x,id:i+1}));C.markDuplicates(ops);
       balances=data.balances;
@@ -588,6 +709,7 @@
       loadEditor();render();scheduleSave();
       toast("Загружено "+ops.length+" операций. Требуют проверки: "+ops.filter(x=>x.status!=="ready").length);
     }catch(err){toast(err.message||"Ошибка чтения файла");}
+    e.target.disabled=false;
     e.target.value="";
   });
   initTableScroll();
