@@ -174,6 +174,34 @@ test("separates compulsory state levies from taxes, based on Alatau statement ab
   assert.equal(manual.article,"Налоги и отчисления");
 });
 
+test("recognizes Kaspi sales payouts, bank card charges and Kaspi Pay processing",()=>{
+  const examples=[
+    ["Продажи с Kaspi.kz за 10/10/2026","Входящее","АО \"KASPI BANK\"","Оплата от покупателя"],
+    ["Оплата за услуги операций по картам Kaspi Gold и другим картам за 09/10/2026","Исходящее","АО \"KASPI BANK\"","Банковские комиссии"],
+    ["Оплата за услуги процессинга Без НДС за 09/10/2026","Исходящее","ТОО Kaspi Pay","Услуги эквайринга и процессинга"],
+    ["Оплата услуги по обработке данных за 09/10/2026","Исходящее","ТОО \"Kaspi Магазин\"","Оплата поставщику"]
+  ];
+  for(const [purpose,direction,cp,article] of examples){
+    const result=C.suggestArticleDetailed(purpose,direction,"",cp);
+    assert.equal(result.article,article,purpose);
+  }
+  const payout={purpose:examples[0][0],direction:"Входящее",article:"Оплата от покупателя"};
+  assert.equal(C.suggestPosting(payout).debit,"1030");
+  assert.equal(C.suggestPosting(payout).credit,"","Kaspi payout credit depends on acquiring settlement in 1C");
+  assert.ok(C.reconciliationNotes({...payout}).some(x=>x.includes("1274")));
+  const processor={purpose:examples[2][0],direction:"Исходящее",article:"Услуги эквайринга и процессинга"};
+  assert.equal(C.suggestPosting(processor).credit,"1030");
+  assert.equal(C.suggestPosting(processor).debit,"","Processing liability and cost accounts require confirmation");
+  assert.ok(C.reconciliationNotes(processor).some(x=>x.includes("Kaspi Pay")));
+  assert.equal(C.suggestArticle("Оплата за услуги процессинга Без НДС","Исходящее","","ТОО Другая компания"),"Оплата поставщику");
+  assert.equal(C.suggestArticle("Оплата за услуги операций по картам Kaspi Gold","Исходящее","","ТОО Другой поставщик"),"Оплата поставщику");
+  // User-chosen DDS and account fields must never be overridden by automatic reclassification.
+  const manual={...processor,article:"Оплата поставщику",articleSource:"manual",debit:"3310",debitSource:"manual"};
+  C.refreshSuggestedPosting(manual);
+  assert.equal(manual.debit,"3310");
+  assert.equal(manual.article,"Оплата поставщику");
+});
+
 test("does not label service fees as taxes despite embedded НДС or penalties",()=>{
   assert.equal(C.suggestArticle("Комиссия за перевод пенсионных взносов, НДС, пеня","Исходящее","841"),"Банковские комиссии");
   assert.equal(C.suggestArticle("Оплата бухгалтерских и налоговых услуг по договору","Исходящее","859"),"Оплата поставщику");
