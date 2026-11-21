@@ -113,11 +113,10 @@
     ["openingBalance","closingBalance"].forEach((id,index)=>{
       const value=$(id);
       if(!value)return;
-      const available=Number.isFinite(balances[index]);
-      value.parentElement.hidden=!available;
-      value.textContent=available?formatBalance.format(balances[index]):"";
+      const amount=balances[index];
+      value.textContent=Number.isFinite(amount)?formatBalance.format(amount):"—";
     });
-    if($("statementBalances"))$("statementBalances").hidden=!balances.some(Number.isFinite);
+    if($("statementBalances"))$("statementBalances").hidden=!fileLabel;
     $("tableCaption").textContent=fileLabel||"Операции";
   }
 
