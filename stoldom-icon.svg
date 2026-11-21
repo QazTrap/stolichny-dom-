@@ -1,13 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="STOLDOM">
- <defs>
-  <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
-   <stop offset="0" stop-color="#1689fa"/>
-   <stop offset="1" stop-color="#0861d6"/>
-  </linearGradient>
- </defs>
- <rect x="1" y="1" width="62" height="62" rx="14" fill="url(#blue)"/>
- <path d="M12.5 28.8 31.6 14l19.9 15.2" fill="none" stroke="#fff" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
- <path d="M44 20.5v-4.2h4.3v7.5" fill="none" stroke="#fff" stroke-width="3.7" stroke-linecap="round" stroke-linejoin="round"/>
- <path d="M19 35v16.8M27 32.4v19.4M15.5 52h15" fill="none" stroke="#fff" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/>
- <path d="M49 35.1c-2.7-3.3-10.9-3.8-13.5.6-3.5 6 3.9 7.3 8.1 8.5 9.2 2.7 5.1 11.6-2.9 11.6-3.9 0-6.7-1.6-8.5-3.4" fill="none" stroke="#fff" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#258afa"/><stop offset="1" stop-color="#1265d5"/></linearGradient></defs>
+  <rect width="64" height="64" rx="15" fill="url(#bg)"/>
+  <path fill="#fff" transform="translate(14.625 50.61) scale(.0254 -.0254)" d="M689 -24C1073 -24 1301 153 1301 453C1301 683 1158 814 828 880L697 906C527 941 456 986 456 1067C456 1160 551 1225 687 1225C829 1225 924 1149 934 1026H1267C1258 1331 1039 1514 682 1514C332 1514 96 1327 96 1050C96 833 245 689 536 629L689 598C868 561 945 512 945 427C945 329 844 265 692 265C520 265 415 349 410 492H67C67 163 292 -24 689 -24Z"/>
 </svg>
