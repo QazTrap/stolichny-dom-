@@ -5,6 +5,15 @@
   const C=window.STOLDOM_CORE;
   if(!C){console.error("STOLDOM rules could not load");return;}
   const $=id=>document.getElementById(id);
+  // Keep the UI responsive and give the browser a chance to draw before synchronous parsing.
+  const letSpinnerPaint=()=>new Promise(resolve=>setTimeout(resolve,35));
+  function showProcessing(active,message="Обрабатываем данные…"){
+    const layer=$("workspaceBusy");
+    if(!layer)return;
+    if(active)$("workspaceBusyText").textContent=message;
+    layer.hidden=!active;
+    document.body.classList.toggle("is-processing",active);
+  }
   const fmt=n=>new Intl.NumberFormat("ru-RU",{minimumFractionDigits:0,maximumFractionDigits:2}).format(Number(n)||0)+" ₸";
   const show=x=>C.escapeHtml(x);
   const formatBalance=new Intl.NumberFormat("ru-RU",{style:"currency",currency:"KZT",currencyDisplay:"narrowSymbol"});
@@ -838,13 +847,18 @@
     resetFilters();
     render();
   });
-  $("reclassifyDDS").addEventListener("click",()=>{
+  $("reclassifyDDS").addEventListener("click",async ()=>{
     if(!ops.length){toast("Сначала загрузите выписку");return;}
-    const eligible=ops.filter(x=>x.articleSource!=="manual");
-    const changed=eligible.filter(recomputeArticle).length;
-    const documentUpdates=ops.filter(C.refreshSuggestedDocument).length;
-    C.markDuplicates(ops);loadEditor();render();scheduleSave();
-    toast("ДДС обновлено: "+changed+"; типов документов обновлено: "+documentUpdates+". Ручные значения сохранены.");
+    showProcessing(true,"Пересчитываем статьи ДДС…");
+    try{
+      await letSpinnerPaint();
+      const eligible=ops.filter(x=>x.articleSource!=="manual");
+      const changed=eligible.filter(recomputeArticle).length;
+      const documentUpdates=ops.filter(C.refreshSuggestedDocument).length;
+      C.markDuplicates(ops);loadEditor();render();scheduleSave();
+      toast("ДДС обновлено: "+changed+"; типов документов обновлено: "+documentUpdates+". Ручные значения сохранены.");
+    }catch(err){toast(err.message||"Не удалось пересчитать ДДС");}
+    finally{showProcessing(false);}
   });
   document.querySelectorAll("[data-filter]").forEach(button=>button.addEventListener("click",()=>{
     filter=button.dataset.filter;
@@ -1077,6 +1091,8 @@
       }
     };
     dialog.returnValue="";
+    // The user must be able to interact with manual column mapping; never cover it with a loader.
+    showProcessing(false);
     return new Promise((resolve,reject)=>{
       dialog.onclose=()=>{
         if(dialog.returnValue==="apply")resolve(operations);
@@ -1112,7 +1128,11 @@
       const rows=XLSX.utils.sheet_to_json(book.Sheets[sheet],{header:1,defval:"",raw:true});
       if(!rows.some(row=>row.some(value=>String(value).trim())))continue;
       let operations=C.parseRows(rows,sheet);
-      if(!operations.length)operations=await mapSheet(rows,sheet);
+      if(!operations.length){
+        operations=await mapSheet(rows,sheet);
+        showProcessing(true,"Продолжаем обработку выписки…");
+        await letSpinnerPaint();
+      }
       if(!operations.length)continue;
       const kaspiHeader=rows.find(row=>row.some(cell=>C.norm(cell)==="наименование бенефициара / отправителя денег"));
       if(kaspiHeader){
@@ -1142,15 +1162,22 @@
       if(!/\.(xlsx|xls|xlsm|xlsb|ods|csv|tsv|txt|pdf)$/i.test(file.name))throw Error("Выберите выписку Excel, ODS, CSV, TSV, табличный TXT или PDF Alatau City Bank");
       if(file.size>20*1024*1024)throw Error("Файл больше 20 МБ");
       e.target.disabled=true;
+      showProcessing(true,"Читаем банковскую выписку…");
+      await letSpinnerPaint();
       const data=await readStatement(file);
+      showProcessing(true,"Формируем таблицу операций…");
+      await letSpinnerPaint();
       ops=data.operations.map((x,i)=>({...x,id:i+1}));C.markDuplicates(ops);
       balances=data.balances;
       selected=null;fileLabel=file.name;filter="all";directionFilter="all";resetFilters();
       loadEditor();render();scheduleSave();
       toast("Загружено "+ops.length+" операций. Требуют проверки: "+ops.filter(x=>x.status!=="ready").length);
     }catch(err){toast(err.message||"Ошибка чтения файла");}
-    e.target.disabled=false;
-    e.target.value="";
+    finally{
+      showProcessing(false);
+      e.target.disabled=false;
+      e.target.value="";
+    }
   });
   initTableScroll();
   restoreDraft();updateCounterpartyFilter();updateValueColumnFilters();loadEditor();render();
