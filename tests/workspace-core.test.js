@@ -53,6 +53,45 @@ test("filters an annual statement by arbitrary inclusive date range",()=>{
   assert.equal(rows.length,7);
 });
 
+test("applies a reviewed posting to identical purposes with different dates, without overwriting manual accounts",()=>{
+  const base={id:1,direction:"Исходящее",name:"ТОО Kaspi Pay",originalName:"ТОО Kaspi Pay",
+    purpose:"Оплата за услуги процессинга Без НДС за 09/10/2026",knp:"859",
+    debit:"7210",debitSource:"manual",credit:"1030",creditSource:"auto",article:"Услуги эквайринга и процессинга",
+    articleSource:"manual",docType:"Платёжное поручение исходящее",docTypeSource:"manual",date:"09.10.2026"};
+  const auto={...base,id:2,date:"10.10.2026",purpose:"Оплата за услуги процессинга Без НДС за 10/10/2026",
+    debit:"",debitSource:"",article:"Оплата поставщику",articleSource:"auto",docTypeSource:"auto"};
+  const manual={...auto,id:3,purpose:"Оплата за услуги процессинга Без НДС за 11/10/2026",debit:"3310",debitSource:"manual"};
+  const differentCard={...auto,id:4,purpose:"Оплата за услуги процессинга Без НДС за 10/10/2026 карта 4567",debit:"",debitSource:""};
+  const differentParty={...auto,id:5,name:"ТОО Другая компания",originalName:"ТОО Другая компания",debit:"",debitSource:""};
+  const differentDirection={...auto,id:6,direction:"Входящее",debit:"",debitSource:""};
+  const all=[base,auto,manual,differentCard,differentParty,differentDirection];
+  assert.equal(C.countSimilarOperations(all,base),2);
+  const result=C.applyPostingToSimilar(all,base);
+  assert.deepEqual(result,{matched:2,updated:2});
+  assert.equal(auto.debit,"7210");
+  assert.equal(auto.article,"Услуги эквайринга и процессинга");
+  assert.equal(auto.debitSource,"manual");
+  assert.equal(manual.debit,"3310");
+  assert.equal(manual.article,"Услуги эквайринга и процессинга");
+  assert.equal(differentCard.debit,"");
+  assert.equal(differentParty.debit,"");
+  assert.equal(differentDirection.debit,"");
+});
+
+test("inline bulk apply only copies the chosen account and preserves other fields",()=>{
+  const source={id:1,direction:"Входящее",name:'АО "KASPI BANK"',purpose:"Продажи с Kaspi.kz за 10/10/2026",
+    debit:"1030",debitSource:"manual",credit:"1274",creditSource:"manual",article:"Оплата от покупателя",articleSource:"manual"};
+  const next={...source,id:2,purpose:"Продажи с Kaspi.kz за 11/10/2026",
+    debit:"1030",debitSource:"auto",credit:"",creditSource:"",article:"",articleSource:""};
+  const result=C.applyPostingToSimilar([source,next],source,C.operationRuleKey(source),["credit"]);
+  assert.deepEqual(result,{matched:1,updated:1});
+  assert.equal(next.credit,"1274");
+  assert.equal(next.creditSource,"manual");
+  assert.equal(next.article,"");
+  assert.equal(next.debitSource,"auto");
+  assert.deepEqual(C.applyPostingToSimilar([source,next],source,C.operationRuleKey(source),["credit"]),{matched:1,updated:0});
+});
+
 test("reads outgoing and incoming bank statement columns",()=>{
   const rows=[
     ["Дата","Дебет","Кредит","Получатель","Плательщик","Назначение платежа","Номер документа"],
