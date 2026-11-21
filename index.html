@@ -127,9 +127,25 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
 #mappingColumns label{display:grid;gap:4px;min-width:0}
 #mappingColumns select{width:100%;padding:6px}
 .mapping-actions{display:flex;flex-wrap:wrap;gap:8px}
-.row-date{border:0;background:transparent;color:inherit;padding:3px 0;text-align:left;cursor:pointer}
-.row-date:hover{text-decoration:underline}
-.row-date .ui-icon{width:13px;height:13px;margin-right:4px;color:#61758c}
+/* The row and its editor use the same disclosure affordance. */
+.row-dropdown,select.cell-field{
+  border:1px solid #cfdded;border-radius:8px;background-color:#f7faff;color:#23415f;
+  padding:7px 10px;font:inherit;text-align:left;cursor:pointer
+}
+#rows tr[data-id]{touch-action:manipulation}
+.row-dropdown{display:inline-flex;align-items:center;justify-content:space-between;gap:10px;max-width:100%}
+.row-dropdown::after{content:"";flex:none;width:6px;height:6px;border:solid #65809b;border-width:0 1.5px 1.5px 0;transform:translateY(-2px) rotate(45deg)}
+.row-dropdown:hover,select.cell-field:hover{border-color:#87b5e9;background-color:#eff6ff}
+.row-dropdown:focus-visible,select:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.tablewrap,.table-scroll-top{scrollbar-color:#96afc9 #eff4f9}
+.choice-popup{position:fixed;z-index:120;display:flex;flex-direction:column;gap:6px;padding:8px;background:#fff;border:1px solid #cddceb;border-radius:12px;box-shadow:0 8px 26px #19395d30}
+.choice-search{flex:none;width:100%;border:1px solid #bdd1e5;border-radius:7px;padding:8px 10px;color:var(--ink);font:inherit}
+.choice-search:focus{outline:2px solid #6da9e8;outline-offset:-1px}
+.choice-options{overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#99b1c9 #f4f7fb}
+.choice-options [role=option]{padding:8px 10px;cursor:pointer;border-radius:6px;color:#274361;overflow-wrap:anywhere}
+.choice-options [aria-selected=true]{font-weight:700;color:#145fa9}
+.choice-options .highlight,.choice-options [role=option]:hover{background:#eaf3ff}
+.choice-empty{padding:8px;color:var(--muted)}
 .cell-field{min-width:8em;width:100%;border:1px solid #a9c5e6;border-radius:6px;padding:6px;background:#fff;color:var(--ink);font:inherit}
 #rows td:nth-child(3){white-space:normal;overflow-wrap:anywhere;max-width:29em}
 #rows td:nth-child(7),#rows td:nth-child(8){white-space:normal}
@@ -258,7 +274,8 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="/workspace-core.js?v=kaspi-alatau" defer></script>
-<script src="/app.js?v=bank-fields-readonly" defer></script>
+<script src="/app.js?v=search-double-tap" defer></script>
 </body></html>
+
 
 
