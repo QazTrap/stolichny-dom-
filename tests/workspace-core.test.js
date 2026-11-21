@@ -14,6 +14,25 @@ test("keeps bank comment separate from payment purpose",()=>{
   assert.equal(operation.comment,"Перевод с Alatau на другой счёт");
 });
 
+test("filters a yearly bank statement by a whole month or single day",()=>{
+  const rows=[
+    {date:"31.12.2025",amount:120,direction:"Исходящее"},
+    {date:"01.01.2026",amount:100,direction:"Входящее"},
+    {date:"15.03.2026",amount:250,direction:"Исходящее"},
+    {date:"31.03.2026",amount:300,direction:"Входящее"},
+    {date:"01.04.2026",amount:400,direction:"Исходящее"},
+    {date:"",amount:999,direction:"Входящее"}
+  ];
+  const march=C.filterPeriod(rows,{month:"2026-03"});
+  assert.deepEqual(march.map(x=>x.amount),[250,300]);
+  assert.deepEqual(C.totals(march),{incoming:300,outgoing:250,net:50,count:2,unknown:0});
+  assert.deepEqual(C.filterPeriod(rows,{date:"15.03.2026"}).map(x=>x.amount),[250]);
+  assert.deepEqual(C.filterPeriod(rows,{month:"2026-03",date:"31.03.2026"}).map(x=>x.amount),[300]);
+  assert.deepEqual(C.filterPeriod(rows,{month:"2026-02"}),[]);
+  assert.equal(C.filterPeriod(rows,{}),rows);
+  assert.equal(rows.length,6,"source operations must remain unchanged");
+});
+
 test("reads outgoing and incoming bank statement columns",()=>{
   const rows=[
     ["Дата","Дебет","Кредит","Получатель","Плательщик","Назначение платежа","Номер документа"],
