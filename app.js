@@ -74,24 +74,24 @@
     x.status=C.validateOperation(x);
     return changed||docChanged||postingChanged;
   }
-  function currentRows(){
-    const query=C.norm($("search").value);
+  function rowsForDate(){
     const date=C.dateText($("checkDate").value);
-    return ops.filter(x=>(filter==="all"||x.status===filter)&&(directionFilter==="all"||x.direction===directionFilter)&&
-      (!date||x.date===date)&&
+    return date?ops.filter(x=>x.date===date):ops;
+  }
+  function currentRows(dateRows){
+    const query=C.norm($("search").value);
+    return dateRows.filter(x=>(filter==="all"||x.status===filter)&&(directionFilter==="all"||x.direction===directionFilter)&&
       (!query||C.norm([x.name,x.originalName,x.purpose,x.article,x.bin,x.docNumber,x.date].join(" ")).includes(query)));
   }
-  function updateStats(visible){
+  function updateStats(visible,dateRows){
     const ready=ops.filter(x=>x.status==="ready").length;
-    const detected=ops.filter(x=>x.status==="detected").length;
-    const review=ops.filter(x=>x.status==="review").length;
-    $("allChip").textContent=ops.length;
-    $("detectedChip").textContent=detected;
-    $("reviewChip").textContent=review;
-    $("readyChip").textContent=ready;
-    $("directionAllChip").textContent=ops.length;
-    $("outgoingChip").textContent=ops.filter(x=>x.direction==="Исходящее").length;
-    $("incomingChip").textContent=ops.filter(x=>x.direction==="Входящее").length;
+    $("allChip").textContent=dateRows.length;
+    $("detectedChip").textContent=dateRows.filter(x=>x.status==="detected").length;
+    $("reviewChip").textContent=dateRows.filter(x=>x.status==="review").length;
+    $("readyChip").textContent=dateRows.filter(x=>x.status==="ready").length;
+    $("directionAllChip").textContent=dateRows.length;
+    $("outgoingChip").textContent=dateRows.filter(x=>x.direction==="Исходящее").length;
+    $("incomingChip").textContent=dateRows.filter(x=>x.direction==="Входящее").length;
     const t=C.totals(visible);
     $("filteredTotal").textContent=fmt(t.incoming);
     $("outgoingTotal").textContent=fmt(t.outgoing);
@@ -248,8 +248,9 @@
   }
 
   function render(){
-    const visible=currentRows();
-    updateStats(visible);
+    const dateRows=rowsForDate();
+    const visible=currentRows(dateRows);
+    updateStats(visible,dateRows);
     const shown=visible.slice(0,400);
     $("rows").innerHTML=shown.length?shown.map(x=>
       '<tr data-id="'+x.id+'" class="'+(x.id===selected?"selected":"")+'">'+
