@@ -269,7 +269,10 @@
     syncTableScrollWidth();
   }
 
-  const cellFields=["editDate","operationDirection","counterparty","editAmount","debit","credit","article","docType"].map($);
+  const cellFields=new Map([
+    [1,$("operationDirection")],[2,$("counterparty")],[4,$("debit")],
+    [5,$("credit")],[6,$("article")],[7,$("docType")]
+  ]);
   const storage=$("rowEditStorage");
   const extraFields=[$("customArticle"),$("editForm")];
   for(const [,accounts] of ledgerGroups){
@@ -290,11 +293,11 @@
     const visible=currentRows(dateRows);
     updateStats(visible,dateRows);
     const shown=visible.slice(0,400);
-    storage.append(...cellFields,...extraFields);
+    storage.append(...cellFields.values(),...extraFields);
     if(!shown.some(x=>x.id===selected))selected=null;
     $("rows").innerHTML=shown.length?shown.map(x=>
       '<tr data-id="'+x.id+'" class="'+(x.id===selected?"selected":"")+'">'+
-      '<td><button type="button" class="row-date" aria-label="Редактировать операцию '+x.id+'" title="Редактировать операцию"><svg class="ui-icon" aria-hidden="true"><use href="#ic-edit"></use></svg>'+show(x.date||"Проверить дату")+'</button></td>'+
+      '<td><button type="button" class="row-date" aria-label="Редактировать операцию '+x.id+'" title="Редактировать реквизиты операции"><svg class="ui-icon" aria-hidden="true"><use href="#ic-edit"></use></svg></button>'+show(x.date||"Проверить дату")+'</td>'+
       '<td>'+show(x.direction==="Входящее"?"Входящие":x.direction==="Исходящее"?"Исходящие":"Не определено")+'</td>'+
       '<td><strong>'+show(x.name||"Не указан")+'</strong>'+(x.possibleDuplicate&&!x.duplicateConfirmed?'<div class="notice">Возможный дубль</div>':"")+'</td>'+
       '<td class="amount">'+fmt(x.amount)+'</td>'+
@@ -330,7 +333,7 @@
     selected=Number(row.dataset.id);
     loadEditor();
     render();
-    (cellFields[column]||cellFields[0]).focus({preventScroll:true});
+    (cellFields.get(column)||$("operationDirection")).focus({preventScroll:true});
   });
   // Expand before iOS opens its native select; focus handles keyboard access.
   ["touchstart","pointerdown","focusin"].forEach(type=>{
@@ -367,9 +370,6 @@
     const x=ops.find(v=>v.id===selected);
     if(!x)return;
     $("operationMeta").textContent=(x.date||"Дата не определена")+" · "+fmt(x.amount)+(x.docNumber?" · Документ "+x.docNumber:"");
-    const match=x.date?.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
-    $("editDate").value=match?match[3]+"-"+match[2]+"-"+match[1]:"";
-    $("editAmount").value=Number(x.amount)||"";
     $("operationDirection").value=x.direction||"";
     $("docType").value=x.docType||"";
     $("operationKindHint").textContent=C.suggestDocumentOperation(x.article,x.docType)
@@ -399,10 +399,6 @@
     event.preventDefault();
     const x=ops.find(v=>v.id===selected);
     if(!x)return;
-    const amount=Math.round(Number($("editAmount").value)*100)/100;
-    if(!Number.isFinite(amount)||amount<=0){toast("Укажите корректную положительную сумму");return;}
-    x.date=C.dateText($("editDate").value);
-    x.amount=amount;
     const previousCounterparty=counterpartyKey(x);
     x.name=C.fixTengeText($("counterparty").value.trim().slice(0,300));
     x.originalName=x.name;
