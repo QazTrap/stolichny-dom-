@@ -548,6 +548,13 @@
     document.querySelectorAll("[data-direction]").forEach(x=>x.classList.toggle("active",x.dataset.direction==="all"));
   }
   function collectStatementBalances(rows, values){
+    for(const [i,label] of ["входящий остаток:","исходящий остаток:"].entries()){
+      const row=rows.find(row=>C.norm(row[0])===label);
+      if(row?.some(cell=>C.norm(cell)==="kzt")){
+        const amount=C.money(row.slice(1).find(cell=>Number.isFinite(C.money(cell))));
+        if(Number.isFinite(amount))values[i].add(amount);
+      }
+    }
     for(const [index,label] of balanceLabels.entries()){
       const header=rows.findIndex(row=>row?.some(cell=>C.norm(cell)===label));
       if(header<0)continue;
@@ -667,6 +674,10 @@
   async function readStatement(file){
     const requireExcel=()=>{if(!window.XLSX)throw Error("Библиотека Excel не загрузилась. Проверьте соединение и обновите страницу.");};
     const ext=file.name.split(".").pop().toLowerCase();
+    if(ext==="pdf"){
+      const {readAlatauPdf}=await import("./alatau-pdf.mjs");
+      return readAlatauPdf(file,C);
+    }
     let book;
     if(["csv","tsv","txt"].includes(ext)){
       const text=decodeBankText(await file.arrayBuffer());
@@ -688,6 +699,20 @@
       let operations=$("manualImport").checked?[]:C.parseRows(rows,sheet);
       if(!operations.length)operations=await mapSheet(rows,sheet);
       if(!operations.length)continue;
+      const kaspiHeader=rows.find(row=>row.some(cell=>C.norm(cell)==="наименование бенефициара / отправителя денег"));
+      if(kaspiHeader){
+        const debit=kaspiHeader.findIndex(cell=>C.norm(cell)==="дебет");
+        const credit=kaspiHeader.findIndex(cell=>C.norm(cell)==="кредит");
+        const totalsRow=rows.find(row=>row.some(cell=>C.norm(cell)==="итого обороты в валюте счета"));
+        const countRow=rows.find(row=>row.some(cell=>C.norm(cell)==="итого операций за период"));
+        const totals=C.totals(operations);
+        if(debit>=0&&credit>=0&&(
+          (totalsRow&&(totals.outgoing!==C.money(totalsRow[debit])||totals.incoming!==C.money(totalsRow[credit])))||
+          (countRow&&(operations.filter(op=>op.direction==="Исходящее").length!==C.money(countRow[debit])||
+                      operations.filter(op=>op.direction==="Входящее").length!==C.money(countRow[credit]))))){
+          throw Error("Операции не сошлись с итогами Kaspi. Проверьте колонки дебета и кредита.");
+        }
+      }
       all.push(...operations);
       collectStatementBalances(rows,balanceValues);
       if(all.length>20000)throw Error("Слишком много операций (максимум 20 000)");
@@ -699,7 +724,7 @@
     const file=e.target.files?.[0];
     if(!file)return;
     try{
-      if(!/\.(xlsx|xls|xlsm|xlsb|ods|csv|tsv|txt)$/i.test(file.name))throw Error("Выберите выписку Excel, ODS, CSV, TSV или табличный TXT");
+      if(!/\.(xlsx|xls|xlsm|xlsb|ods|csv|tsv|txt|pdf)$/i.test(file.name))throw Error("Выберите выписку Excel, ODS, CSV, TSV, табличный TXT или PDF Alatau City Bank");
       if(file.size>20*1024*1024)throw Error("Файл больше 20 МБ");
       e.target.disabled=true;
       const data=await readStatement(file);
@@ -715,3 +740,4 @@
   initTableScroll();
   restoreDraft();updateCounterpartyFilter();loadEditor();render();
 })();
+
