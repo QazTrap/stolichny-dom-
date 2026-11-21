@@ -103,6 +103,38 @@ test("Alatau-style export uses document date and KNP, not statement generation d
   assert.equal(data[2].date,"03.11.2026");
 });
 
+test("separates compulsory state levies from taxes, based on Alatau statement abbreviations",()=>{
+  const bankPurpose="НДС не облагается. Плата за разм нар (виз) рекл на откр простр за пред помещ в городе респ знач, столице. Начисленные (исчисленные) и иные обязательства в бюджет. Период: 08.2026";
+  const rows=[
+    ["Дата операции","Сумма по дебету","Сумма по кредиту","КНП","Назначение платежа","Контрагент"],
+    ["07.09.2026","21625","","911",bankPurpose,"УГД по Алматинскому району"]
+  ];
+  const [op]=C.parseRows(rows,"Alatau City Bank");
+  assert.equal(op.article,"Другие обязательные платежи в бюджет");
+  assert.equal(op.articleConfidence,"review");
+  assert.equal(op.debit,"3230");
+  assert.equal(op.credit,"1030");
+  assert.ok(op.debitReason.includes("начисленного"));
+  assert.ok(C.reconciliationNotes(op).some(note=>note.includes("3230")));
+
+  assert.equal(C.suggestArticle("Плата за размещение наружной (визуальной) рекламы","Исходящее","911","УГД Нура"),
+    "Другие обязательные платежи в бюджет");
+  assert.equal(C.suggestArticle("Государственная пошлина за выдачу разрешения","Исходящее","911","Казначейство"),
+    "Другие обязательные платежи в бюджет");
+  assert.equal(C.suggestArticle("Оплата за размещение наружной рекламы по договору","Исходящее","859","ТОО Рекламное агентство"),
+    "Оплата поставщику");
+  assert.equal(C.suggestArticle("Плата за размещение наружной рекламы по договору","Исходящее","859","ТОО Рекламное агентство"),
+    "Оплата поставщику");
+  assert.equal(C.suggestArticle("Комиссия банка за уплату госпошлины","Исходящее","841","Alatau City Bank"),
+    "Банковские комиссии");
+  assert.equal(C.suggestArticle("Уплата НДС за 3 квартал","Исходящее","911","УГД"),
+    "Налоги и отчисления");
+  const manual={...op,debit:"7210",debitSource:"manual",article:"Налоги и отчисления",articleSource:"manual"};
+  C.refreshSuggestedPosting(manual);
+  assert.equal(manual.debit,"7210");
+  assert.equal(manual.article,"Налоги и отчисления");
+});
+
 test("does not label service fees as taxes despite embedded НДС or penalties",()=>{
   assert.equal(C.suggestArticle("Комиссия за перевод пенсионных взносов, НДС, пеня","Исходящее","841"),"Банковские комиссии");
   assert.equal(C.suggestArticle("Оплата бухгалтерских и налоговых услуг по договору","Исходящее","859"),"Оплата поставщику");
