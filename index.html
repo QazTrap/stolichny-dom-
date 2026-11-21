@@ -90,6 +90,9 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
   .sidebar-tools .filters{display:flex;flex-wrap:wrap}
   .sidebar-tools .chip{width:auto}
 }
+.heading-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.date-summary-button{background:var(--blue2);color:#174777;border-color:#b9d7f7}
+.date-summary-button:hover{background:#deeeff}
 </style>
 </head>
 <body>
@@ -111,7 +114,6 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
     <button class="chip" data-filter="detected"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-file"></use></svg>Документы определены (<span id="detectedChip">0</span>)</button>
     <button class="chip" data-filter="review"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-alert"></use></svg>Проверить (<span id="reviewChip">0</span>)</button>
     <button class="chip" data-filter="ready"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-check"></use></svg>Поля заполнены (<span id="readyChip">0</span>)</button>
-    <button class="chip" id="toggleDateCheck" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-calendar"></use></svg> Итоги за дату</button>
     <button class="chip" id="reclassifyDDS" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-refresh"></use></svg> Пересчитать ДДС</button>
    </div>
    <div class="search-field"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-search"></use></svg><input class="search" id="search" type="search" aria-label="Поиск по контрагенту или назначению" placeholder="Поиск по операциям"></div>
@@ -122,8 +124,19 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
  <main>
   <div class="heading">
    <div class="titlewrap"><div class="folder"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-folder"></use></svg></div><div><h1>Обработка банковской выписки</h1><p>Проверьте и при необходимости отредактируйте операции перед загрузкой в 1С</p></div></div>
-   <label class="btn primary" for="fileInput"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-upload"></use></svg> Загрузить выписку</label><input id="fileInput" type="file" accept=".xlsx,.xls,.csv,.txt">
+   <div class="heading-actions">
+    <button class="btn date-summary-button" aria-controls="dateCheckPanel" id="toggleDateCheck" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-calendar"></use></svg> Итоги за дату</button>
+    <label class="btn primary" for="fileInput"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-upload"></use></svg> Загрузить выписку</label><input id="fileInput" type="file" accept=".xlsx,.xls,.csv,.txt">
+   </div>
   </div>
+  <section class="tablecard" id="dateCheckPanel" style="margin-bottom:14px;padding:16px" hidden>
+   <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
+    <div><label for="checkDate" style="display:block;font-size:12px;font-weight:750;margin-bottom:6px">Дата операции</label><input id="checkDate" type="date" class="search" style="width:190px"></div>
+    <div><label for="checkDirection" style="display:block;font-size:12px;font-weight:750;margin-bottom:6px">Направление</label><select id="checkDirection" class="search" style="width:180px"><option value="Исходящее">Исходящие</option><option value="Входящее">Входящие</option><option value="all">Все операции</option></select></div>
+    <button class="btn primary" id="runDateCheck" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-list"></use></svg> Показать итоги</button>
+   </div>
+   <div id="dateCheckResult" style="margin-top:14px"></div>
+  </section>
   <div class="stats">
    <div class="stat"><div class="staticon blue"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-file"></use></svg></div><div><strong id="totalCount">0</strong><span>Всего операций</span></div></div>
    <div class="stat"><div class="staticon green"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-check"></use></svg></div><div><strong id="detectedCount">0</strong><span>Документы определены</span></div></div>
@@ -135,14 +148,6 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
    <div class="stat"><div class="staticon blue"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-sigma"></use></svg></div><div><strong id="netTotal">0 ₸</strong><span>Разница (поступления − списания)</span></div></div>
    <div class="stat"><div class="staticon blue"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-list"></use></svg></div><div><strong id="filteredCount">0</strong><span>Операций по фильтру</span></div></div>
   </div>
-  <section class="tablecard" id="dateCheckPanel" style="margin-bottom:14px;padding:16px" hidden>
-   <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
-    <div><label for="checkDate" style="display:block;font-size:12px;font-weight:750;margin-bottom:6px">Дата операции</label><input id="checkDate" type="date" class="search" style="width:190px"></div>
-    <div><label for="checkDirection" style="display:block;font-size:12px;font-weight:750;margin-bottom:6px">Направление</label><select id="checkDirection" class="search" style="width:180px"><option value="Исходящее">Исходящие</option><option value="Входящее">Входящие</option><option value="all">Все операции</option></select></div>
-    <button class="btn primary" id="runDateCheck" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-list"></use></svg> Показать итоги</button>
-   </div>
-   <div id="dateCheckResult" style="margin-top:14px"></div>
-  </section>
   <section class="tablecard" id="previewPanel" style="margin-bottom:14px;padding:16px" hidden>
    <h2 style="font-size:17px;margin:0 0 12px">Предварительная проверка перед экспортом</h2>
    <div id="previewContent"></div>
