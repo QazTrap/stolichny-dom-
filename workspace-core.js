@@ -253,6 +253,7 @@
     payer:["наименование плательщика","плательщик","отправитель","от кого","payer","sender"],
     receiver:["наименование получателя","получатель","кому","receiver","beneficiary"],
     name:["наименование бенефициара / отправителя денег","наименование контрагента","контрагент","название контрагента","counterparty","контрагент атауы","корреспондент"],
+    comment:["комментарий","комментарии","комментарий банка","комментарий к операции","примечание","примечания","memo","transaction memo","payment comment","comment","remarks","note"],
     purpose:["назначение платежа","назначение","детали платежа","описание платежа","описание","purpose","details","description","төлем мақсаты"],
     amount:["сумма операции","сумма платежа","сумма в валюте счета","сумма","amount","сумма в тенге","сомасы"],
     debit:["сумма по дебету","дебетовая сумма","сумма дебет","расход","списание","дебет","debit","withdrawal","money out","шығыс"],
@@ -326,6 +327,7 @@
       const embeddedBin=partyText.match(/\s+(?:ИИН\s*\/\s*БИН|БИН\s*\/\s*ИИН)[:\s]+(\d{12})\s*$/i);
       const companyName=embeddedBin?partyText.slice(0,embeddedBin.index).trim():partyText;
       const purpose=fixTengeText(get("purpose")||"").trim();
+      const comment=fixTengeText(get("comment")||"").trim().slice(0,3000);
       const rawKnp=String(get("knp")??"").trim();
       const knp=/^\d{1,3}$/.test(rawKnp)?rawKnp.padStart(3,"0"):rawKnp;
       const articleSuggestion=suggestArticleDetailed(purpose,direction,knp,companyName);
@@ -333,7 +335,7 @@
       const bankDebit=String(get("accountDebit")||"").trim(),bankCredit=String(get("accountCredit")||"").trim();
       const docType=suggestDocumentType(direction,article);
       const entry={
-        id:0, date:dateText(get("date")), name:shortLegalName(companyName), originalName:companyName, purpose,
+        id:0, date:dateText(get("date")), name:shortLegalName(companyName), originalName:companyName, purpose, comment,
         amount:roundMoney(Math.abs(amount)), direction, docType, docTypeSource:docType?"auto":"", article, articleSource:article?"auto":"",
         articleReason:articleSuggestion.reason,articleConfidence:articleSuggestion.confidence,knp,bankRef:String(get("bankRef")??"").trim(),
         debit:/^\d{4}$/.test(bankDebit)?bankDebit:"", debitSource:/^\d{4}$/.test(bankDebit)?"statement":"",
