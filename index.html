@@ -258,7 +258,7 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
     <input id="counterparty" form="editForm" aria-label="Контрагент" class="cell-field">
     <input id="debit" form="editForm" aria-label="Счёт дебета" class="cell-field" value="" list="ledgerCodes" pattern="[0-9]{4}" inputmode="numeric" autocomplete="off" placeholder="Указать">
     <input id="credit" form="editForm" aria-label="Счёт кредита" class="cell-field" value="" list="ledgerCodes" pattern="[0-9]{4}" inputmode="numeric" autocomplete="off" placeholder="Указать">
-    <select id="article" form="editForm" aria-label="Статья ДДС" class="cell-field"><option value="">Выберите статью ДДС</option><option>Оплата от покупателя</option><option>Оплата поставщику</option><option>Заработная плата</option><option>Налоги и отчисления</option><option>Другие обязательные платежи в бюджет</option><option>Аренда</option><option>Приобретение ГСМ</option><option>Банковские комиссии</option><option>Возврат денежных средств</option><option>Перевод между счетами</option><option>Получение займа</option><option>Погашение займа</option><option>Прочие поступления</option><option>Прочие списания</option><option>Алименты</option><option>Исполнительные документы</option><option value="__custom__">＋ Своя статья…</option></select>
+    <select id="article" form="editForm" aria-label="Статья ДДС" class="cell-field"><option value="">Выберите статью ДДС</option><option>Оплата от покупателя</option><option>Оплата поставщику</option><option>Заработная плата</option><option>Налоги и отчисления</option><option>Другие обязательные платежи в бюджет</option><option>Аренда</option><option>Приобретение ГСМ</option><option>Банковские комиссии</option><option>Услуги эквайринга и процессинга</option><option>Возврат денежных средств</option><option>Перевод между счетами</option><option>Получение займа</option><option>Погашение займа</option><option>Прочие поступления</option><option>Прочие списания</option><option>Алименты</option><option>Исполнительные документы</option><option value="__custom__">＋ Своя статья…</option></select>
     <select id="docType" form="editForm" aria-label="Тип документа 1С" class="cell-field"><option value="">Не выбран</option><option>Платёжное поручение входящее</option><option>Платёжное поручение исходящее</option><option>Платёжный ордер (списание денежных средств)</option><option>ПКО</option><option>РКО</option><option>Поступление на расчётный счёт</option><option>Списание с расчётного счёта</option></select>
     <input id="customArticle" class="cell-field" aria-label="Своя статья ДДС" form="editForm" placeholder="Введите название своей статьи" style="display:none;margin-top:8px">
     <form class="edit" id="editForm">
@@ -306,7 +306,7 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
 </dialog>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
-<script src="/workspace-core.js?v=date-range-20261121-v1" defer></script>
+<script src="/workspace-core.js?v=kaspi-classification-20261121-v1" defer></script>
 <script src="/app.js?v=date-range-20261121-v2" defer></script>
 </body></html>
 
