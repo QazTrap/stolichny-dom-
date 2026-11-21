@@ -68,9 +68,7 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
 
 .inline-ledger-picker{display:inline-flex;position:relative;align-items:center;min-width:60px;min-height:36px;cursor:pointer}
 .inline-ledger-picker.unset,#rows input[list="ledgerCodes"]::placeholder{color:#b45309;opacity:1}
-.operation-comment{display:block;width:100%;min-width:10em;resize:vertical;border:0;padding:3px 0;background:transparent;color:inherit;line-height:1.4}
-.operation-comment::placeholder{color:var(--muted)}
-.operation-comment:focus-visible{outline:1px solid var(--blue);outline-offset:2px}
+.statement-comment{max-width:300px;overflow:hidden;text-overflow:ellipsis;color:var(--muted);cursor:default}
 .inline-ledger-picker:has(select:focus-visible),.column-filter:has(select:focus-visible){outline:2px solid var(--blue);outline-offset:2px}
 .inline-ledger-current{font-variant-numeric:tabular-nums;pointer-events:none}
 .inline-ledger-select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px}
@@ -208,7 +206,7 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
      <span class="muted" id="tableCaption">Сначала загрузите банковскую выписку</span>
     </div>
     <div class="table-scroll-top" id="tableScrollTop" aria-label="Горизонтальная прокрутка таблицы операций" role="region" tabindex="0"><div id="tableScrollTopSpacer"></div></div>
-    <div class="tablewrap" id="tableScrollBottom"><table><thead><tr><th>Дата</th><th>Направление</th><th scope="col"><label class="column-filter">Контрагент<select id="counterpartyFilter" aria-label="Фильтр по контрагенту" title="Выбрать контрагента" disabled><option value="">Все контрагенты</option></select></label></th><th>Сумма</th><th title="Предварительный счёт дебета">Дт</th><th title="Предварительный счёт кредита">Кт</th><th>Статья ДДС</th><th>Тип документа 1С</th><th>Комментарии</th></tr></thead><tbody id="rows"></tbody></table></div>
+    <div class="tablewrap" id="tableScrollBottom"><table><thead><tr><th>Дата</th><th>Направление</th><th scope="col"><label class="column-filter">Контрагент<select id="counterpartyFilter" aria-label="Фильтр по контрагенту" title="Выбрать контрагента" disabled><option value="">Все контрагенты</option></select></label></th><th>Сумма</th><th title="Предварительный счёт дебета">Дт</th><th title="Предварительный счёт кредита">Кт</th><th>Статья ДДС</th><th>Тип документа 1С</th><th>Комментарии из выписки</th></tr></thead><tbody id="rows"></tbody></table></div>
     <div class="pagination"><span id="shownCount">Операций пока нет</span></div>
    </section>
    <div id="rowEditStorage" hidden>
@@ -267,7 +265,7 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="/workspace-core.js?v=kaspi-alatau" defer></script>
-<script src="/app.js?v=operation-comments" defer></script>
+<script src="/app.js?v=statement-comments" defer></script>
 </body></html>
 
 
