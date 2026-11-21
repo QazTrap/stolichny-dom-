@@ -93,6 +93,10 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
 .heading-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .date-summary-button{background:var(--blue2);color:#174777;border-color:#b9d7f7}
 .date-summary-button:hover{background:#deeeff}
+#dateCheckPanel{position:relative}
+.date-summary-controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap;padding-right:48px}
+.date-summary-close{position:absolute;top:12px;right:12px;width:36px;height:36px;padding:0;font-size:24px;line-height:1}
+@media(max-width:720px){.date-summary-controls{padding-top:38px;padding-right:0}}
 </style>
 </head>
 <body>
@@ -125,12 +129,13 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
   <div class="heading">
    <div class="titlewrap"><div class="folder"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-folder"></use></svg></div><div><h1>Обработка банковской выписки</h1><p>Проверьте и при необходимости отредактируйте операции перед загрузкой в 1С</p></div></div>
    <div class="heading-actions">
-    <button class="btn date-summary-button" aria-controls="dateCheckPanel" id="toggleDateCheck" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-calendar"></use></svg> Итоги за дату</button>
+    <button class="btn date-summary-button" aria-controls="dateCheckPanel" aria-expanded="false" id="toggleDateCheck" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-calendar"></use></svg> Итоги за дату</button>
     <label class="btn primary" for="fileInput"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-upload"></use></svg> Загрузить выписку</label><input id="fileInput" type="file" accept=".xlsx,.xls,.csv,.txt">
    </div>
   </div>
   <section class="tablecard" id="dateCheckPanel" style="margin-bottom:14px;padding:16px" hidden>
-   <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
+   <button class="btn outline date-summary-close" id="closeDateCheck" type="button" aria-label="Закрыть итоги за дату" title="Закрыть итоги за дату"><span aria-hidden="true">×</span></button>
+   <div class="date-summary-controls">
     <div><label for="checkDate" style="display:block;font-size:12px;font-weight:750;margin-bottom:6px">Дата операции</label><input id="checkDate" type="date" class="search" style="width:190px"></div>
     <div><label for="checkDirection" style="display:block;font-size:12px;font-weight:750;margin-bottom:6px">Направление</label><select id="checkDirection" class="search" style="width:180px"><option value="Исходящее">Исходящие</option><option value="Входящее">Входящие</option><option value="all">Все операции</option></select></div>
     <button class="btn primary" id="runDateCheck" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-list"></use></svg> Показать итоги</button>
@@ -192,5 +197,5 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="/workspace-core.js" defer></script>
-<script src="/app.js?v=downloads-paused-scroll-fix-20261121" defer></script>
+<script src="/app.js?v=date-summary-close-20261121" defer></script>
 </body></html>
