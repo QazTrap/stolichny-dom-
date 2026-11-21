@@ -397,10 +397,15 @@
     directionFilter=button.dataset.direction;
     document.querySelectorAll("[data-direction]").forEach(b=>b.classList.toggle("active",b===button));render();
   }));
-  $("toggleDateCheck").addEventListener("click",()=>{
-    $("dateCheckPanel").hidden=!$("dateCheckPanel").hidden;
-    if(!$("dateCheckPanel").hidden)$("checkDate").focus();
-  });
+  const dateCheckPanel=$("dateCheckPanel");
+  const dateCheckToggle=$("toggleDateCheck");
+  function setDateCheckOpen(open){
+    dateCheckPanel.hidden=!open;
+    dateCheckToggle.setAttribute("aria-expanded",String(open));
+    (open?$("checkDate"):dateCheckToggle).focus();
+  }
+  dateCheckToggle.addEventListener("click",()=>setDateCheckOpen(dateCheckPanel.hidden));
+  $("closeDateCheck")?.addEventListener("click",()=>setDateCheckOpen(false));
   function renderDateCheck(){
     const raw=$("checkDate").value;
     if(!raw)return;
