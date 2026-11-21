@@ -1,5 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="STOLDOM">
-  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#258afa"/><stop offset="1" stop-color="#1265d5"/></linearGradient></defs>
-  <rect width="64" height="64" rx="15" fill="url(#bg)"/>
-  <path fill="#fff" transform="translate(14.625 50.61) scale(.0254 -.0254)" d="M689 -24C1073 -24 1301 153 1301 453C1301 683 1158 814 828 880L697 906C527 941 456 986 456 1067C456 1160 551 1225 687 1225C829 1225 924 1149 934 1026H1267C1258 1331 1039 1514 682 1514C332 1514 96 1327 96 1050C96 833 245 689 536 629L689 598C868 561 945 512 945 427C945 329 844 265 692 265C520 265 415 349 410 492H67C67 163 292 -24 689 -24Z"/>
+ <defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#218af7"/><stop offset=".58" stop-color="#1465d8"/><stop offset="1" stop-color="#0646ba"/></linearGradient>
+  <linearGradient id="shine" x1="0" y1="0" x2=".9" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#dfeeff"/></linearGradient>
+ </defs>
+ <rect x="0" y="0" width="64" height="64" rx="14" fill="url(#bg)"/>
+ <path d="M12.5 27 32 12.5 51.5 27" fill="none" stroke="url(#shine)" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/>
+ <path d="M44.5 21V15.5h4.5v9" fill="none" stroke="url(#shine)" stroke-width="3.5" stroke-linejoin="round"/>
+ <path d="M44 31.5H28.5c-5.9 0-9.8 2.4-9.8 6.3 0 3.6 3.3 5.8 9.3 5.8h7.8c5.4 0 9 2.3 9 5.8 0 3.7-3.7 6-9.7 6H20.5" fill="none" stroke="url(#shine)" stroke-width="6.1" stroke-linecap="round" stroke-linejoin="round"/>
+ <path d="M23 59h18" stroke="#8ccfff" stroke-width="2" stroke-linecap="round" opacity=".9"/>
 </svg>
