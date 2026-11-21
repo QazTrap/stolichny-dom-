@@ -241,6 +241,15 @@ test("recognizes Kaspi sales payouts, bank card charges and Kaspi Pay processing
   assert.equal(manual.article,"Оплата поставщику");
 });
 
+test("distinguishes sales refunds and reversals of Kaspi card fees from new revenue",()=>{
+  const outgoing=C.suggestArticleDetailed("Возврат продаж с Kaspi.kz за 31/10/2026","Исходящее","","АО KASPI BANK");
+  const incoming=C.suggestArticleDetailed("Возврат оплаты за услуги операций по картам Kaspi Gold и другим картам за 31/10/2026","Входящее","","АО KASPI BANK");
+  assert.equal(outgoing.article,"Возврат денежных средств");
+  assert.equal(incoming.article,"Возврат денежных средств");
+  assert.equal(outgoing.confidence,"review");
+  assert.equal(incoming.confidence,"review");
+  assert.equal(C.suggestPosting({article:"Возврат денежных средств",direction:"Исходящее",purpose:"Возврат продаж с Kaspi.kz"}).debit,"");
+});
 test("does not label service fees as taxes despite embedded НДС or penalties",()=>{
   assert.equal(C.suggestArticle("Комиссия за перевод пенсионных взносов, НДС, пеня","Исходящее","841"),"Банковские комиссии");
   assert.equal(C.suggestArticle("Оплата бухгалтерских и налоговых услуг по договору","Исходящее","859"),"Оплата поставщику");
