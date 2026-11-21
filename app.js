@@ -127,18 +127,45 @@
       amountSelect.disabled=!amounts.length;
     }
   }
+  function ddsArticleKey(operation){
+    const value=C.norm(operation.article||"");
+    return value?"dds:"+value:"missing";
+  }
+  function updateDdsArticleFilter(){
+    const select=$("ddsArticleFilter");
+    if(!select)return;
+    const selected=select.value;
+    const entries=new Map();
+    for(const operation of ops){
+      const key=ddsArticleKey(operation);
+      const entry=entries.get(key);
+      if(entry)entry.count++;
+      else entries.set(key,{name:operation.article?.trim()||"Не указана",count:1});
+    }
+    const sorted=[...entries].sort((a,b)=>{
+      if(a[0]==="missing")return -1;
+      if(b[0]==="missing")return 1;
+      return a[1].name.localeCompare(b[1].name,"ru");
+    });
+    select.replaceChildren(new Option("Все статьи ДДС",""),...sorted.map(([key,entry])=>
+      new Option(entry.name+" · "+entry.count,key)));
+    select.value=entries.has(selected)?selected:"";
+    select.disabled=!sorted.length;
+  }
   function rowsForDate(){
     const rows=C.filterPeriod(ops,{date:$("checkDate").value,month:selectedMonth,from:periodFrom,to:periodTo});
     const counterparty=$("counterpartyFilter")?.value;
     const amount=$("amountColumnFilter")?.value;
-    if(!counterparty&&!amount)return rows;
+    const article=$("ddsArticleFilter")?.value;
+    if(!counterparty&&!amount&&!article)return rows;
     return rows.filter(x=>(!counterparty||counterpartyKey(x)===counterparty)&&
-      (!amount||amountKey(x.amount)===amount));
+      (!amount||amountKey(x.amount)===amount)&&
+      (!article||ddsArticleKey(x)===article));
   }
   function currentRows(dateRows){
     const query=C.norm($("search").value);
     return dateRows.filter(x=>(filter==="all"||x.status===filter)&&(directionFilter==="all"||x.direction===directionFilter)&&
-      (!query||C.norm([x.name,x.originalName,x.purpose,x.article,x.bin,x.docNumber,x.date,x.comment].join(" ")).includes(query)));
+      (!query||C.norm([x.name,x.originalName,x.purpose,x.article,x.docType,x.bin,x.docNumber,x.date,x.comment].join(" ")).includes(query)));
   }
   function updateStats(visible,dateRows){
     const ready=ops.filter(x=>x.status==="ready").length;
@@ -638,6 +665,7 @@
   }
   function render(){
     closeChoice();
+    updateDdsArticleFilter();
     const dateRows=rowsForDate();
     const visible=currentRows(dateRows);
     updateStats(visible,dateRows);
@@ -835,6 +863,7 @@
   $("search").addEventListener("input",render);
   $("counterpartyFilter")?.addEventListener("change",render);
   $("amountColumnFilter")?.addEventListener("change",render);
+  $("ddsArticleFilter")?.addEventListener("change",render);
   $("dateColumnFilter")?.addEventListener("change",()=>{
     const date=$("dateColumnFilter").value;
     periodFrom="";periodTo="";
@@ -970,6 +999,7 @@
     if($("counterpartyFilter"))$("counterpartyFilter").value="";
     if($("dateColumnFilter"))$("dateColumnFilter").value="";
     if($("amountColumnFilter"))$("amountColumnFilter").value="";
+    if($("ddsArticleFilter"))$("ddsArticleFilter").value="";
     updateCounterpartyFilter();
     updateValueColumnFilters();
     $("checkDate").value="";
