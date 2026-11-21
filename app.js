@@ -155,7 +155,6 @@
     if(statusIcon)statusIcon.setAttribute("href","#ic-alert");
     $("bottomStatusIcon").parentElement.classList.add("pending");
     $("export").disabled=!downloadsEnabled || ops.length===0;
-    $("preview").disabled=ops.length===0;
     ["openingBalance","closingBalance"].forEach((id,index)=>{
       const value=$(id);
       if(!value)return;
@@ -697,11 +696,6 @@
       '</tbody></table></div>'+
       (ops.length>checks.length?'<p class="notice">Показаны первые '+checks.length+' операций.</p>':"");
   }
-  $("preview").addEventListener("click",()=>{
-    if(!ops.length)return;
-    $("previewPanel").hidden=!$("previewPanel").hidden;
-    if(!$("previewPanel").hidden)renderPreview();
-  });
   function safeText(value){
     const text=String(value??"");
     return /^[\s]*[=+@-]/.test(text)?"'"+text:text;
@@ -738,22 +732,6 @@
       XLSX.writeFile(workbook,"STOLDOM_подготовка_1С_"+new Date().toISOString().slice(0,10)+".xlsx",{compression:true});
       toast("Контрольный Excel скачан. Все проводки и статьи ДДС необходимо сверить с 1С.");
     }catch(e){toast("Не удалось сформировать Excel: "+e.message);}
-  });
-  $("restoreDraftFile").addEventListener("click",()=>$("draftInput").click());
-  $("draftInput").addEventListener("change",async e=>{
-    const file=e.target.files?.[0];
-    if(!file)return;
-    try{
-      if(file.size>20*1024*1024)throw Error("Черновик слишком большой");
-      const data=JSON.parse(await file.text());
-      if(data.version!==2)throw Error("Этот формат черновика не поддерживается");
-      ops=sanitizeImported(data.ops);ops.forEach(recomputeArticle);ops.forEach(C.refreshSuggestedDocument);ops.forEach(C.refreshSuggestedPosting);C.markDuplicates(ops);
-      selected=null;fileLabel=String(data.fileLabel||file.name).slice(0,200);
-      balances=Array.isArray(data.balances)?data.balances:[];
-      filter="all";directionFilter="all";resetFilters();
-      loadEditor();render();scheduleSave();toast("Черновик загружен: "+ops.length+" операций");
-    }catch(err){toast(err.message||"Ошибка открытия черновика");}
-    e.target.value="";
   });
   $("clearDraft").addEventListener("click",()=>{
     if(!ops.length)return;
