@@ -91,12 +91,11 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
   .sidebar-tools .chip{width:auto}
 }
 .heading-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.date-summary-button{background:var(--blue2);color:#174777;border-color:#b9d7f7}
-.date-summary-button:hover{background:#deeeff}
-#dateCheckPanel{position:relative}
-.date-summary-controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap;padding-right:48px}
-.date-summary-close{position:absolute;top:12px;right:12px;width:36px;height:36px;padding:0;font-size:24px;line-height:1}
-@media(max-width:720px){.date-summary-controls{padding-top:38px;padding-right:0}}
+.tabletop{flex-wrap:wrap;gap:10px}
+.table-date-filter{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.table-date-filter [hidden]{display:none}
+.table-date-filter label{font-weight:650}
+.table-date-filter .search{width:auto;max-width:100%}
 </style>
 </head>
 <body>
@@ -129,19 +128,9 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
   <div class="heading">
    <div class="titlewrap"><div class="folder"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-folder"></use></svg></div><div><h1>Обработка банковской выписки</h1><p>Проверьте и при необходимости отредактируйте операции перед загрузкой в 1С</p></div></div>
    <div class="heading-actions">
-    <button class="btn date-summary-button" aria-controls="dateCheckPanel" aria-expanded="false" id="toggleDateCheck" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-calendar"></use></svg> Итоги за дату</button>
     <label class="btn primary" for="fileInput"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-upload"></use></svg> Загрузить выписку</label><input id="fileInput" type="file" accept=".xlsx,.xls,.csv,.txt">
    </div>
   </div>
-  <section class="tablecard" id="dateCheckPanel" style="margin-bottom:14px;padding:16px" hidden>
-   <button class="btn outline date-summary-close" id="closeDateCheck" type="button" aria-label="Закрыть итоги за дату" title="Закрыть итоги за дату"><span aria-hidden="true">×</span></button>
-   <div class="date-summary-controls">
-    <div><label for="checkDate" style="display:block;font-size:12px;font-weight:750;margin-bottom:6px">Дата операции</label><input id="checkDate" type="date" class="search" style="width:190px"></div>
-    <div><label for="checkDirection" style="display:block;font-size:12px;font-weight:750;margin-bottom:6px">Направление</label><select id="checkDirection" class="search" style="width:180px"><option value="Исходящее">Исходящие</option><option value="Входящее">Входящие</option><option value="all">Все операции</option></select></div>
-    <button class="btn primary" id="runDateCheck" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-list"></use></svg> Показать итоги</button>
-   </div>
-   <div id="dateCheckResult" style="margin-top:14px"></div>
-  </section>
   <div class="stats">
    <div class="stat"><div class="staticon blue"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-file"></use></svg></div><div><strong id="totalCount">0</strong><span>Всего операций</span></div></div>
    <div class="stat"><div class="staticon green"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-check"></use></svg></div><div><strong id="detectedCount">0</strong><span>Документы определены</span></div></div>
@@ -159,7 +148,15 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
   </section>
   <div class="workspace">
    <section class="tablecard">
-    <div class="tabletop"><strong>Операции</strong><span class="muted" id="tableCaption">Сначала загрузите банковскую выписку</span></div>
+    <div class="tabletop">
+     <strong>Операции</strong>
+     <div class="table-date-filter">
+      <label for="checkDate">Итоги за дату</label>
+      <input id="checkDate" type="date" class="search">
+      <button id="clearDateFilter" class="btn outline" type="button" hidden>Сбросить дату</button>
+     </div>
+     <span class="muted" id="tableCaption">Сначала загрузите банковскую выписку</span>
+    </div>
     <div class="table-scroll-top" id="tableScrollTop" aria-label="Горизонтальная прокрутка таблицы операций" role="region" tabindex="0"><div id="tableScrollTopSpacer"></div></div>
     <div class="tablewrap" id="tableScrollBottom"><table><thead><tr><th>Дата</th><th>Направление</th><th>Контрагент</th><th>Сумма</th><th title="Предварительный счёт дебета">Дт</th><th title="Предварительный счёт кредита">Кт</th><th>Статья ДДС</th><th>Тип документа 1С</th><th>Статус</th></tr></thead><tbody id="rows"></tbody></table></div>
     <div class="pagination"><span id="shownCount">Операций пока нет</span></div>
@@ -197,5 +194,5 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="/workspace-core.js" defer></script>
-<script src="/app.js?v=date-summary-close-20261121" defer></script>
+<script src="/app.js?v=table-date-filter-20261121" defer></script>
 </body></html>
