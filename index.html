@@ -105,9 +105,11 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
 .statement-balances>div{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px}
 .statement-balances span{display:block;color:var(--muted)}
 .statement-balances strong{display:block;font-size:20px}
-.counterparty-filter{display:grid;gap:5px;min-width:0}
-.counterparty-filter label{font-weight:650}
-.counterparty-filter select{width:100%;text-overflow:ellipsis}
+.column-filter{position:relative;display:inline-flex;align-items:center;gap:5px;min-height:26px}
+.column-filter span{display:grid;place-items:center;width:19px;height:19px;border:1px solid #cbd8e8;border-radius:4px;background:#fff}
+.column-filter select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.column-filter:focus-within{outline:2px solid var(--blue);outline-offset:2px;border-radius:3px}
+.column-filter:has(option:checked:not([value=""])) span{background:var(--blue);color:#fff;border-color:var(--blue)}
 </style>
 </head>
 <body>
@@ -130,10 +132,6 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
     <button class="chip" data-filter="review"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-alert"></use></svg>Проверить (<span id="reviewChip">0</span>)</button>
     <button class="chip" data-filter="ready"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-check"></use></svg>Поля заполнены (<span id="readyChip">0</span>)</button>
     <button class="chip" id="reclassifyDDS" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-refresh"></use></svg> Пересчитать ДДС</button>
-   </div>
-   <div class="counterparty-filter">
-    <label for="counterpartyFilter">Контрагент</label>
-    <select class="search" id="counterpartyFilter" disabled><option value="">Все контрагенты</option></select>
    </div>
    <div class="search-field"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-search"></use></svg><input class="search" id="search" type="search" aria-label="Поиск по контрагенту или назначению" placeholder="Поиск по операциям"></div>
   </div>
@@ -169,7 +167,7 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
      <span class="muted" id="tableCaption">Сначала загрузите банковскую выписку</span>
     </div>
     <div class="table-scroll-top" id="tableScrollTop" aria-label="Горизонтальная прокрутка таблицы операций" role="region" tabindex="0"><div id="tableScrollTopSpacer"></div></div>
-    <div class="tablewrap" id="tableScrollBottom"><table><thead><tr><th>Дата</th><th>Направление</th><th>Контрагент</th><th>Сумма</th><th title="Предварительный счёт дебета">Дт</th><th title="Предварительный счёт кредита">Кт</th><th>Статья ДДС</th><th>Тип документа 1С</th><th>Статус</th></tr></thead><tbody id="rows"></tbody></table></div>
+    <div class="tablewrap" id="tableScrollBottom"><table><thead><tr><th>Дата</th><th>Направление</th><th scope="col"><label class="column-filter">Контрагент <span aria-hidden="true">▾</span><select id="counterpartyFilter" aria-label="Фильтр по контрагенту" title="Выбрать контрагента" disabled><option value="">Все контрагенты</option></select></label></th><th>Сумма</th><th title="Предварительный счёт дебета">Дт</th><th title="Предварительный счёт кредита">Кт</th><th>Статья ДДС</th><th>Тип документа 1С</th><th>Статус</th></tr></thead><tbody id="rows"></tbody></table></div>
     <div class="pagination"><span id="shownCount">Операций пока нет</span></div>
    </section>
    <section class="editor" id="editorPanel" hidden>
