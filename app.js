@@ -121,9 +121,9 @@
     ["Доходы и расходы",[["6010","Доход от реализации"],["7010","Себестоимость реализации"],["7110","Расходы по реализации"],["7210","Административные расходы"],["7310","Расходы по вознаграждениям"],["7470","Прочие расходы"]]]
   ];
   const knownLedgerAccounts=new Set(ledgerGroups.flatMap(group=>group[1].map(entry=>entry[0])));
-  function accountPicker(x,side){
-    const code=String(x[side]||"");
-    const label=side==="debit"?"Дт":"Кт";
+  // Populate account lists only when an accountant opens a cell.
+  // Prevent thousands of hidden options from slowing large statement tables.
+  function ledgerOptions(code){
     let options='<option value=""'+(!code?' selected':"")+'>Указать / очистить</option>';
     if(code&&!knownLedgerAccounts.has(code))
       options+='<option value="'+show(code)+'" selected>'+show(code)+' — выбранный счёт</option>';
@@ -133,8 +133,22 @@
       options+='</optgroup>';
     }
     options+='<option value="__other__">Другой счёт…</option>';
+    return options;
+  }
+  function accountPicker(x,side){
+    const code=String(x[side]||"");
+    const label=side==="debit"?"Дт":"Кт";
+    const initialLabel=code?show(code)+" — выбранный счёт":"Указать / очистить";
     return '<span class="inline-ledger-picker'+(code?"":" unset")+'"><span class="inline-ledger-current">'+(code?show(code):"Указать")+'</span>'+
-      '<select class="inline-ledger-select" data-ledger-side="'+side+'" title="Выбрать '+label+' прямо в таблице" aria-label="Выбрать '+label+' по операции '+x.id+'">'+options+'</select></span>';
+      '<select class="inline-ledger-select" data-ledger-side="'+side+'" data-ledger-expanded="false" title="Выбрать '+label+' прямо в таблице" aria-label="Выбрать '+label+' по операции '+x.id+'">'+
+      '<option value="'+show(code)+'" selected>'+initialLabel+'</option></select></span>';
+  }
+  function expandLedgerSelect(select){
+    if(select.dataset.ledgerExpanded==="true")return;
+    const code=select.value;
+    select.innerHTML=ledgerOptions(code);
+    select.value=code;
+    select.dataset.ledgerExpanded="true";
   }
   function saveInlineLedger(row,side,account){
     const x=ops.find(op=>op.id===Number(row.dataset.id));
@@ -165,29 +179,59 @@
     input.select();
   }
 
-  // The top scroll track mirrors the actual scroll width of the table.
-  // Both scrollbars remain usable; no duplicate or independent table is created.
+  // Sync both horizontal tracks once per animation frame; ignore mirrored events.
+  const mirroredScroll=new WeakMap();
   function syncTableScrollWidth(){
     const upper=$("tableScrollTop"),lower=$("tableScrollBottom");
     const spacer=$("tableScrollTopSpacer");
     if(!upper||!lower||!spacer)return;
     const fullWidth=lower.scrollWidth;
-    spacer.style.width=fullWidth+"px";
-    upper.hidden=fullWidth<=lower.clientWidth+1;
-    if(!upper.hidden&&upper.scrollLeft!==lower.scrollLeft)
+    const width=fullWidth+"px";
+    if(spacer.style.width!==width)spacer.style.width=width;
+    const shouldHide=fullWidth<=lower.clientWidth+1;
+    if(upper.hidden!==shouldHide)upper.hidden=shouldHide;
+    if(!shouldHide&&Math.abs(upper.scrollLeft-lower.scrollLeft)>1){
+      mirroredScroll.set(upper,lower.scrollLeft);
       upper.scrollLeft=lower.scrollLeft;
+    }
   }
   function initTableScroll(){
     const upper=$("tableScrollTop"),lower=$("tableScrollBottom");
-    upper.addEventListener("scroll",()=>{
-      if(lower.scrollLeft!==upper.scrollLeft)lower.scrollLeft=upper.scrollLeft;
-    },{passive:true});
-    lower.addEventListener("scroll",()=>{
-      if(upper.scrollLeft!==lower.scrollLeft)upper.scrollLeft=lower.scrollLeft;
-    },{passive:true});
-    window.addEventListener("resize",syncTableScrollWidth,{passive:true});
+    let pendingSource=null,scrollFrame=0,widthFrame=0;
+    function onScroll(source){
+      const mirrored=mirroredScroll.get(source);
+      if(mirrored!==undefined){
+        mirroredScroll.delete(source);
+        if(Math.abs(source.scrollLeft-mirrored)<=1)return;
+      }
+      pendingSource=source;
+      if(scrollFrame)return;
+      scrollFrame=requestAnimationFrame(()=>{
+        scrollFrame=0;
+        const active=pendingSource;
+        pendingSource=null;
+        if(!active||upper.hidden)return;
+        const target=active===upper?lower:upper;
+        const maxLeft=Math.max(0,target.scrollWidth-target.clientWidth);
+        const nextLeft=Math.max(0,Math.min(maxLeft,active.scrollLeft));
+        if(Math.abs(target.scrollLeft-nextLeft)>1){
+          mirroredScroll.set(target,nextLeft);
+          target.scrollLeft=nextLeft;
+        }
+      });
+    }
+    function scheduleWidthSync(){
+      if(widthFrame)return;
+      widthFrame=requestAnimationFrame(()=>{
+        widthFrame=0;
+        syncTableScrollWidth();
+      });
+    }
+    upper.addEventListener("scroll",()=>onScroll(upper),{passive:true});
+    lower.addEventListener("scroll",()=>onScroll(lower),{passive:true});
+    window.addEventListener("resize",scheduleWidthSync,{passive:true});
     if(typeof ResizeObserver!=="undefined"){
-      const observer=new ResizeObserver(syncTableScrollWidth);
+      const observer=new ResizeObserver(scheduleWidthSync);
       observer.observe(lower);
       observer.observe(lower.querySelector("table"));
     }
@@ -233,6 +277,13 @@
     }
     selected=Number(row.dataset.id);
     loadEditor();render();
+  });
+  // Expand before iOS opens its native select; focus handles keyboard access.
+  ["touchstart","pointerdown","focusin"].forEach(type=>{
+    $("rows").addEventListener(type,event=>{
+      const select=event.target.closest?.("select[data-ledger-side]");
+      if(select)expandLedgerSelect(select);
+    },{passive:true});
   });
   $("rows").addEventListener("change",event=>{
     const select=event.target.closest("select[data-ledger-side]");
