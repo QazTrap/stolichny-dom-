@@ -33,6 +33,26 @@ test("filters a yearly bank statement by a whole month or single day",()=>{
   assert.equal(rows.length,6,"source operations must remain unchanged");
 });
 
+test("filters an annual statement by arbitrary inclusive date range",()=>{
+  const rows=[
+    {date:"31.12.2025",amount:8,direction:"Исходящее"},
+    {date:"01.01.2026",amount:10,direction:"Входящее"},
+    {date:"01.03.2026",amount:100,direction:"Входящее"},
+    {date:"15.03.2026",amount:40,direction:"Исходящее"},
+    {date:"30.04.2026",amount:70,direction:"Исходящее"},
+    {date:"01.05.2026",amount:55,direction:"Входящее"},
+    {date:"",amount:999,direction:"Входящее"}
+  ];
+  const spring=C.filterPeriod(rows,{from:"2026-03-01",to:"2026-04-30"});
+  assert.deepEqual(spring.map(x=>x.amount),[100,40,70]);
+  assert.deepEqual(C.totals(spring),{incoming:100,outgoing:110,net:-10,count:3,unknown:0});
+  assert.deepEqual(C.filterPeriod(rows,{from:"2025-12-31",to:"2026-01-01"}).map(x=>x.amount),[8,10]);
+  assert.deepEqual(C.filterPeriod(rows,{from:"2026-03-15",to:"2026-03-15"}).map(x=>x.amount),[40]);
+  assert.deepEqual(C.filterPeriod(rows,{from:"2026-06-01",to:"2026-06-30"}),[]);
+  assert.deepEqual(C.filterPeriod(rows,{month:"2026-03",from:"2026-03-01",to:"2026-04-30"}).map(x=>x.amount),[100,40]);
+  assert.equal(rows.length,7);
+});
+
 test("reads outgoing and incoming bank statement columns",()=>{
   const rows=[
     ["Дата","Дебет","Кредит","Получатель","Плательщик","Назначение платежа","Номер документа"],
