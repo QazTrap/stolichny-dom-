@@ -72,7 +72,9 @@
   }
   function currentRows(){
     const query=C.norm($("search").value);
+    const date=C.dateText($("checkDate").value);
     return ops.filter(x=>(filter==="all"||x.status===filter)&&(directionFilter==="all"||x.direction===directionFilter)&&
+      (!date||x.date===date)&&
       (!query||C.norm([x.name,x.originalName,x.purpose,x.article,x.bin,x.docNumber,x.date].join(" ")).includes(query)));
   }
   function updateStats(visible){
@@ -258,7 +260,7 @@
     syncTableScrollWidth();
     $("shownCount").textContent=ops.length?"Показано "+shown.length+" из "+visible.length+" по фильтру (всего "+ops.length+")":"Операций пока нет";
 
-    if(!$("dateCheckPanel").hidden&&$("checkDate").value)renderDateCheck();
+    if($("clearDateFilter"))$("clearDateFilter").hidden=!$("checkDate").value;
     if(!$("previewPanel").hidden)renderPreview();
   }
 
@@ -397,33 +399,11 @@
     directionFilter=button.dataset.direction;
     document.querySelectorAll("[data-direction]").forEach(b=>b.classList.toggle("active",b===button));render();
   }));
-  const dateCheckPanel=$("dateCheckPanel");
-  const dateCheckToggle=$("toggleDateCheck");
-  function setDateCheckOpen(open){
-    dateCheckPanel.hidden=!open;
-    dateCheckToggle.setAttribute("aria-expanded",String(open));
-    (open?$("checkDate"):dateCheckToggle).focus();
-  }
-  dateCheckToggle.addEventListener("click",()=>setDateCheckOpen(dateCheckPanel.hidden));
-  $("closeDateCheck")?.addEventListener("click",()=>setDateCheckOpen(false));
-  function renderDateCheck(){
-    const raw=$("checkDate").value;
-    if(!raw)return;
-    const date=C.dateText(raw),direction=$("checkDirection").value;
-    const found=ops.filter(x=>x.date===date&&(direction==="all"||x.direction===direction));
-    const t=C.totals(found);
-    const rows=found.map(x=>'<tr><td>'+show(x.name)+'</td><td>'+show(x.purpose)+'</td><td>'+fmt(x.amount)+'</td></tr>').join("");
-    $("dateCheckResult").innerHTML=
-      '<div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px">'+
-      '<div><span class="muted">Операций</span><div style="font-size:22px;font-weight:800">'+t.count+'</div></div>'+
-      '<div><span class="muted">Поступления</span><div style="font-size:22px;font-weight:800">'+fmt(t.incoming)+'</div></div>'+
-      '<div><span class="muted">Списания</span><div style="font-size:22px;font-weight:800">'+fmt(t.outgoing)+'</div></div>'+
-      '<div><span class="muted">Разница</span><div style="font-size:22px;font-weight:800">'+fmt(t.net)+'</div></div></div>'+
-      (rows?'<div class="tablewrap"><table style="min-width:560px"><thead><tr><th>Контрагент</th><th>Назначение</th><th>Сумма</th></tr></thead><tbody>'+rows+'</tbody></table></div>':
-      '<div class="empty">За '+show(date)+' операций выбранного типа нет.</div>');
-  }
-  $("runDateCheck").addEventListener("click",()=>{
-    if(!$("checkDate").value){toast("Выберите дату");return;}renderDateCheck();
+  $("checkDate").addEventListener("change",render);
+  $("clearDateFilter")?.addEventListener("click",()=>{
+    $("checkDate").value="";
+    render();
+    $("checkDate").focus();
   });
   function issues(x){
     const a=[];
@@ -538,6 +518,7 @@
   });
   function resetFilters(){
     $("search").value="";
+    $("checkDate").value="";
     document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x.dataset.filter==="all"));
     document.querySelectorAll("[data-direction]").forEach(x=>x.classList.toggle("active",x.dataset.direction==="all"));
   }
