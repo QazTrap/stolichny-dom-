@@ -110,7 +110,7 @@
       // mistaking commercial advertising services for a state payment.
       const stateReceiver=/(?:^|[^а-яa-z])(угд|кгд|дгд|казначейств)(?=$|[^а-яa-z])|управлени.{0,16}государственн.{0,15}доход/.test(cp);
       const budgetContext=code==="911"||stateReceiver||/в бюджет|гос.?бюджет/.test(p);
-      const outdoorAdFee=/(?:^|[\s,;])плат[аы]\s+за\s+разм[а-я.]*\s+(?:наружн[а-я]*|нар\b).{0,45}рекл[а-я]*/.test(p);
+      const outdoorAdFee=/(?:^|[\s,;])плат[аы]\s+за\s+разм[а-я.]*\s+(?:наружн[а-я]*|нар(?=$|[^а-яa-z0-9])).{0,45}рекл[а-я]*/.test(p);
       const officialFee=/(государственн.{0,16}пошлин|госпошлин|регистрационн.{0,16}сбор|сбор за выдачу.{0,25}(лиценз|разрешен)|плат[аы]\s+за\s+пользовани.{0,18}земельн)/.test(p);
       if(budgetContext&&(outdoorAdFee||officialFee))
         return suggestion("Другие обязательные платежи в бюджет",
