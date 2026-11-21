@@ -189,6 +189,12 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
 .operation-detail .edit{position:sticky;left:0;max-width:100%;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));align-items:start}
 .workspace .tablecard{container-type:inline-size}
 @supports(width:1cqi){.operation-detail .edit{width:100cqi}}
+.similar-actions{grid-column:1/-1;display:flex;align-items:center;gap:9px;margin:2px 0 0;background:#f5f9ff;border-radius:8px;padding:10px 12px;color:#34516f;font-size:13px}
+.similar-actions[hidden]{display:none}
+.similar-actions label{display:flex;align-items:center;gap:8px;margin:0;font-size:13px;font-weight:600;cursor:pointer}
+.similar-actions input[type="checkbox"]{width:17px;height:17px;accent-color:var(--blue);margin:0}
+.toast-action{display:block;margin-top:8px;border:1px solid #bad5f5;border-radius:7px;padding:7px 10px;background:#e9f3ff;color:#173b66;cursor:pointer;font:inherit;font-weight:650}
+.toast-action:hover{background:#d9eaff}
 .operation-detail .editactions{grid-column:1/-1;justify-content:flex-end}
 .operation-detail .editactions .btn{flex:0 1 auto}
 </style>
@@ -274,6 +280,7 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
       <p id="duplicateHint"></p>
       <label><input type="checkbox" id="confirmDuplicate"> Это отдельная операция, сверено с банком</label>
      </div>
+     <div id="similarActions" class="similar-actions" hidden><label><input type="checkbox" id="applyToSimilar"> Применить выбранные Дт/Кт, ДДС и документ к похожим операциям (<span id="similarCount">0</span>)</label></div>
      <div class="editactions"><button class="btn outline" type="button" id="reset"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-undo"></use></svg> Отменить</button><button class="btn primary" type="submit"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-save"></use></svg> Сохранить</button></div>
     </form>
    </div>
@@ -306,8 +313,8 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
 </dialog>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
-<script src="/workspace-core.js?v=kaspi-classification-20261121-v1" defer></script>
-<script src="/app.js?v=date-range-20261121-v2" defer></script>
+<script src="/workspace-core.js?v=bulk-kaspi-20261121-v1" defer></script>
+<script src="/app.js?v=bulk-kaspi-20261121-v1" defer></script>
 </body></html>
 
 
