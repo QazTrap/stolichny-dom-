@@ -142,8 +142,8 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
    </div>
   </div>
   <section class="statement-balances" id="statementBalances" aria-label="Остатки по банку за период выписки" hidden>
-   <div hidden><span>Сальдо на начало периода</span><strong id="openingBalance"></strong></div>
-   <div hidden><span>Сальдо на конец периода</span><strong id="closingBalance"></strong></div>
+   <div><span>Входящий остаток на начало периода</span><strong id="openingBalance"></strong></div>
+   <div><span>Исходящий остаток на конец периода</span><strong id="closingBalance"></strong></div>
   </section>
   <div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin:0 0 16px">
    <div class="stat"><div class="staticon green"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-arrowdown"></use></svg></div><div><strong id="filteredTotal">0 ₸</strong><span id="filteredTotalLabel">Поступления по фильтру</span></div></div>
@@ -198,5 +198,5 @@ main{min-width:0;padding:30px 30px 110px;max-width:1800px;width:100%;margin:auto
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="/workspace-core.js" defer></script>
-<script src="/app.js?v=statement-balances-20261121" defer></script>
+<script src="/app.js?v=bank-opening-closing-balances-20261121" defer></script>
 </body></html>
