@@ -37,7 +37,7 @@
       if(!Number.isFinite(amount)||amount<=0||amount>1e15)throw Error("Некорректная сумма операции");
       return {
         id:i+1,date:C.dateText(str("date")),name:str("name"),originalName:str("originalName")||str("name"),
-        purpose:str("purpose"),comment:String(x.comment??"").slice(0,3000),amount,direction:["Входящее","Исходящее"].includes(str("direction"))?str("direction"):"",
+        purpose:str("purpose"),comment:str("comment"),amount,direction:["Входящее","Исходящее"].includes(str("direction"))?str("direction"):"",
         docType:str("docType"),docTypeSource:str("docTypeSource"),article:str("article"),articleSource:str("articleSource"),articleReason:str("articleReason"),articleConfidence:str("articleConfidence"),knp:str("knp"),bankRef:str("bankRef"),debit:str("debit"),credit:str("credit"),debitSource:str("debitSource"),creditSource:str("creditSource"),debitReason:str("debitReason"),creditReason:str("creditReason"),
         bin:str("bin"),sourceDoc:str("sourceDoc"),docNumber:str("docNumber"),sourceSheet:str("sourceSheet"),
         possibleDuplicate:false,duplicateConfirmed:!!x.duplicateConfirmed,status:"review"
@@ -105,7 +105,7 @@
   function currentRows(dateRows){
     const query=C.norm($("search").value);
     return dateRows.filter(x=>(filter==="all"||x.status===filter)&&(directionFilter==="all"||x.direction===directionFilter)&&
-      (!query||C.norm([x.name,x.originalName,x.purpose,x.article,x.bin,x.docNumber,x.date].join(" ")).includes(query)));
+      (!query||C.norm([x.name,x.originalName,x.purpose,x.article,x.bin,x.docNumber,x.date,x.comment].join(" ")).includes(query)));
   }
   function updateStats(visible,dateRows){
     const ready=ops.filter(x=>x.status==="ready").length;
@@ -433,7 +433,7 @@
       '<td class="account-cell">'+accountPicker(x,"credit")+'</td>'+
       '<td>'+fieldDropdown("article","Статья ДДС",x.article||"Не указана")+'</td>'+
       '<td>'+fieldDropdown("docType","Тип документа 1С",x.docType||"Не выбран")+'</td>'+
-      '<td><textarea class="operation-comment" data-comment-id="'+x.id+'" rows="2" maxlength="3000" aria-label="Комментарий к операции '+x.id+'" placeholder="Добавить комментарий">'+show(x.comment||"")+'</textarea></td></tr>'
+      '<td class="statement-comment" title="'+show(x.comment||"")+'">'+show(x.comment||"")+'</td></tr>'
     ).join(""):'<tr><td colspan="9" class="empty">Операции не найдены</td></tr>';
     if(selected!==null)attachRowEditor($("rows").querySelector('tr[data-id="'+selected+'"]'));
     syncTableScrollWidth();
@@ -443,15 +443,6 @@
     if(!$("previewPanel").hidden)renderPreview();
   }
 
-  $("rows").addEventListener("input",event=>{
-    const field=event.target;
-    if(!field.matches(".operation-comment"))return;
-    const operation=ops.find(x=>x.id===Number(field.dataset.commentId));
-    if(operation){
-      operation.comment=field.value;
-      scheduleSave();
-    }
-  });
   // Ledger pickers can be used without opening the rest of the row.
   $("rows").addEventListener("click",event=>{
     const target=event.target;
@@ -687,8 +678,8 @@
       return;
     }
     if(!window.XLSX){toast("Не удалось загрузить библиотеку Excel");return;}
-    const headers=["№","Дата","Направление","Контрагент","БИН/ИИН","Назначение платежа","Сумма, ₸","Статья ДДС","Основание подбора ДДС","КНП","Документ 1С","Вид операции в 1С (предложение)","Дебет","Кредит","Номер документа","Статус","Что проверить","Лист источника"];
-    const rows=ops.map((x,i)=>[i+1,x.date,x.direction,safeText(x.name),safeText(x.bin),safeText(x.purpose),Number(x.amount),safeText(x.article),safeText(x.articleReason),safeText(x.knp),x.docType,safeText(C.suggestDocumentOperation(x.article,x.docType)),x.debit,x.credit,safeText(x.docNumber),
+    const headers=["№","Дата","Направление","Контрагент","БИН/ИИН","Назначение платежа","Комментарий банка","Сумма, ₸","Статья ДДС","Основание подбора ДДС","КНП","Документ 1С","Вид операции в 1С (предложение)","Дебет","Кредит","Номер документа","Статус","Что проверить","Лист источника"];
+    const rows=ops.map((x,i)=>[i+1,x.date,x.direction,safeText(x.name),safeText(x.bin),safeText(x.purpose),safeText(x.comment),Number(x.amount),safeText(x.article),safeText(x.articleReason),safeText(x.knp),x.docType,safeText(C.suggestDocumentOperation(x.article,x.docType)),x.debit,x.credit,safeText(x.docNumber),
       x.status==="ready"?"Реквизиты заполнены":"Требует заполнения",safeText(reviewNotes(x).join("; ")||"Сверить с 1С"),safeText(x.sourceSheet)]);
     const workbook=XLSX.utils.book_new();
     function sheet(name,data,widths){
@@ -809,7 +800,7 @@
   function mapSheet(rows,sheet){
     const dialog=$("importMapping"), header=$("mappingHeader"), fields=$("mappingColumns");
     const feedback=$("mappingFeedback");
-    const labels={date:"Дата операции",debit:"Списания",credit:"Поступления",amount:"Сумма операции",direction:"Направление",name:"Контрагент",purpose:"Назначение платежа",bin:"БИН/ИИН",number:"Номер документа",knp:"КНП",payer:"Плательщик",receiver:"Получатель"};
+    const labels={comment:"Комментарий из выписки",date:"Дата операции",debit:"Списания",credit:"Поступления",amount:"Сумма операции",direction:"Направление",name:"Контрагент",purpose:"Назначение платежа",bin:"БИН/ИИН",number:"Номер документа",knp:"КНП",payer:"Плательщик",receiver:"Получатель"};
     $("mappingSheet").textContent="Лист «"+sheet+"». Укажите дату и сумму или колонки списаний и поступлений.";
     header.max=rows.length;
     header.value=Math.max(1,rows.findIndex(row=>row.filter(value=>String(value).trim()).length>=3)+1);
