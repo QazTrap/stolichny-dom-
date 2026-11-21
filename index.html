@@ -250,7 +250,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
      <button class="chip active" data-filter="all"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-status-grid"></use></svg><span class="chip-label">Все статусы <span class="chip-count">(<span id="allChip">0</span>)</span></span></button>
      <button class="chip" data-filter="detected"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-file-check"></use></svg><span class="chip-label">Документы определены <span class="chip-count">(<span id="detectedChip">0</span>)</span></span></button>
      <button class="chip" data-filter="review"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-alert-circle"></use></svg><span class="chip-label">Проверить <span class="chip-count">(<span id="reviewChip">0</span>)</span></span></button>
-     <button class="chip" data-filter="ready"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-check-circle"></use></svg><span class="chip-label">Поля заполнены <span class="chip-count">(<span id="readyChip">0</span>)</span></span></button>
+     <button class="chip" data-filter="ready"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-check-circle"></use></svg><span class="chip-label">Полностью заполнены <span class="chip-count">(<span id="readyChip">0</span>)</span></span></button>
      <button class="chip" id="reclassifyDDS" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-rotate-cw"></use></svg><span class="chip-label">Пересчитать ДДС</span></button>
    </div>
    <div class="search-field"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-search"></use></svg><input class="search" id="search" type="search" aria-label="Поиск по операциям, контрагентам, статьям ДДС и назначению" placeholder="Поиск по операциям и ДДС"></div>
@@ -356,8 +356,8 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 <div id="workspaceBusy" class="workspace-busy" role="status" aria-live="polite" aria-atomic="true" hidden><div class="workspace-busy-card"><span class="workspace-spinner" aria-hidden="true"></span><span id="workspaceBusyText">Обрабатываем данные…</span></div></div>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
-<script src="/workspace-core.js?v=bulk-kaspi-20261121-v1" defer></script>
-<script src="/app.js?v=direction-arrows-20261121-v1" defer></script>
+<script src="/workspace-core.js?v=bulk-count-fix-20261122-v1" defer></script>
+<script src="/app.js?v=bulk-count-fix-20261122-v1" defer></script>
 </body></html>
 
 
