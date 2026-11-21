@@ -1,6 +1,7 @@
 /* STOLDOM.SITE browser workspace. Bank files remain on the user's device. */
 (() => {
   "use strict";
+  const downloadsEnabled=false;
   const C=window.STOLDOM_CORE;
   if(!C){console.error("STOLDOM rules could not load");return;}
   const $=id=>document.getElementById(id);
@@ -102,7 +103,8 @@
     const statusIcon=$("bottomStatusIcon").querySelector("use");
     if(statusIcon)statusIcon.setAttribute("href","#ic-alert");
     $("bottomStatusIcon").parentElement.classList.add("pending");
-    $("export").disabled=ops.length===0;
+    $("export").disabled=!downloadsEnabled || ops.length===0;
+    $("saveDraftFile").disabled=!downloadsEnabled;
     $("preview").disabled=ops.length===0;
     $("editorPanel").hidden=ops.length===0;
     $("tableCaption").textContent=fileLabel||"Операции";
@@ -395,12 +397,12 @@
     $("previewContent").innerHTML='<p><strong>Всего операций: '+ops.length+
       ' · Реквизиты заполнены: '+filled.length+
       ' · Требуют заполнения: '+unfinished.length+'</strong></p>'+
-      '<p class="notice"><strong>Все '+ops.length+' операций требуют бухгалтерской сверки с 1С.</strong> Заполненные поля и автоматические предложения не подтверждают правильность проводок. Excel — контрольный файл, а не готовая загрузка в 1С.</p>'+
+      '<p class="notice"><strong>Все '+ops.length+' операций требуют бухгалтерской сверки с 1С.</strong> Заполненные поля и автоматические предложения не подтверждают правильность проводок.</p>'+
       '<div class="tablewrap"><table style="min-width:750px"><thead><tr><th>№</th><th>Контрагент</th><th>Дт</th><th>Кт</th><th>Что проверить</th></tr></thead><tbody>'+
       checks.map(x=>'<tr><td>'+String(ops.indexOf(x)+1)+'</td><td>'+show(x.name||"Не указан")+'</td><td>'+show(x.debit||"—")+'</td><td>'+show(x.credit||"—")+'</td><td>'+
         show(reviewNotes(x).length?reviewNotes(x).join("; "):"Сверить проводку, статью ДДС и документы с базой 1С")+'</td></tr>').join("")+
       '</tbody></table></div>'+
-      (ops.length>checks.length?'<p class="notice">Показаны первые '+checks.length+' операций. Все '+ops.length+' строк и замечаний будут в Excel.</p>':"");
+      (ops.length>checks.length?'<p class="notice">Показаны первые '+checks.length+' операций.</p>':"");
   }
   $("preview").addEventListener("click",()=>{
     if(!ops.length)return;
@@ -418,7 +420,7 @@
     return /^[\s]*[=+@-]/.test(text)?"'"+text:text;
   }
   $("export").addEventListener("click",()=>{
-    if(!ops.length)return;
+    if(!downloadsEnabled || !ops.length)return;
     if($("previewPanel").hidden){
       $("previewPanel").hidden=false;
       renderPreview();
@@ -451,6 +453,7 @@
     }catch(e){toast("Не удалось сформировать Excel: "+e.message);}
   });
   $("saveDraftFile").addEventListener("click",()=>{
+    if(!downloadsEnabled)return;
     if(!ops.length){toast("Нет операций для сохранения");return;}
     const data=JSON.stringify({version:2,fileLabel,savedAt:new Date().toISOString(),ops},null,2);
     download(data,"STOLDOM_черновик_"+new Date().toISOString().slice(0,10)+".json","application/json;charset=utf-8");
@@ -472,7 +475,7 @@
   });
   $("clearDraft").addEventListener("click",()=>{
     if(!ops.length)return;
-    if(!confirm("Очистить текущие операции? Сначала можно скачать черновик."))return;
+    if(!confirm("Очистить текущие операции?"))return;
     ops=[];selected=null;fileLabel="";filter="all";directionFilter="all";resetFilters();
     try{sessionStorage.removeItem(sessionKey);}catch{}
     loadEditor();render();toast("Данные текущей вкладки очищены");
