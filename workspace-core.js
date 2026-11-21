@@ -92,6 +92,17 @@
     if(isOutgoing&&(bankFee||(code==="841"&&/(комисси|тариф|банковск)/.test(p))))
       return suggestion("Банковские комиссии","Комиссия банка"+(code==="841"?" · КНП 841":""));
 
+    // Kaspi extracts fees under service descriptions without the word "комиссия".
+    // Use both the payment description and service provider for confidence.
+    const kaspiBank=/(каспи|kaspi).{0,15}банк|(каспи|kaspi)\s*bank/.test(cp);
+    const kaspiProcessor=/(каспи|kaspi)\s*pay/.test(cp);
+    if(isOutgoing&&kaspiBank&&/услуг.{0,30}операц.{0,20}по картам|операц.{0,22}по картам.{0,25}kaspi gold/.test(p))
+      return suggestion("Банковские комиссии","Услуги банка за операции по картам Kaspi Gold; сверьте тариф и документы","review");
+    if(isOutgoing&&kaspiProcessor&&/услуг.{0,15}процессинг|процессинг.{0,20}платеж/.test(p))
+      return suggestion("Услуги эквайринга и процессинга","Услуги Kaspi Pay по обработке платежей; сверьте акт и расчёты","review");
+    if(isIncoming&&/(продажи\s+с\s+(kaspi\.?(?:kz)?|каспи)|продажи\s+через\s+(kaspi|каспи))/.test(p))
+      return suggestion("Оплата от покупателя","Зачисление продаж через Kaspi; сверьте с эквайрингом и счётом 1274, а не считайте новым доходом","review");
+
     if(isOutgoing&&(/алимент/.test(p)||(code==="118"&&/дет|содержани|алим/.test(p))))
       return suggestion("Алименты","Алименты"+(code==="118"?" · КНП 118":""),"review");
     if(isOutgoing&&/(исполнительн.{0,30}(производств|лист)|судебн.{0,20}исполн|взыскани.{0,20}по исполнительн)/.test(p))
@@ -412,6 +423,10 @@
     if(x.docTypeSource==="auto") notes.push("Предложенный тип документа: проверить в 1С");
     if(x.article==="Оплата поставщику" || x.article==="Оплата от покупателя")
       notes.push("Проверить по договору: аванс или погашение задолженности");
+    if(x.article==="Услуги эквайринга и процессинга")
+      notes.push("Услуги процессинга: проверить договор/акт, назначение расходного счёта и расчёты с Kaspi Pay; не подставлять 7210 или 3310 без проверки");
+    if(x.direction==="Входящее"&&/(продажи\s+с\s+(kaspi|каспи)|продажи\s+через\s+(kaspi|каспи))/.test(norm(x.purpose)))
+      notes.push("Поступление через Kaspi: сверить с оплатами покупателей, выручкой и транзитным счётом эквайринга 1274; не задваивать доход");
     if(x.article==="Перевод между счетами")
       notes.push("Сверить оба собственных банковских счёта и не относить перевод на расходы");
     if(x.article==="Алименты" || x.article==="Исполнительные документы")
