@@ -414,6 +414,53 @@
     return true;
   }
 
+  // Apply a reviewed posting to repeated transactions within the loaded
+  // statement. Match on direction, counterparty, KNP and payment purpose,
+  // ignoring only the calendar date in the purpose, never amount or card ID.
+  function operationRuleKey(x){
+    if(!x||!x.direction)return "";
+    const counterparty=norm(x.originalName||x.name);
+    const rawPurpose=norm(x.purpose);
+    if(!counterparty||!rawPurpose)return "";
+    const template=rawPurpose
+      .replace(/\b\d{4}-\d{1,2}-\d{1,2}\b/g,"{дата}")
+      .replace(/\b\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b/g,"{дата}")
+      .replace(/\s+/g," ").trim();
+    return [x.direction,counterparty,norm(x.knp),template].join("|");
+  }
+  function countSimilarOperations(operations,source){
+    const key=operationRuleKey(source);
+    return key?operations.filter(x=>x!==source&&x.id!==source.id&&operationRuleKey(x)===key).length:0;
+  }
+  function applyPostingToSimilar(operations,source,ruleKey=operationRuleKey(source)){
+    if(!ruleKey)return {matched:0,updated:0};
+    let matched=0,updated=0;
+    for(const target of operations){
+      if(target===source||target.id===source.id||operationRuleKey(target)!==ruleKey)continue;
+      matched++;
+      let changed=false;
+      for(const field of ["article","docType","debit","credit"]){
+        const value=String(source[field]||"").trim();
+        if(!value)continue;
+        if((field==="debit"||field==="credit")&&!/^\d{4}$/.test(value))continue;
+        const sourceField=field+"Source";
+        if(["manual","statement"].includes(target[sourceField]))continue;
+        if(target[field]!==value||target[sourceField]!=="manual"){
+          target[field]=value;
+          target[sourceField]="manual";
+          if(field==="article")target.articleReason="Применено бухгалтером к аналогичным операциям";
+          if(field==="debit"||field==="credit")target[field+"Reason"]="Счёт перенесён из проверенной аналогичной операции; подтвердите в 1С";
+          changed=true;
+        }
+      }
+      if(changed){
+        refreshSuggestedDocument(target);
+        refreshSuggestedPosting(target);
+        updated++;
+      }
+    }
+    return {matched,updated};
+  }
   // A filled-out form is not a reconciled 1C posting. These are prompts for
   // accountant verification, never a claim of ledger correctness.
   function reconciliationNotes(x) {
@@ -473,6 +520,6 @@
     const outgoing=roundMoney(rows.filter(x=>x.direction==="Исходящее").reduce((s,x)=>s+Number(x.amount||0),0));
     return {incoming,outgoing,net:roundMoney(incoming-outgoing),count:rows.length,unknown:rows.filter(x=>!x.direction).length};
   }
-  return {norm,fixTengeText,escapeHtml,money,dateText,shortLegalName,suggestArticle,suggestArticleDetailed,suggestPosting,refreshSuggestedPosting,suggestDocumentType,suggestDocumentOperation,refreshSuggestedDocument,parseRows,markDuplicates,validateOperation,reconciliationNotes,setManualPostingAccount,filterPeriod,totals,BANK_FEE_DOCUMENT};
+  return {norm,fixTengeText,escapeHtml,money,dateText,shortLegalName,suggestArticle,suggestArticleDetailed,suggestPosting,refreshSuggestedPosting,suggestDocumentType,suggestDocumentOperation,refreshSuggestedDocument,parseRows,markDuplicates,validateOperation,reconciliationNotes,setManualPostingAccount,operationRuleKey,countSimilarOperations,applyPostingToSimilar,filterPeriod,totals,BANK_FEE_DOCUMENT};
 });
 
