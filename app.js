@@ -81,9 +81,6 @@
     const ready=ops.filter(x=>x.status==="ready").length;
     const detected=ops.filter(x=>x.status==="detected").length;
     const review=ops.filter(x=>x.status==="review").length;
-    $("totalCount").textContent=ops.length;
-    $("detectedCount").textContent=detected+ready;
-    $("reviewCount").textContent=review;
     $("allChip").textContent=ops.length;
     $("detectedChip").textContent=detected;
     $("reviewChip").textContent=review;
