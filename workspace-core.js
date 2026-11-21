@@ -432,14 +432,15 @@
     const key=operationRuleKey(source);
     return key?operations.filter(x=>x!==source&&x.id!==source.id&&operationRuleKey(x)===key).length:0;
   }
-  function applyPostingToSimilar(operations,source,ruleKey=operationRuleKey(source)){
+  function applyPostingToSimilar(operations,source,ruleKey=operationRuleKey(source),fields=["article","docType","debit","credit"]){
     if(!ruleKey)return {matched:0,updated:0};
     let matched=0,updated=0;
     for(const target of operations){
       if(target===source||target.id===source.id||operationRuleKey(target)!==ruleKey)continue;
       matched++;
       let changed=false;
-      for(const field of ["article","docType","debit","credit"]){
+      for(const field of fields){
+        if(!["article","docType","debit","credit"].includes(field))continue;
         const value=String(source[field]||"").trim();
         if(!value)continue;
         if((field==="debit"||field==="credit")&&!/^\d{4}$/.test(value))continue;
