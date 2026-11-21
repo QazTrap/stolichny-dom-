@@ -242,14 +242,12 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
    </div>
    <datalist id="ledgerCodes"></datalist>
   </div>
-  <div class="bottom"><div class="ready"><span class="check" id="bottomStatusIcon"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-help"></use></svg></span><span id="bottomMessage">Загрузите банковскую выписку, чтобы начать работу.</span></div><div class="bottomactions"><button class="btn outline" id="preview" disabled><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-eye"></use></svg> Предварительный просмотр</button><button class="btn primary" id="export" disabled><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-download"></use></svg> Скачать Excel для подготовки 1С · Скоро</button><button type="button" class="btn outline" disabled>Отправить в 1С · Скоро</button></div></div>
+  <div class="bottom"><div class="ready"><span class="check" id="bottomStatusIcon"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-help"></use></svg></span><span id="bottomMessage">Загрузите банковскую выписку, чтобы начать работу.</span></div><div class="bottomactions"><button class="btn primary" id="export" disabled><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-download"></use></svg> Скачать Excel для подготовки 1С · Скоро</button><button type="button" class="btn outline" disabled>Отправить в 1С · Скоро</button></div></div>
   <section class="tablecard" id="previewPanel" style="margin-top:12px;padding:16px" hidden>
    <h2 style="font-size:17px;margin:0 0 12px">Предварительная проверка перед экспортом</h2>
    <div id="previewContent"></div>
   </section>
   <div id="draftControls" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:12px 24px 24px">
-  <button class="btn outline" id="restoreDraftFile" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-folderup"></use></svg> Открыть черновик</button>
-  <input type="file" id="draftInput" accept=".json,application/json" hidden>
   <button class="btn outline" id="clearDraft" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-trash"></use></svg> Очистить сессию</button>
   <span class="muted" id="draftStatus">Данные не отправляются на сервер</span>
  </div>
@@ -272,7 +270,7 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="/workspace-core.js?v=budget-levies-20261121-v1" defer></script>
-<script src="/app.js?v=auto-columns-20261121-v1" defer></script>
+<script src="/app.js?v=compact-footer-20261121-v1" defer></script>
 </body></html>
 
 
