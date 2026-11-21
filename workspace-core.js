@@ -436,11 +436,23 @@
     if(ready) return "ready";
     return compatible && x.date && !x.possibleDuplicate ? "detected":"review";
   }
+  // Period filtering applies to loaded operations only. It never changes
+  // the source statement, and missing dates do not match selected periods.
+  function filterPeriod(rows,{date="",month=""}={}){
+    const day=dateText(date);
+    const validMonth=/^\d{4}-(0[1-9]|1[0-2])$/.test(month)?month:"";
+    if(!day&&!validMonth)return rows;
+    return rows.filter(operation=>{
+      const value=dateText(operation.date);
+      return (!day||value===day)&&(!validMonth||(value&&
+        value.slice(6,10)+"-"+value.slice(3,5)===validMonth));
+    });
+  }
   function totals(rows) {
     const incoming=roundMoney(rows.filter(x=>x.direction==="Входящее").reduce((s,x)=>s+Number(x.amount||0),0));
     const outgoing=roundMoney(rows.filter(x=>x.direction==="Исходящее").reduce((s,x)=>s+Number(x.amount||0),0));
     return {incoming,outgoing,net:roundMoney(incoming-outgoing),count:rows.length,unknown:rows.filter(x=>!x.direction).length};
   }
-  return {norm,fixTengeText,escapeHtml,money,dateText,shortLegalName,suggestArticle,suggestArticleDetailed,suggestPosting,refreshSuggestedPosting,suggestDocumentType,suggestDocumentOperation,refreshSuggestedDocument,parseRows,markDuplicates,validateOperation,reconciliationNotes,setManualPostingAccount,totals,BANK_FEE_DOCUMENT};
+  return {norm,fixTengeText,escapeHtml,money,dateText,shortLegalName,suggestArticle,suggestArticleDetailed,suggestPosting,refreshSuggestedPosting,suggestDocumentType,suggestDocumentOperation,refreshSuggestedDocument,parseRows,markDuplicates,validateOperation,reconciliationNotes,setManualPostingAccount,filterPeriod,totals,BANK_FEE_DOCUMENT};
 });
 
