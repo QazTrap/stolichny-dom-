@@ -289,7 +289,7 @@
     row.after(detail);
   }
   // One searchable menu services both row fields and filters.
-  let openMenu=null, highlightedId=null, lastRowTap=null;
+  let openMenu=null, lastRowTap=null;
   function closeChoice(restoreFocus=false){
     if(!openMenu)return;
     const {popup,anchor}=openMenu;
@@ -422,9 +422,8 @@
     storage.append(...cellFields.values(),...extraFields);
     lastRowTap=null;
     if(!shown.some(x=>x.id===selected))selected=null;
-    if(!shown.some(x=>x.id===highlightedId))highlightedId=null;
     $("rows").innerHTML=shown.length?shown.map(x=>
-      '<tr data-id="'+x.id+'" tabindex="0" class="'+(x.id===highlightedId?"selected":"")+'">'+
+      '<tr data-id="'+x.id+'" tabindex="0">'+
       '<td>'+show(x.date||"Проверить дату")+'</td>'+
       '<td>'+fieldDropdown("operationDirection","Направление",x.direction==="Входящее"?"Входящие":x.direction==="Исходящее"?"Исходящие":"Не определено")+'</td>'+
       '<td><strong>'+show(x.name||"Не указан")+'</strong>'+(x.possibleDuplicate&&!x.duplicateConfirmed?'<div class="notice">Возможный дубль</div>':"")+'</td>'+
@@ -459,11 +458,6 @@
     const dropdown=target.closest(".row-dropdown");
     if(!dropdown&&target.closest("input,button,select,textarea"))return;
     const id=Number(row.dataset.id);
-    if(highlightedId!==id){
-      $("rows").querySelector("tr.selected")?.classList.remove("selected");
-      highlightedId=id;
-      row.classList.add("selected");
-    }
     if(dropdown){
       lastRowTap=null;
       const operation=ops.find(x=>x.id===id);
@@ -494,7 +488,7 @@
     lastRowTap=null;
     const id=Number(row.dataset.id);
     if(selected===id)return;
-    highlightedId=selected=id;
+    selected=id;
     loadEditor();render();
     $("operationDirection").focus({preventScroll:true});
   }
@@ -731,7 +725,7 @@
     loadEditor();render();toast("Данные текущей вкладки очищены");
   });
   function resetFilters(){
-    highlightedId=null;lastRowTap=null;
+    lastRowTap=null;
     $("search").value="";
     if($("counterpartyFilter"))$("counterpartyFilter").value="";
     updateCounterpartyFilter();
