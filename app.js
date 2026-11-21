@@ -207,7 +207,7 @@
     if(narrowed){
       const applied=[];
       if(filter!=="all")applied.push(filter==="detected"?"Документы определены":
-        filter==="ready"?"Поля заполнены":"Проверить");
+        filter==="ready"?"Полностью заполнены":"Проверить");
       if(directionFilter!=="all")applied.push(directionFilter==="Входящее"?"Входящие":"Исходящие");
       if(ddsFilter)applied.push("Статья ДДС: "+($("ddsArticleFilter").selectedOptions[0]?.textContent||"выбрана"));
       if(!applied.length)applied.push("поиск или другие фильтры");
@@ -273,6 +273,21 @@
     select.value=code;
     select.dataset.ledgerExpanded="true";
   }
+  function completionHint(x){
+    if(x.status==="ready")return "Операция полностью заполнена.";
+    const missing=[];
+    if(!/^\d{4}$/.test(String(x.debit||"")))missing.push("Дт");
+    if(!/^\d{4}$/.test(String(x.credit||"")))missing.push("Кт");
+    if(!x.article?.trim())missing.push("статью ДДС");
+    if(!x.docType?.trim())missing.push("тип документа 1С");
+    if(!x.purpose?.trim())missing.push("назначение платежа");
+    if(!x.name?.trim())missing.push("контрагента");
+    if(!x.direction)missing.push("направление");
+    if(x.possibleDuplicate&&!x.duplicateConfirmed)missing.push("проверку возможного дубля");
+    return missing.length?
+      "Операция ещё не полностью заполнена. Осталось: "+missing.join(", ")+"."
+      :"Операция требует проверки документа или проводки.";
+  }
   function saveInlineLedger(row,side,account){
     const x=ops.find(op=>op.id===Number(row.dataset.id));
     if(!x || !C.setManualPostingAccount(x,side,account)){
@@ -287,17 +302,23 @@
     render();
     scheduleSave();
     const title="Счёт "+(side==="debit"?"Дт":"Кт");
-    toast(x[side]?title+" "+x[side]+" сохранён":title+" очищен");
-    const count=x[side]?C.countSimilarOperations(ops,x):0;
+    toast((x[side]?title+" "+x[side]+" сохранён":title+" очищен")+". "+completionHint(x));
+    const count=x[side]?C.countSimilarOperations(ops,x,[side]):0;
     if(count>0){
       const btn=document.createElement("button");
       btn.type="button";
       btn.className="toast-action";
       btn.textContent="Применить этот счёт к "+count+" похожим операциям";
       btn.addEventListener("click",()=>{
+        const before=ops.filter(item=>item.status==="ready").length;
         const result=C.applyPostingToSimilar(ops,x,C.operationRuleKey(x),[side]);
         C.markDuplicates(ops);render();scheduleSave();
-        toast(title+" перенесён: обновлено "+result.updated+" из "+result.matched+" похожих операций. Ручные значения сохранены.");
+        const after=ops.filter(item=>item.status==="ready").length;
+        const growth=after-before;
+        const note=result.updated?
+          "Полностью заполнено: "+after+(growth>0?" (+"+growth+")":" (не изменилось: есть незаполненные поля)")+".":
+          "Изменений нет: значения уже заданы вручную или из выписки.";
+        toast(title+" применён к "+result.updated+" из "+result.matched+" похожих операций. "+note+" Ручные значения сохранены.");
       });
       $("toast").append(btn);
       clearTimeout(toast.timer);
@@ -849,10 +870,17 @@
     C.refreshSuggestedPosting(x);
     x.docTypeSource="manual";
     x.duplicateConfirmed=$("confirmDuplicate").checked;
+    const readyBefore=ops.filter(item=>item.status==="ready").length;
     const bulk=applyBulk?C.applyPostingToSimilar(ops,x,originalRuleKey):null;
     C.markDuplicates(ops);
     closeRowEditor();scheduleSave();
-    if(bulk)toast("Сохранено. Похожих операций: "+bulk.matched+", обновлено: "+bulk.updated+". Ручные настройки других операций не изменены. Сверьте проводки с 1С.");
+    if(bulk){
+      const readyAfter=ops.filter(item=>item.status==="ready").length;
+      toast("Массовое применение: обновлено "+bulk.updated+" из "+bulk.matched+
+        " похожих операций. Полностью заполнено: "+readyAfter+
+        (readyAfter>readyBefore?" (+"+(readyAfter-readyBefore)+")":" (без изменения — проверьте остальные поля)")+
+        ". Ручные настройки сохранены.");
+    }
     else toast(x.status==="ready"?"Реквизиты заполнены. Проводку необходимо сверить с 1С.":"Изменения сохранены. Проверьте оставшиеся поля или возможный дубль.");
   });
   $("article").addEventListener("change",()=>{
