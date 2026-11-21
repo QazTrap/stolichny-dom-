@@ -143,6 +143,15 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
 .statement-month-select{width:100%;min-height:36px;border:1px solid #bfd8f5;background:#eff6ff;color:#1567c3;border-radius:8px;font-weight:650;font:inherit;cursor:pointer}
 .statement-month-select:hover{background:#e1efff}
 .statement-month-select.active{background:#1478e8;color:white;border-color:#1478e8}
+.statement-date-legend{display:flex;align-items:center;gap:6px;margin:0 0 9px;color:#718199;font-size:11px}
+.statement-date-legend .date-dot{height:5px;width:5px;flex:none;border-radius:50%;background:#1478e8}
+.statement-range-header{font-weight:650;font-size:12px;color:#334e71;margin:11px 0 7px}
+.statement-range-fields{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.statement-range-fields label{display:flex;flex-direction:column;gap:4px;font-size:11px;color:#617796}
+.statement-range-fields input{box-sizing:border-box;min-width:0;width:100%;border:1px solid #cbd8ea;border-radius:7px;padding:6px 4px;background:#fff;color:#163357;font:inherit;font-size:12px;height:34px;color-scheme:light}
+.statement-range-fields input:focus-visible{outline:2px solid #83b7ef;outline-offset:1px}
+.statement-range-apply{display:block;width:100%;border:0;border-radius:8px;background:#1478e8;color:#fff;min-height:36px;font-weight:650;margin-top:9px;cursor:pointer}
+.statement-range-apply:hover{background:#0866cf}
 .statement-balances{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px}
 .statement-balances[hidden]{display:none}
 .statement-balances>div{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px}
@@ -218,7 +227,7 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
      <label for="dateTrigger">Итоги за период</label>
      <input id="checkDate" type="date" hidden>
      <button id="dateTrigger" type="button" class="search date-trigger" aria-haspopup="dialog" aria-expanded="false" aria-label="Выбрать дату выписки" disabled><span id="dateTriggerLabel">дд.мм.гггг</span><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-calendar"></use></svg></button>
-     <button id="clearDateFilter" class="btn outline" type="button" hidden>Сбросить дату</button>
+     <button id="clearDateFilter" class="btn outline" type="button" hidden>Сбросить период</button>
     </div>
    <div class="heading-upload">
     <label class="btn primary" for="fileInput"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-upload"></use></svg> Загрузить выписку</label><input id="fileInput" type="file" accept=".xlsx,.xls,.xlsm,.xlsb,.ods,.csv,.tsv,.txt,.pdf">
@@ -297,8 +306,8 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
 </dialog>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
-<script src="/workspace-core.js?v=month-filter-20261121-v1" defer></script>
-<script src="/app.js?v=month-filter-20261121-v1" defer></script>
+<script src="/workspace-core.js?v=date-range-20261121-v1" defer></script>
+<script src="/app.js?v=date-range-20261121-v1" defer></script>
 </body></html>
 
 
