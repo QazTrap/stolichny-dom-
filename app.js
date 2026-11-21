@@ -11,7 +11,7 @@
   const balanceLabels=["Вх.остаток на начало периода в нац.валюте","Исх.остаток на конец периода в нац.валюте"].map(C.norm);
   let balances=[];
   const sessionKey="stoldom.workspace.v2";
-  let ops=[],selected=null,filter="all",directionFilter="all",fileLabel="",saveTimer=0;
+  let ops=[],selected=null,filter="all",directionFilter="all",fileLabel="",saveTimer=0,selectedMonth="";
   function toast(message){
     $("toast").textContent=String(message);
     $("toast").style.display="block";
@@ -119,11 +119,11 @@
     }
   }
   function rowsForDate(){
-    const date=C.dateText($("checkDate").value);
+    const rows=C.filterPeriod(ops,{date:$("checkDate").value,month:selectedMonth});
     const counterparty=$("counterpartyFilter")?.value;
     const amount=$("amountColumnFilter")?.value;
-    if(!date&&!counterparty&&!amount)return ops;
-    return ops.filter(x=>(!date||x.date===date)&&(!counterparty||counterpartyKey(x)===counterparty)&&
+    if(!counterparty&&!amount)return rows;
+    return rows.filter(x=>(!counterparty||counterpartyKey(x)===counterparty)&&
       (!amount||amountKey(x.amount)===amount));
   }
   function currentRows(dateRows){
@@ -321,9 +321,14 @@
   }
   function syncDateTrigger(){
     const iso=$("checkDate").value;
-    $("dateTriggerLabel").textContent=iso?iso.split("-").reverse().join("."):"дд.мм.гггг";
+    let display="дд.мм.гггг";
+    if(selectedMonth){
+      display=new Intl.DateTimeFormat("ru-RU",{month:"long",year:"numeric"})
+        .format(new Date(Number(selectedMonth.slice(0,4)),Number(selectedMonth.slice(5,7))-1,1));
+    }else if(iso)display=iso.split("-").reverse().join(".");
+    $("dateTriggerLabel").textContent=display;
     $("dateTrigger").disabled=!ops.some(x=>!!C.dateText(x.date));
-    $("dateTrigger").setAttribute("aria-label",iso?"Итоги за "+$("dateTriggerLabel").textContent+", выбрать другую дату":"Выбрать дату из выписки");
+    $("dateTrigger").setAttribute("aria-label",iso||selectedMonth?"Итоги за "+display+", выбрать другой период":"Выбрать день или месяц из выписки");
   }
   function closeDateCalendar(restoreFocus=false){
     if(!datePopup)return;
@@ -341,7 +346,7 @@
     if(!dates.length)return;
     const available=new Set(dates);
     const earliest=dates[0],latest=dates[dates.length-1];
-    const current=$("checkDate").value||earliest;
+    const current=$("checkDate").value||(selectedMonth?selectedMonth+"-01":earliest);
     let year=Number(current.slice(0,4)),month=Number(current.slice(5,7))-1;
     const pad=n=>String(n).padStart(2,"0");
     const popup=document.createElement("div");
@@ -370,15 +375,28 @@
         '<div class="statement-date-nav"><button type="button" data-calendar-prev aria-label="Предыдущий месяц">‹</button>'+
         '<button type="button" data-calendar-next aria-label="Следующий месяц">›</button></div></div>'+
         '<div class="statement-date-weekdays">'+["Пн","Вт","Ср","Чт","Пт","Сб","Вс"].map(x=>"<span>"+x+"</span>").join("")+'</div>'+
-        '<div class="statement-date-days">'+cells+'</div>';
+        '<div class="statement-date-days">'+cells+'</div>'+
+        '<div class="statement-date-footer"><button type="button" data-calendar-month="'+monthKey+'" class="statement-month-select'+
+          (selectedMonth===monthKey?" active":"")+'">Показать весь месяц</button></div>';
       popup.querySelector("[data-calendar-prev]").disabled=monthKey<=earliest.slice(0,7);
       popup.querySelector("[data-calendar-next]").disabled=monthKey>=latest.slice(0,7);
     }
     popup.addEventListener("click",event=>{
       if(event.target.closest("[data-calendar-prev]")){month--;if(month<0){month=11;year--;}drawCalendar();return;}
       if(event.target.closest("[data-calendar-next]")){month++;if(month>11){month=0;year++;}drawCalendar();return;}
+      const monthButton=event.target.closest("[data-calendar-month]");
+      if(monthButton){
+        selectedMonth=monthButton.dataset.calendarMonth;
+        $("checkDate").value="";
+        $("dateColumnFilter").value="";
+        closeDateCalendar();
+        render();
+        anchor.focus({preventScroll:true});
+        return;
+      }
       const day=event.target.closest("[data-calendar-day]");
       if(!day)return;
+      selectedMonth="";
       $("checkDate").value=day.dataset.calendarDay;
       closeDateCalendar();
       $("checkDate").dispatchEvent(new Event("change",{bubbles:true}));
@@ -558,7 +576,7 @@
     syncTableScrollWidth();
     $("shownCount").textContent=ops.length?"Показано "+shown.length+" из "+visible.length+" по фильтру (всего "+ops.length+")":"Операций пока нет";
 
-    if($("clearDateFilter"))$("clearDateFilter").hidden=!$("checkDate").value;
+    if($("clearDateFilter"))$("clearDateFilter").hidden=!$("checkDate").value&&!selectedMonth;
     syncDateTrigger();
     if(!$("previewPanel").hidden)renderPreview();
   }
@@ -725,6 +743,7 @@
   $("amountColumnFilter")?.addEventListener("change",render);
   $("dateColumnFilter")?.addEventListener("change",()=>{
     const date=$("dateColumnFilter").value;
+    selectedMonth="";
     $("checkDate").value=date?date.split(".").reverse().join("-"):"";
     render();
   });
@@ -745,10 +764,12 @@
     document.querySelectorAll("[data-direction]").forEach(b=>b.classList.toggle("active",b===button));render();
   }));
   $("checkDate").addEventListener("change",()=>{
+    selectedMonth="";
     $("dateColumnFilter").value=C.dateText($("checkDate").value);
     render();
   });
   $("clearDateFilter")?.addEventListener("click",()=>{
+    selectedMonth="";
     $("checkDate").value="";
     $("dateColumnFilter").value="";
     render();
@@ -835,6 +856,8 @@
   });
   function resetFilters(){
     lastRowTap=null;
+    selectedMonth="";
+    closeDateCalendar();
     $("search").value="";
     if($("counterpartyFilter"))$("counterpartyFilter").value="";
     if($("dateColumnFilter"))$("dateColumnFilter").value="";
