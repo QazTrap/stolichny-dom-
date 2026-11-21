@@ -433,7 +433,7 @@
       '<td class="account-cell">'+accountPicker(x,"credit")+'</td>'+
       '<td>'+fieldDropdown("article","Статья ДДС",x.article||"Не указана")+'</td>'+
       '<td>'+fieldDropdown("docType","Тип документа 1С",x.docType||"Не выбран")+'</td>'+
-      '<td class="statement-comment" title="'+show(x.comment||"")+'">'+show(x.comment||"")+'</td></tr>'
+      '<td class="statement-comment" title="'+show(x.comment?x.comment:(x.purpose?"Отдельный комментарий отсутствует. Показано назначение платежа: "+x.purpose:"В выписке не найден комментарий"))+'">'+show(x.comment||x.purpose||"")+'</td></tr>'
     ).join(""):'<tr><td colspan="9" class="empty">Операции не найдены</td></tr>';
     if(selected!==null)attachRowEditor($("rows").querySelector('tr[data-id="'+selected+'"]'));
     syncTableScrollWidth();
