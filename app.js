@@ -288,23 +288,151 @@
     cell.append($("editForm"));
     row.after(detail);
   }
+  // One searchable menu services both row fields and filters.
+  let openMenu=null, highlightedId=null, lastRowTap=null;
+  function closeChoice(restoreFocus=false){
+    if(!openMenu)return;
+    const {popup,anchor}=openMenu;
+    openMenu=null;
+    popup.remove();
+    anchor.removeAttribute("aria-expanded");
+    if(restoreFocus&&anchor.isConnected)anchor.focus({preventScroll:true});
+  }
+  function openChoice(anchor,quick=null){
+    closeChoice();
+    if(anchor.disabled)return;
+    if(anchor.matches("select[data-ledger-side]"))expandLedgerSelect(anchor);
+    const isInput=anchor.matches("input[list]");
+    const options=quick?.options||(isInput?anchor.list?.options:anchor.options);
+    const current=quick?quick.value:anchor.value;
+    if(!options)return;
+    const popup=document.createElement("div");
+    popup.className="choice-popup";
+    popup.innerHTML='<input type="search" class="choice-search" role="combobox" aria-expanded="true" aria-controls="choiceOptions" autocomplete="off" placeholder="Поиск…"><div id="choiceOptions" role="listbox" class="choice-options"></div><div class="choice-empty" hidden>Совпадений нет</div>';
+    const search=popup.querySelector("input"), list=popup.querySelector('[role="listbox"]');
+    const label=anchor.getAttribute("aria-label")||anchor.labels?.[0]?.textContent.trim()||"Выбор значения";
+    search.setAttribute("aria-label","Поиск · "+label);
+    list.setAttribute("aria-label",label);
+    (anchor.closest("dialog[open]")||document.body).append(popup);
+    openMenu={popup,anchor};
+    anchor.setAttribute("aria-expanded","true");
+    const bounds=anchor.getBoundingClientRect();
+    const below=innerHeight-bounds.bottom-12,above=bounds.top-12;
+    const up=below<200&&above>below;
+    popup.style.maxHeight=Math.max(100,Math.min(340,up?above:below))+"px";
+    popup.style.width=Math.min(innerWidth-16,Math.max(265,bounds.width))+"px";
+    popup.style.left=Math.max(8,Math.min(bounds.left,innerWidth-popup.offsetWidth-8))+"px";
+    if(up)popup.style.bottom=(innerHeight-bounds.top+3)+"px";
+    else popup.style.top=(bounds.bottom+3)+"px";
+    let active=-1, matches=[];
+    function highlight(index,scroll){
+      list.children[active]?.classList.remove("highlight");
+      active=index;
+      const item=list.children[index];
+      if(!item){search.removeAttribute("aria-activedescendant");return;}
+      item.classList.add("highlight");
+      search.setAttribute("aria-activedescendant",item.id);
+      if(scroll){
+        const box=list.getBoundingClientRect(), row=item.getBoundingClientRect();
+        if(row.top<box.top)list.scrollTop+=row.top-box.top;
+        else if(row.bottom>box.bottom)list.scrollTop+=row.bottom-box.bottom;
+      }
+    }
+    function draw(){
+      const query=C.norm(search.value);
+      matches=Array.from(options).filter(opt=>!opt.disabled && C.norm(opt.label+" "+opt.value).includes(query));
+      if(isInput&&!query)matches.unshift(new Option("Очистить счёт",""));
+      if(isInput&&/^\d{4}$/.test(query)&&!matches.some(opt=>opt.value===query))matches.push(new Option(query,query));
+      if(quick?.customArticle&&query&&!matches.some(opt=>C.norm(opt.value)===query)){
+        const typed=search.value.trim().slice(0,300);
+        matches.push(new Option("Использовать «"+typed+"»",typed));
+      }
+      const fragment=document.createDocumentFragment();
+      matches.forEach((opt,i)=>{
+        const item=document.createElement("div");
+        item.setAttribute("role","option");
+        item.setAttribute("aria-selected",String(opt.value===current));
+        item.id="choiceOption"+i;item.dataset.index=i;item.textContent=opt.label;
+        fragment.append(item);
+      });
+      list.replaceChildren(fragment);
+      popup.querySelector(".choice-empty").hidden=matches.length>0;
+      list.scrollTop=0;active=-1;
+      highlight(matches.length?Math.max(0,matches.findIndex(opt=>opt.value===current)):-1,true);
+    }
+    function choose(i){
+      const opt=matches[i];if(!opt)return;
+      closeChoice(true);
+      if(quick){quick.save(opt.value);return;}
+      anchor.value=opt.value;
+      anchor.dispatchEvent(new Event("change",{bubbles:true}));
+    }
+    search.addEventListener("input",draw);
+    popup.addEventListener("keydown",event=>{
+      if(event.key==="Escape"){event.preventDefault();event.stopPropagation();closeChoice(true);}
+      else if(event.key==="Tab"){closeChoice(true);}
+      else if(event.key==="Enter"){event.preventDefault();choose(active);}
+      else if(matches.length&&["ArrowDown","ArrowUp"].includes(event.key)){
+        event.preventDefault();
+        highlight(Math.max(0,Math.min(matches.length-1,active+(event.key==="ArrowDown"?1:-1))),true);
+      }
+    });
+    list.addEventListener("click",event=>{
+      const item=event.target.closest("[data-index]");
+      if(item)choose(Number(item.dataset.index));
+    });
+    draw();search.focus({preventScroll:true});
+  }
+  const choiceSelector="select:not([multiple]),input.cell-field[list]";
+  document.addEventListener("pointerdown",event=>{
+    if(openMenu&&!openMenu.popup.contains(event.target)&&event.target!==openMenu.anchor)closeChoice();
+    if(event.button!==0)return;
+    const field=event.target.closest(choiceSelector);
+    if(field&&!field.disabled){
+      event.preventDefault();
+      if(openMenu?.anchor!==field)openChoice(field);
+    }
+  },true);
+  document.addEventListener("mousedown",event=>{
+    if(event.target.closest(choiceSelector))event.preventDefault();
+  },true);
+  document.addEventListener("click",event=>{
+    const field=event.target.closest(choiceSelector);
+    if(field&&!field.disabled){event.preventDefault();event.stopPropagation();if(openMenu?.anchor!==field)openChoice(field);}
+  },true);
+  document.addEventListener("keydown",event=>{
+    const field=event.target.closest(choiceSelector);
+    if(field&&["Enter"," ","ArrowDown","ArrowUp"].includes(event.key)){
+      event.preventDefault();openChoice(field);
+    }
+  });
+  document.addEventListener("scroll",event=>{
+    if(openMenu&&!openMenu.popup.contains(event.target))closeChoice();
+  },true);
+  window.addEventListener("resize",()=>closeChoice());
+  function fieldDropdown(id,label,value){
+    return '<button type="button" class="row-dropdown" data-field="'+id+'" aria-haspopup="listbox" aria-label="'+show(label+": "+value)+'">'+show(value)+'</button>';
+  }
   function render(){
+    closeChoice();
     const dateRows=rowsForDate();
     const visible=currentRows(dateRows);
     updateStats(visible,dateRows);
     const shown=visible.slice(0,400);
     storage.append(...cellFields.values(),...extraFields);
+    lastRowTap=null;
     if(!shown.some(x=>x.id===selected))selected=null;
+    if(!shown.some(x=>x.id===highlightedId))highlightedId=null;
     $("rows").innerHTML=shown.length?shown.map(x=>
-      '<tr data-id="'+x.id+'" class="'+(x.id===selected?"selected":"")+'">'+
-      '<td><button type="button" class="row-date" aria-label="Редактировать операцию '+x.id+'" title="Редактировать реквизиты операции"><svg class="ui-icon" aria-hidden="true"><use href="#ic-edit"></use></svg></button>'+show(x.date||"Проверить дату")+'</td>'+
-      '<td>'+show(x.direction==="Входящее"?"Входящие":x.direction==="Исходящее"?"Исходящие":"Не определено")+'</td>'+
+      '<tr data-id="'+x.id+'" tabindex="0" class="'+(x.id===highlightedId?"selected":"")+'">'+
+      '<td>'+show(x.date||"Проверить дату")+'</td>'+
+      '<td>'+fieldDropdown("operationDirection","Направление",x.direction==="Входящее"?"Входящие":x.direction==="Исходящее"?"Исходящие":"Не определено")+'</td>'+
       '<td><strong>'+show(x.name||"Не указан")+'</strong>'+(x.possibleDuplicate&&!x.duplicateConfirmed?'<div class="notice">Возможный дубль</div>':"")+'</td>'+
       '<td class="amount">'+fmt(x.amount)+'</td>'+
       '<td class="account-cell">'+accountPicker(x,"debit")+'</td>'+
       '<td class="account-cell">'+accountPicker(x,"credit")+'</td>'+
-      '<td>'+show(x.article||"Не указана")+'</td>'+
-      '<td>'+show(x.docType||"Не выбран")+'</td>'+
+      '<td>'+fieldDropdown("article","Статья ДДС",x.article||"Не указана")+'</td>'+
+      '<td>'+fieldDropdown("docType","Тип документа 1С",x.docType||"Не выбран")+'</td>'+
       '<td><span class="pill '+(x.status==="ready"?"info":x.status==="detected"?"info":"warn")+'">'+
       (x.status==="ready"?"Реквизиты заполнены":x.status==="detected"?"Документ определён":"Проверить")+"</span></td></tr>"
     ).join(""):'<tr><td colspan="9" class="empty">Операции не найдены</td></tr>';
@@ -328,12 +456,52 @@
       }else if(target.matches("[data-inline-cancel]"))render();
       return;
     }
-    if(selected===Number(row.dataset.id))return;
-    const column=target.closest("td")?.cellIndex ?? 0;
-    selected=Number(row.dataset.id);
-    loadEditor();
-    render();
-    (cellFields.get(column)||$("operationDirection")).focus({preventScroll:true});
+    const dropdown=target.closest(".row-dropdown");
+    if(!dropdown&&target.closest("input,button,select,textarea"))return;
+    const id=Number(row.dataset.id);
+    if(highlightedId!==id){
+      $("rows").querySelector("tr.selected")?.classList.remove("selected");
+      highlightedId=id;
+      row.classList.add("selected");
+    }
+    if(dropdown){
+      lastRowTap=null;
+      const operation=ops.find(x=>x.id===id);
+      const field=dropdown.dataset.field;
+      const key=field==="operationDirection"?"direction":field;
+      const options=Array.from($(field).options).filter(opt=>opt.value!=="__custom__");
+      if(key==="article"&&operation.article&&!options.some(opt=>opt.value===operation.article)){
+        options.push(new Option(operation.article,operation.article));
+      }
+      openChoice(dropdown,{options,value:operation[key],customArticle:key==="article",save(value){
+        operation[key]=value;
+        if(key==="article")operation.articleSource="manual";
+        if(key==="docType")operation.docTypeSource="manual";
+        else C.refreshSuggestedDocument(operation);
+        C.refreshSuggestedPosting(operation);
+        C.markDuplicates(ops);
+        render();scheduleSave();
+        $("rows").querySelector('tr[data-id="'+id+'"] [data-field="'+field+'"]')?.focus({preventScroll:true});
+      }});
+      return;
+    }
+    const now=performance.now();
+    if(lastRowTap?.id===id&&(event.detail===2||now-lastRowTap.time<410)){
+      openRowEditor(row);
+    }else lastRowTap={id,time:now};
+  });
+  function openRowEditor(row){
+    lastRowTap=null;
+    const id=Number(row.dataset.id);
+    if(selected===id)return;
+    highlightedId=selected=id;
+    loadEditor();render();
+    $("operationDirection").focus({preventScroll:true});
+  }
+  $("rows").addEventListener("keydown",event=>{
+    if(event.key==="Enter"&&event.target.matches("tr[data-id]")){
+      event.preventDefault();openRowEditor(event.target);
+    }
   });
   // Expand before iOS opens its native select; focus handles keyboard access.
   ["touchstart","pointerdown","focusin"].forEach(type=>{
@@ -435,7 +603,7 @@
     const id=selected;
     selected=null;
     render();
-    $("rows").querySelector('tr[data-id="'+id+'"] .row-date')?.focus({preventScroll:true});
+    $("rows").querySelector('tr[data-id="'+id+'"] .row-dropdown')?.focus({preventScroll:true});
   }
   $("reset").addEventListener("click",closeRowEditor);
   $("search").addEventListener("input",render);
@@ -563,6 +731,7 @@
     loadEditor();render();toast("Данные текущей вкладки очищены");
   });
   function resetFilters(){
+    highlightedId=null;lastRowTap=null;
     $("search").value="";
     if($("counterpartyFilter"))$("counterpartyFilter").value="";
     updateCounterpartyFilter();
@@ -763,5 +932,6 @@
   initTableScroll();
   restoreDraft();updateCounterpartyFilter();loadEditor();render();
 })();
+
 
 
