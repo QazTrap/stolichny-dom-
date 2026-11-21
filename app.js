@@ -146,6 +146,33 @@
     $("netTotal").textContent=fmt(t.net);
     $("filteredCount").textContent=t.count;
     $("filteredTotalLabel").textContent="Поступления по фильтру";
+    // Whole-statement controls must never depend on status, date or search.
+    // Otherwise the user may mistake partial results for the bank's turnover.
+    const whole=C.totals(ops);
+    $("statementReconcile").hidden=!ops.length;
+    $("statementReconcileNumbers").textContent=ops.length?
+      whole.count+" операций · поступления "+fmt(whole.incoming)+
+      " · списания "+fmt(whole.outgoing)+" · разница "+fmt(whole.net):"";
+    const balanceCheck=$("statementBalanceCheck");
+    const haveBalances=Number.isFinite(balances[0])&&Number.isFinite(balances[1]);
+    balanceCheck.hidden=!haveBalances||!ops.length;
+    if(haveBalances&&ops.length){
+      const actual=Math.round((balances[1]-balances[0])*100);
+      const calculated=Math.round(whole.net*100);
+      const delta=actual-calculated;
+      const matches=Math.abs(delta)<=1;
+      balanceCheck.classList.toggle("mismatch",!matches);
+      balanceCheck.textContent=matches?"Контроль остатков: разница сходится":
+        "Внимание: итог операций и изменение остатков расходятся на "+fmt(Math.abs(delta)/100)+". Сверьте исходный файл.";
+    }
+    const narrowed=ops.length>0 && (visible.length!==ops.length||filter!=="all"||directionFilter!=="all");
+    $("activeFilterNotice").hidden=!narrowed;
+    if(narrowed){
+      const name=filter==="detected"?"Документы определены":
+        filter==="ready"?"Поля заполнены":filter==="review"?"Проверить":"Все статусы";
+      $("activeFilterText").textContent="Активен фильтр («"+name+"»). Показано "+visible.length+
+        " из "+ops.length+" операций. Суммы в карточках относятся только к выбранным операциям.";
+    }
     const pendingCount=ops.length-ready;
     $("bottomMessage").textContent=!ops.length?"Загрузите банковскую выписку, чтобы начать работу.":
       "Реквизиты заполнены: "+ready+" из "+ops.length+". "+
@@ -804,6 +831,11 @@
     periodFrom="";periodTo="";
     selectedMonth="";
     $("checkDate").value=date?date.split(".").reverse().join("-"):"";
+    render();
+  });
+  $("showAllFilters").addEventListener("click",()=>{
+    filter="all";directionFilter="all";
+    resetFilters();
     render();
   });
   $("reclassifyDDS").addEventListener("click",()=>{
