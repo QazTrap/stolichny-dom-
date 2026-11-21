@@ -94,7 +94,18 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
   .sidebar-tools .filters{display:flex;flex-wrap:wrap}
   .sidebar-tools .chip{width:auto}
 }
-.heading-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.heading{display:grid;grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:"title date upload";align-items:start}
+.heading .titlewrap{grid-area:title;min-width:0}
+.heading-date-filter{grid-area:date;align-self:start}
+.heading-upload{grid-area:upload;display:grid;justify-items:end;gap:6px}
+.manual-import-option{font-size:12px;color:var(--muted);cursor:pointer}
+@media(max-width:1250px){
+ .heading{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"title upload" "date date";gap:12px}
+}
+@media(max-width:600px){
+ .heading{grid-template-columns:minmax(0,1fr);grid-template-areas:"title" "upload" "date"}
+ .heading-upload{justify-self:end}
+}
 .tabletop{flex-wrap:wrap;gap:10px}
 .heading-date-filter{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
 .heading-date-filter [hidden]{display:none}
@@ -161,14 +172,14 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
  <main>
   <div class="heading">
    <div class="titlewrap"><div class="folder"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-folder"></use></svg></div><div><h1>Обработка банковской выписки</h1><p>Проверьте и при необходимости отредактируйте операции перед загрузкой в 1С</p></div></div>
-   <div class="heading-actions">
     <div class="heading-date-filter">
      <label for="checkDate">Итоги за дату</label>
      <input id="checkDate" type="date" class="search">
      <button id="clearDateFilter" class="btn outline" type="button" hidden>Сбросить дату</button>
     </div>
-    <label><input type="checkbox" id="manualImport"> Выбрать колонки вручную</label>
+   <div class="heading-upload">
     <label class="btn primary" for="fileInput"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-upload"></use></svg> Загрузить выписку</label><input id="fileInput" type="file" accept=".xlsx,.xls,.xlsm,.xlsb,.ods,.csv,.tsv,.txt,.pdf">
+    <label class="manual-import-option"><input type="checkbox" id="manualImport"> Выбрать колонки вручную</label>
    </div>
   </div>
   <section class="statement-balances" id="statementBalances" aria-label="Остатки по банку за период выписки" hidden>
