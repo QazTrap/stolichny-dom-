@@ -668,6 +668,15 @@
   function fieldDropdown(id,label,value){
     return '<button type="button" class="row-dropdown" data-field="'+id+'" aria-haspopup="listbox" aria-label="'+show(label+": "+value)+'">'+show(value)+'</button>';
   }
+  function directionDropdown(direction){
+    const outgoing=direction==="Исходящее",incoming=direction==="Входящее";
+    const label=outgoing?"Исходящие":incoming?"Входящие":"Не определено";
+    const icon=outgoing?"#ic-arrowup":incoming?"#ic-arrowdown":"";
+    return '<button type="button" class="row-dropdown row-direction '+(outgoing?"direction-out":incoming?"direction-in":"")+
+      '" data-field="operationDirection" aria-haspopup="listbox" aria-label="'+show("Направление: "+label)+'">'+
+      (icon?'<svg class="ui-icon" aria-hidden="true" focusable="false"><use href="'+icon+'"></use></svg>':"")+
+      '<span>'+show(label)+'</span></button>';
+  }
   function render(){
     closeChoice();
     updateDdsArticleFilter();
@@ -681,7 +690,7 @@
     $("rows").innerHTML=shown.length?shown.map(x=>
       '<tr data-id="'+x.id+'" tabindex="0">'+
       '<td>'+show(x.date||"Проверить дату")+'</td>'+
-      '<td>'+fieldDropdown("operationDirection","Направление",x.direction==="Входящее"?"Входящие":x.direction==="Исходящее"?"Исходящие":"Не определено")+'</td>'+
+      '<td>'+directionDropdown(x.direction)+'</td>'+
       '<td><strong>'+show(x.name||"Не указан")+'</strong>'+(x.possibleDuplicate&&!x.duplicateConfirmed?'<div class="notice">Возможный дубль</div>':"")+'</td>'+
       '<td class="amount">'+fmt(x.amount)+'</td>'+
       '<td class="account-cell">'+accountPicker(x,"debit")+'</td>'+
