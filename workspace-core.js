@@ -432,9 +432,21 @@
       .replace(/\s+/g," ").trim();
     return [x.direction,counterparty,norm(x.knp),template].join("|");
   }
-  function countSimilarOperations(operations,source){
+  function canCopyPostingField(source,target,field){
+    if(!["article","docType","debit","credit"].includes(field))return false;
+    const value=String(source[field]||"").trim();
+    if(!value)return false;
+    if((field==="debit"||field==="credit")&&!/^\d{4}$/.test(value))return false;
+    // Do not replace values deliberately entered by the accountant or read from the bank.
+    if(["manual","statement"].includes(target[field+"Source"]))return false;
+    return target[field]!==value||target[field+"Source"]!=="manual";
+  }
+  // Show an apply button only for matching operations that can actually receive
+  // the selected fields. Otherwise the user sees "apply to N" but nothing changes.
+  function countSimilarOperations(operations,source,fields=["article","docType","debit","credit"]){
     const key=operationRuleKey(source);
-    return key?operations.filter(x=>x!==source&&x.id!==source.id&&operationRuleKey(x)===key).length:0;
+    return key?operations.filter(target=>target!==source&&target.id!==source.id&&
+      operationRuleKey(target)===key&&fields.some(field=>canCopyPostingField(source,target,field))).length:0;
   }
   function applyPostingToSimilar(operations,source,ruleKey=operationRuleKey(source),fields=["article","docType","debit","credit"]){
     if(!ruleKey)return {matched:0,updated:0};
@@ -444,23 +456,19 @@
       matched++;
       let changed=false;
       for(const field of fields){
-        if(!["article","docType","debit","credit"].includes(field))continue;
+        if(!canCopyPostingField(source,target,field))continue;
         const value=String(source[field]||"").trim();
-        if(!value)continue;
-        if((field==="debit"||field==="credit")&&!/^\d{4}$/.test(value))continue;
         const sourceField=field+"Source";
-        if(["manual","statement"].includes(target[sourceField]))continue;
-        if(target[field]!==value||target[sourceField]!=="manual"){
-          target[field]=value;
-          target[sourceField]="manual";
-          if(field==="article")target.articleReason="Применено бухгалтером к аналогичным операциям";
-          if(field==="debit"||field==="credit")target[field+"Reason"]="Счёт перенесён из проверенной аналогичной операции; подтвердите в 1С";
-          changed=true;
-        }
+        target[field]=value;
+        target[sourceField]="manual";
+        if(field==="article")target.articleReason="Применено бухгалтером к аналогичным операциям";
+        if(field==="debit"||field==="credit")target[field+"Reason"]="Счёт перенесён из проверенной аналогичной операции; подтвердите в 1С";
+        changed=true;
       }
       if(changed){
         refreshSuggestedDocument(target);
         refreshSuggestedPosting(target);
+        target.status=validateOperation(target);
         updated++;
       }
     }
