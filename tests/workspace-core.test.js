@@ -3,6 +3,17 @@ const test=require("node:test");
 const assert=require("node:assert/strict");
 const C=require("../workspace-core.js");
 
+
+test("keeps bank comment separate from payment purpose",()=>{
+  const rows=[
+    ["Дата","Дебет","Назначение платежа","Комментарий","Получатель"],
+    ["21.11.2026","1000","Оплата за товар","Перевод с Alatau на другой счёт","ТОО Получатель"]
+  ];
+  const [operation]=C.parseRows(rows,"Тест");
+  assert.equal(operation.purpose,"Оплата за товар");
+  assert.equal(operation.comment,"Перевод с Alatau на другой счёт");
+});
+
 test("reads outgoing and incoming bank statement columns",()=>{
   const rows=[
     ["Дата","Дебет","Кредит","Получатель","Плательщик","Назначение платежа","Номер документа"],
