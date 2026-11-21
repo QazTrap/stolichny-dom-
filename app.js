@@ -351,6 +351,8 @@
     let year=Number(current.slice(0,4)),month=Number(current.slice(5,7))-1;
     let draftFrom=periodFrom||earliest,draftTo=periodTo||latest;
     const pad=n=>String(n).padStart(2,"0");
+    const firstAllowed=earliest.slice(0,7)+"-01";
+    const lastAllowed=latest.slice(0,7)+"-"+pad(new Date(Number(latest.slice(0,4)),Number(latest.slice(5,7)),0).getDate());
     const popup=document.createElement("div");
     popup.className="statement-date-popup";
     popup.setAttribute("role","dialog");
@@ -384,8 +386,8 @@
           (selectedMonth===monthKey?" active":"")+'">Показать весь месяц</button>'+
         '<div class="statement-range-header">Установить период</div>'+
         '<div class="statement-range-fields">'+
-        '<label>С<input data-range-from type="date" min="'+earliest+'" max="'+latest+'" value="'+draftFrom+'"></label>'+
-        '<label>По<input data-range-to type="date" min="'+earliest+'" max="'+latest+'" value="'+draftTo+'"></label></div>'+
+        '<label>С<input data-range-from type="date" min="'+firstAllowed+'" max="'+lastAllowed+'" value="'+draftFrom+'"></label>'+
+        '<label>По<input data-range-to type="date" min="'+firstAllowed+'" max="'+lastAllowed+'" value="'+draftTo+'"></label></div>'+
         '<button type="button" data-range-apply class="statement-range-apply">Применить период</button></div>';
       popup.querySelector("[data-calendar-prev]").disabled=monthKey<=earliest.slice(0,7);
       popup.querySelector("[data-calendar-next]").disabled=monthKey>=latest.slice(0,7);
@@ -398,7 +400,7 @@
       if(event.target.closest("[data-range-apply]")){
         const from=popup.querySelector("[data-range-from]"),to=popup.querySelector("[data-range-to]");
         draftFrom=from.value;draftTo=to.value;
-        if(!draftFrom||!draftTo||draftFrom>draftTo||draftFrom<earliest||draftTo>latest){
+        if(!draftFrom||!draftTo||draftFrom>draftTo||draftFrom<firstAllowed||draftTo>lastAllowed){
           toast("Укажите корректный период: дата «С» должна быть не позже даты «По» и в пределах выписки.");
           if(!draftFrom||draftFrom>draftTo)from.focus();else to.focus();
           return;
