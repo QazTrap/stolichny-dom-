@@ -438,14 +438,19 @@
   }
   // Period filtering applies to loaded operations only. It never changes
   // the source statement, and missing dates do not match selected periods.
-  function filterPeriod(rows,{date="",month=""}={}){
+  function filterPeriod(rows,{date="",month="",from="",to=""}={}){
     const day=dateText(date);
     const validMonth=/^\d{4}-(0[1-9]|1[0-2])$/.test(month)?month:"";
-    if(!day&&!validMonth)return rows;
+    const start=dateText(from),finish=dateText(to);
+    if(!day&&!validMonth&&!start&&!finish)return rows;
+    const iso=value=>value.slice(6,10)+"-"+value.slice(3,5)+"-"+value.slice(0,2);
+    const first=start?iso(start):"",last=finish?iso(finish):"";
     return rows.filter(operation=>{
       const value=dateText(operation.date);
-      return (!day||value===day)&&(!validMonth||(value&&
-        value.slice(6,10)+"-"+value.slice(3,5)===validMonth));
+      if(!value)return false;
+      const candidate=iso(value);
+      return (!day||value===day)&&(!validMonth||candidate.slice(0,7)===validMonth)&&
+        (!first||candidate>=first)&&(!last||candidate<=last);
     });
   }
   function totals(rows) {
