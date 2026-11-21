@@ -244,7 +244,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
      <button class="chip" data-filter="ready"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-check-circle"></use></svg><span class="chip-label">Поля заполнены <span class="chip-count">(<span id="readyChip">0</span>)</span></span></button>
      <button class="chip" id="reclassifyDDS" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-rotate-cw"></use></svg><span class="chip-label">Пересчитать ДДС</span></button>
    </div>
-   <div class="search-field"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-search"></use></svg><input class="search" id="search" type="search" aria-label="Поиск по контрагенту или назначению" placeholder="Поиск по операциям"></div>
+   <div class="search-field"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-search"></use></svg><input class="search" id="search" type="search" aria-label="Поиск по операциям, контрагентам, статьям ДДС и назначению" placeholder="Поиск по операциям и ДДС"></div>
   </div>
   <div class="company"><strong>ТОО «Моя компания»</strong><span class="muted">Выбранная организация</span></div>
   <div class="support">Поддержка<br>support@stoldom.site</div>
@@ -288,7 +288,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
      <span class="muted" id="tableCaption">Сначала загрузите банковскую выписку</span>
     </div>
     <div class="table-scroll-top" id="tableScrollTop" aria-label="Горизонтальная прокрутка таблицы операций" role="region" tabindex="0"><div id="tableScrollTopSpacer"></div></div>
-    <div class="tablewrap" id="tableScrollBottom"><table><thead><tr><th scope="col"><label class="column-filter">Дата<select id="dateColumnFilter" aria-label="Фильтр по дате" title="Выбрать дату" disabled><option value="">Все даты</option></select></label></th><th>Направление</th><th scope="col"><label class="column-filter">Контрагент<select id="counterpartyFilter" aria-label="Фильтр по контрагенту" title="Выбрать контрагента" disabled><option value="">Все контрагенты</option></select></label></th><th scope="col"><label class="column-filter">Сумма<select id="amountColumnFilter" aria-label="Фильтр по сумме" title="Выбрать сумму" disabled><option value="">Все суммы</option></select></label></th><th title="Предварительный счёт дебета">Дт</th><th title="Предварительный счёт кредита">Кт</th><th>Статья ДДС</th><th>Тип документа 1С</th><th>Комментарии из выписки</th></tr></thead><tbody id="rows"></tbody></table></div>
+    <div class="tablewrap" id="tableScrollBottom"><table><thead><tr><th scope="col"><label class="column-filter">Дата<select id="dateColumnFilter" aria-label="Фильтр по дате" title="Выбрать дату" disabled><option value="">Все даты</option></select></label></th><th>Направление</th><th scope="col"><label class="column-filter">Контрагент<select id="counterpartyFilter" aria-label="Фильтр по контрагенту" title="Выбрать контрагента" disabled><option value="">Все контрагенты</option></select></label></th><th scope="col"><label class="column-filter">Сумма<select id="amountColumnFilter" aria-label="Фильтр по сумме" title="Выбрать сумму" disabled><option value="">Все суммы</option></select></label></th><th title="Предварительный счёт дебета">Дт</th><th title="Предварительный счёт кредита">Кт</th><th scope="col"><label class="column-filter">Статья ДДС<select id="ddsArticleFilter" aria-label="Фильтр по статье ДДС" title="Выбрать статью ДДС" disabled><option value="">Все статьи ДДС</option></select></label></th><th>Тип документа 1С</th><th>Комментарии из выписки</th></tr></thead><tbody id="rows"></tbody></table></div>
     <div class="pagination"><span id="shownCount">Операций пока нет</span></div>
    </section>
    <div id="rowEditStorage" hidden>
@@ -348,7 +348,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="/workspace-core.js?v=bulk-kaspi-20261121-v1" defer></script>
-<script src="/app.js?v=busy-spinner-20261121-v1" defer></script>
+<script src="/app.js?v=dds-column-search-20261121-v1" defer></script>
 </body></html>
 
 
