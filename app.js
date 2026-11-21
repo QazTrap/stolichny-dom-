@@ -218,7 +218,23 @@
     }
     render();
     scheduleSave();
-    toast(x[side]?"Счёт "+(side==="debit"?"Дт":"Кт")+" "+x[side]+" сохранён":"Счёт "+(side==="debit"?"Дт":"Кт")+" очищен");
+    const title="Счёт "+(side==="debit"?"Дт":"Кт");
+    toast(x[side]?title+" "+x[side]+" сохранён":title+" очищен");
+    const count=x[side]?C.countSimilarOperations(ops,x):0;
+    if(count>0){
+      const btn=document.createElement("button");
+      btn.type="button";
+      btn.className="toast-action";
+      btn.textContent="Применить этот счёт к "+count+" похожим операциям";
+      btn.addEventListener("click",()=>{
+        const result=C.applyPostingToSimilar(ops,x,C.operationRuleKey(x),[side]);
+        C.markDuplicates(ops);render();scheduleSave();
+        toast(title+" перенесён: обновлено "+result.updated+" из "+result.matched+" похожих операций. Ручные значения сохранены.");
+      });
+      $("toast").append(btn);
+      clearTimeout(toast.timer);
+      toast.timer=setTimeout(()=>$("toast").style.display="none",12000);
+    }
     return true;
   }
   function editOtherLedger(select){
@@ -727,14 +743,21 @@
     $("confirmDuplicate").checked=!!x.duplicateConfirmed;
     $("duplicateHint").textContent=x.possibleDuplicate?
       "В выписке найдены похожие дата, сумма, контрагент и назначение/номер документа. Сверьте с банком, прежде чем подтверждать.":"";
+    const count=C.countSimilarOperations(ops,x);
+    $("similarActions").hidden=count===0;
+    $("similarCount").textContent=String(count);
+    $("applyToSimilar").checked=false;
   }
   $("editForm").addEventListener("submit",event=>{
     event.preventDefault();
     const x=ops.find(v=>v.id===selected);
     if(!x)return;
     const previousCounterparty=counterpartyKey(x);
+    const originalRuleKey=C.operationRuleKey(x);
+    const applyBulk=$("applyToSimilar").checked;
+    const previousName=x.name;
     x.name=C.fixTengeText($("counterparty").value.trim().slice(0,300));
-    x.originalName=x.name;
+    if(x.name!==previousName)x.originalName=x.name;
     if(previousCounterparty!==counterpartyKey(x))updateCounterpartyFilter();
     x.purpose=C.fixTengeText($("purpose").value.trim().slice(0,3000));
     x.article=($("article").value==="__custom__"?$("customArticle").value:$("article").value).trim().slice(0,300);
@@ -748,9 +771,11 @@
     C.refreshSuggestedPosting(x);
     x.docTypeSource="manual";
     x.duplicateConfirmed=$("confirmDuplicate").checked;
+    const bulk=applyBulk?C.applyPostingToSimilar(ops,x,originalRuleKey):null;
     C.markDuplicates(ops);
     closeRowEditor();scheduleSave();
-    toast(x.status==="ready"?"Реквизиты заполнены. Проводку необходимо сверить с 1С.":"Изменения сохранены. Проверьте оставшиеся поля или возможный дубль.");
+    if(bulk)toast("Сохранено. Похожих операций: "+bulk.matched+", обновлено: "+bulk.updated+". Ручные настройки других операций не изменены. Сверьте проводки с 1С.");
+    else toast(x.status==="ready"?"Реквизиты заполнены. Проводку необходимо сверить с 1С.":"Изменения сохранены. Проверьте оставшиеся поля или возможный дубль.");
   });
   $("article").addEventListener("change",()=>{
     $("customArticle").style.display=$("article").value==="__custom__"?"block":"none";
