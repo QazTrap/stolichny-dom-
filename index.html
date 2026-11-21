@@ -22,6 +22,14 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
 .bottomactions .feature-status{display:inline-flex;align-items:center;gap:5px;color:#78879d;font-size:11px;font-weight:600;white-space:nowrap}
 .bottomactions .feature-status .ui-icon{width:14px;height:14px;stroke-width:1.7}
 @media(max-width:800px){.bottomactions .in-development{flex-wrap:wrap}}.notice{font-size:12px;color:var(--muted);margin-top:12px}
+
+/* Show progress only while a real import or recalculation is running. */
+.workspace-busy{position:fixed;inset:0;z-index:200;display:grid;place-items:center;background:rgba(244,248,253,.68);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);padding:20px}
+.workspace-busy-card{display:flex;flex-direction:column;align-items:center;gap:15px;min-width:210px;max-width:310px;padding:25px 30px;background:#fff;border:1px solid #dce6f3;border-radius:16px;box-shadow:0 18px 55px rgba(24,57,103,.14);color:#20395b;text-align:center;font-weight:650}
+.workspace-spinner{display:block;width:38px;height:38px;border:3px solid #e0edff;border-top-color:#1478e8;border-right-color:#1478e8;border-radius:50%;animation:workspace-spin .8s linear infinite}
+@keyframes workspace-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.workspace-spinner{animation-duration:2s}}
+body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 #fileInput{display:none}.toast{position:fixed;right:24px;bottom:90px;background:#173252;color:#fff;padding:12px 16px;border-radius:10px;box-shadow:0 8px 25px #10204425;display:none;z-index:10}
 @media(max-width:1100px){.stats{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:720px){.top{padding:0 15px}.layout{grid-template-columns:1fr}aside{position:static;display:flex;flex-direction:row;overflow:auto;padding:9px;border-right:0;border-bottom:1px solid var(--line)}.navlabel,.company,.support{display:none}.nav{white-space:nowrap;padding:9px 12px;font-size:12px}main{padding:20px 14px 24px}.heading{align-items:flex-start;flex-direction:column}.heading h1{font-size:22px}.stats{grid-template-columns:1fr;gap:8px}.stat{padding:11px}.staticon{width:40px;height:40px}.toolbar{align-items:stretch}.search{width:100%}.bottom{padding:10px 12px;align-items:stretch;flex-direction:column}.bottomactions .btn{flex:1}.bottomactions{width:100%}.profile .username{display:none}}
@@ -336,10 +344,11 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
   </div>
  </form>
 </dialog>
+<div id="workspaceBusy" class="workspace-busy" role="status" aria-live="polite" aria-atomic="true" hidden><div class="workspace-busy-card"><span class="workspace-spinner" aria-hidden="true"></span><span id="workspaceBusyText">Обрабатываем данные…</span></div></div>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="/workspace-core.js?v=bulk-kaspi-20261121-v1" defer></script>
-<script src="/app.js?v=filter-totals-20261121-v1" defer></script>
+<script src="/app.js?v=busy-spinner-20261121-v1" defer></script>
 </body></html>
 
 
