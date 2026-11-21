@@ -7,6 +7,9 @@
   const $=id=>document.getElementById(id);
   const fmt=n=>new Intl.NumberFormat("ru-RU",{minimumFractionDigits:0,maximumFractionDigits:2}).format(Number(n)||0)+" ₸";
   const show=x=>C.escapeHtml(x);
+  const formatBalance=new Intl.NumberFormat("ru-RU",{style:"currency",currency:"KZT",currencyDisplay:"narrowSymbol"});
+  const balanceLabels=["Вх.остаток на начало периода в нац.валюте","Исх.остаток на конец периода в нац.валюте"].map(C.norm);
+  let balances=[];
   const sessionKey="stoldom.workspace.v2";
   let ops=[],selected=null,filter="all",directionFilter="all",fileLabel="",saveTimer=0;
   function toast(message){
@@ -17,7 +20,7 @@
   }
   function saveDraft(){
     try {
-      sessionStorage.setItem(sessionKey, JSON.stringify({version:2,ops,fileLabel,savedAt:new Date().toISOString()}));
+      sessionStorage.setItem(sessionKey, JSON.stringify({version:2,ops,fileLabel,balances,savedAt:new Date().toISOString()}));
       if($("draftStatus")) $("draftStatus").textContent="Черновик в этой вкладке сохранён";
     } catch {
       if($("draftStatus")) $("draftStatus").textContent="Автосохранение недоступно — скачайте черновик";
@@ -53,6 +56,7 @@
       C.markDuplicates(ops);
       selected=ops[0]?.id??null;
       fileLabel=String(parsed.fileLabel||"Черновик").slice(0,200);
+      balances=Array.isArray(parsed.balances)?parsed.balances:[];
       if(ops.length) toast("Восстановлен черновик текущей вкладки: "+ops.length+" операций");
     }catch{try{sessionStorage.removeItem(sessionKey);}catch{}}
   }
@@ -106,6 +110,14 @@
     $("saveDraftFile").disabled=!downloadsEnabled;
     $("preview").disabled=ops.length===0;
     $("editorPanel").hidden=ops.length===0;
+    ["openingBalance","closingBalance"].forEach((id,index)=>{
+      const value=$(id);
+      if(!value)return;
+      const available=Number.isFinite(balances[index]);
+      value.parentElement.hidden=!available;
+      value.textContent=available?formatBalance.format(balances[index]):"";
+    });
+    if($("statementBalances"))$("statementBalances").hidden=!balances.some(Number.isFinite);
     $("tableCaption").textContent=fileLabel||"Операции";
   }
 
@@ -488,7 +500,7 @@
   $("saveDraftFile").addEventListener("click",()=>{
     if(!downloadsEnabled)return;
     if(!ops.length){toast("Нет операций для сохранения");return;}
-    const data=JSON.stringify({version:2,fileLabel,savedAt:new Date().toISOString(),ops},null,2);
+    const data=JSON.stringify({version:2,fileLabel,balances,savedAt:new Date().toISOString(),ops},null,2);
     download(data,"STOLDOM_черновик_"+new Date().toISOString().slice(0,10)+".json","application/json;charset=utf-8");
   });
   $("restoreDraftFile").addEventListener("click",()=>$("draftInput").click());
@@ -501,6 +513,7 @@
       if(data.version!==2)throw Error("Этот формат черновика не поддерживается");
       ops=sanitizeImported(data.ops);ops.forEach(recomputeArticle);ops.forEach(C.refreshSuggestedDocument);ops.forEach(C.refreshSuggestedPosting);C.markDuplicates(ops);
       selected=ops[0]?.id??null;fileLabel=String(data.fileLabel||file.name).slice(0,200);
+      balances=Array.isArray(data.balances)?data.balances:[];
       filter="all";directionFilter="all";resetFilters();
       loadEditor();render();scheduleSave();toast("Черновик загружен: "+ops.length+" операций");
     }catch(err){toast(err.message||"Ошибка открытия черновика");}
@@ -509,7 +522,7 @@
   $("clearDraft").addEventListener("click",()=>{
     if(!ops.length)return;
     if(!confirm("Очистить текущие операции?"))return;
-    ops=[];selected=null;fileLabel="";filter="all";directionFilter="all";resetFilters();
+    ops=[];balances=[];selected=null;fileLabel="";filter="all";directionFilter="all";resetFilters();
     try{sessionStorage.removeItem(sessionKey);}catch{}
     loadEditor();render();toast("Данные текущей вкладки очищены");
   });
@@ -519,6 +532,17 @@
     document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x.dataset.filter==="all"));
     document.querySelectorAll("[data-direction]").forEach(x=>x.classList.toggle("active",x.dataset.direction==="all"));
   }
+  function collectStatementBalances(rows, values){
+    for(const [index,label] of balanceLabels.entries()){
+      const header=rows.findIndex(row=>row?.some(cell=>C.norm(cell)===label));
+      if(header<0)continue;
+      const column=rows[header].findIndex(cell=>C.norm(cell)===label);
+      for(let row=header+1;row<rows.length;row++){
+        const amount=C.money(rows[row]?.[column]);
+        if(Number.isFinite(amount))values[index].add(amount);
+      }
+    }
+  }
   async function readStatement(file){
     if(!window.XLSX)throw Error("Библиотека Excel не загрузилась. Проверьте соединение и обновите страницу.");
     const ext=file.name.split(".").pop().toLowerCase();
@@ -526,13 +550,15 @@
     if(ext==="csv"||ext==="txt")book=XLSX.read(await file.text(),{type:"string",cellDates:true});
     else book=XLSX.read(await file.arrayBuffer(),{type:"array",cellDates:true});
     const all=[];
+    const balanceValues=balanceLabels.map(()=>new Set());
     for(const sheet of book.SheetNames){
       const rows=XLSX.utils.sheet_to_json(book.Sheets[sheet],{header:1,defval:"",raw:true});
       all.push(...C.parseRows(rows,sheet));
+      collectStatementBalances(rows,balanceValues);
       if(all.length>20000)throw Error("Слишком много операций (максимум 20 000)");
     }
     if(!all.length)throw Error("В файле не найдена таблица операций с колонками «Дата» и «Сумма/Дебет/Кредит»");
-    return all;
+    return {operations:all,balances:balanceValues.map(values=>values.size===1?[...values][0]:null)};
   }
   $("fileInput").addEventListener("change",async e=>{
     const file=e.target.files?.[0];
@@ -541,7 +567,8 @@
       if(!/\.(xlsx|xls|csv|txt)$/i.test(file.name))throw Error("Поддерживаются только XLSX, XLS, CSV и TXT");
       if(file.size>20*1024*1024)throw Error("Файл больше 20 МБ");
       const data=await readStatement(file);
-      ops=data.map((x,i)=>({...x,id:i+1}));C.markDuplicates(ops);
+      ops=data.operations.map((x,i)=>({...x,id:i+1}));C.markDuplicates(ops);
+      balances=data.balances;
       selected=ops[0].id;fileLabel=file.name;filter="all";directionFilter="all";resetFilters();
       loadEditor();render();scheduleSave();
       toast("Загружено "+ops.length+" операций. Требуют проверки: "+ops.filter(x=>x.status!=="ready").length);
