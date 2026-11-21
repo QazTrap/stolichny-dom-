@@ -26,7 +26,8 @@
       if($("draftStatus")) $("draftStatus").textContent="Автосохранение в этой вкладке недоступно";
     }
   }
-  function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveDraft,200);}
+  function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{saveTimer=0;saveDraft();},200);}
+  window.addEventListener("pagehide",()=>{if(saveTimer){clearTimeout(saveTimer);saveTimer=0;saveDraft();}});
   function sanitizeImported(raw){
     if(!Array.isArray(raw)||raw.length>20000) throw Error("Неверный формат черновика");
     return raw.map((x,i)=>{
@@ -36,7 +37,7 @@
       if(!Number.isFinite(amount)||amount<=0||amount>1e15)throw Error("Некорректная сумма операции");
       return {
         id:i+1,date:C.dateText(str("date")),name:str("name"),originalName:str("originalName")||str("name"),
-        purpose:str("purpose"),amount,direction:["Входящее","Исходящее"].includes(str("direction"))?str("direction"):"",
+        purpose:str("purpose"),comment:String(x.comment??"").slice(0,3000),amount,direction:["Входящее","Исходящее"].includes(str("direction"))?str("direction"):"",
         docType:str("docType"),docTypeSource:str("docTypeSource"),article:str("article"),articleSource:str("articleSource"),articleReason:str("articleReason"),articleConfidence:str("articleConfidence"),knp:str("knp"),bankRef:str("bankRef"),debit:str("debit"),credit:str("credit"),debitSource:str("debitSource"),creditSource:str("creditSource"),debitReason:str("debitReason"),creditReason:str("creditReason"),
         bin:str("bin"),sourceDoc:str("sourceDoc"),docNumber:str("docNumber"),sourceSheet:str("sourceSheet"),
         possibleDuplicate:false,duplicateConfirmed:!!x.duplicateConfirmed,status:"review"
@@ -432,8 +433,7 @@
       '<td class="account-cell">'+accountPicker(x,"credit")+'</td>'+
       '<td>'+fieldDropdown("article","Статья ДДС",x.article||"Не указана")+'</td>'+
       '<td>'+fieldDropdown("docType","Тип документа 1С",x.docType||"Не выбран")+'</td>'+
-      '<td><span class="pill '+(x.status==="ready"?"info":x.status==="detected"?"info":"warn")+'">'+
-      (x.status==="ready"?"Реквизиты заполнены":x.status==="detected"?"Документ определён":"Проверить")+"</span></td></tr>"
+      '<td><textarea class="operation-comment" data-comment-id="'+x.id+'" rows="2" maxlength="3000" aria-label="Комментарий к операции '+x.id+'" placeholder="Добавить комментарий">'+show(x.comment||"")+'</textarea></td></tr>'
     ).join(""):'<tr><td colspan="9" class="empty">Операции не найдены</td></tr>';
     if(selected!==null)attachRowEditor($("rows").querySelector('tr[data-id="'+selected+'"]'));
     syncTableScrollWidth();
@@ -443,6 +443,15 @@
     if(!$("previewPanel").hidden)renderPreview();
   }
 
+  $("rows").addEventListener("input",event=>{
+    const field=event.target;
+    if(!field.matches(".operation-comment"))return;
+    const operation=ops.find(x=>x.id===Number(field.dataset.commentId));
+    if(operation){
+      operation.comment=field.value;
+      scheduleSave();
+    }
+  });
   // Ledger pickers can be used without opening the rest of the row.
   $("rows").addEventListener("click",event=>{
     const target=event.target;
