@@ -96,11 +96,35 @@
     select.value=names.has(selectedKey)?selectedKey:"";
     select.disabled=!entries.length;
   }
+  function amountKey(value){
+    return String(Math.round(Number(value)*100));
+  }
+  function updateValueColumnFilters(){
+    const dateSelect=$("dateColumnFilter"),amountSelect=$("amountColumnFilter");
+    if(dateSelect){
+      const selected=dateSelect.value;
+      const dates=[...new Set(ops.map(x=>x.date).filter(Boolean))]
+        .sort((a,b)=>b.split(".").reverse().join("").localeCompare(a.split(".").reverse().join("")));
+      dateSelect.replaceChildren(new Option("Все даты",""),...dates.map(date=>new Option(date,date)));
+      dateSelect.value=dates.includes(selected)?selected:"";
+      dateSelect.disabled=!dates.length;
+    }
+    if(amountSelect){
+      const selected=amountSelect.value;
+      const amounts=[...new Set(ops.map(x=>amountKey(x.amount)))]
+        .sort((a,b)=>Number(a)-Number(b));
+      amountSelect.replaceChildren(new Option("Все суммы",""),...amounts.map(key=>new Option(fmt(Number(key)/100),key)));
+      amountSelect.value=amounts.includes(selected)?selected:"";
+      amountSelect.disabled=!amounts.length;
+    }
+  }
   function rowsForDate(){
     const date=C.dateText($("checkDate").value);
     const counterparty=$("counterpartyFilter")?.value;
-    if(!date&&!counterparty)return ops;
-    return ops.filter(x=>(!date||x.date===date)&&(!counterparty||counterpartyKey(x)===counterparty));
+    const amount=$("amountColumnFilter")?.value;
+    if(!date&&!counterparty&&!amount)return ops;
+    return ops.filter(x=>(!date||x.date===date)&&(!counterparty||counterpartyKey(x)===counterparty)&&
+      (!amount||amountKey(x.amount)===amount));
   }
   function currentRows(dateRows){
     const query=C.norm($("search").value);
@@ -602,6 +626,12 @@
   $("reset").addEventListener("click",closeRowEditor);
   $("search").addEventListener("input",render);
   $("counterpartyFilter")?.addEventListener("change",render);
+  $("amountColumnFilter")?.addEventListener("change",render);
+  $("dateColumnFilter")?.addEventListener("change",()=>{
+    const date=$("dateColumnFilter").value;
+    $("checkDate").value=date?date.split(".").reverse().join("-"):"";
+    render();
+  });
   $("reclassifyDDS").addEventListener("click",()=>{
     if(!ops.length){toast("Сначала загрузите выписку");return;}
     const eligible=ops.filter(x=>x.articleSource!=="manual");
@@ -618,9 +648,13 @@
     directionFilter=button.dataset.direction;
     document.querySelectorAll("[data-direction]").forEach(b=>b.classList.toggle("active",b===button));render();
   }));
-  $("checkDate").addEventListener("change",render);
+  $("checkDate").addEventListener("change",()=>{
+    $("dateColumnFilter").value=C.dateText($("checkDate").value);
+    render();
+  });
   $("clearDateFilter")?.addEventListener("click",()=>{
     $("checkDate").value="";
+    $("dateColumnFilter").value="";
     render();
     $("checkDate").focus();
   });
@@ -728,7 +762,10 @@
     lastRowTap=null;
     $("search").value="";
     if($("counterpartyFilter"))$("counterpartyFilter").value="";
+    if($("dateColumnFilter"))$("dateColumnFilter").value="";
+    if($("amountColumnFilter"))$("amountColumnFilter").value="";
     updateCounterpartyFilter();
+    updateValueColumnFilters();
     $("checkDate").value="";
     document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x.dataset.filter==="all"));
     document.querySelectorAll("[data-direction]").forEach(x=>x.classList.toggle("active",x.dataset.direction==="all"));
@@ -924,7 +961,7 @@
     e.target.value="";
   });
   initTableScroll();
-  restoreDraft();updateCounterpartyFilter();loadEditor();render();
+  restoreDraft();updateCounterpartyFilter();updateValueColumnFilters();loadEditor();render();
 })();
 
 
