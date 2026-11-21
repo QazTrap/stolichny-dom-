@@ -54,7 +54,7 @@
       ops.forEach(C.refreshSuggestedDocument);
       ops.forEach(C.refreshSuggestedPosting);
       C.markDuplicates(ops);
-      selected=ops[0]?.id??null;
+      selected=null;
       fileLabel=String(parsed.fileLabel||"Черновик").slice(0,200);
       balances=Array.isArray(parsed.balances)?parsed.balances:[];
       if(ops.length) toast("Восстановлен черновик текущей вкладки: "+ops.length+" операций");
@@ -131,7 +131,6 @@
     $("bottomStatusIcon").parentElement.classList.add("pending");
     $("export").disabled=!downloadsEnabled || ops.length===0;
     $("preview").disabled=ops.length===0;
-    $("editorPanel").hidden=ops.length===0;
     ["openingBalance","closingBalance"].forEach((id,index)=>{
       const value=$(id);
       if(!value)return;
@@ -270,14 +269,32 @@
     syncTableScrollWidth();
   }
 
+  const cellFields=["editDate","operationDirection","counterparty","editAmount","debit","credit","article","docType"].map($);
+  const storage=$("rowEditStorage");
+  const extraFields=[$("customArticle"),$("editForm")];
+  for(const [,accounts] of ledgerGroups){
+    for(const [number,title] of accounts)$("ledgerCodes").append(new Option(number+" · "+title,number));
+  }
+  function attachRowEditor(row){
+    cellFields.forEach((field,index)=>row.cells[index].replaceChildren(field));
+    $("article").after($("customArticle"));
+    const detail=document.createElement("tr");
+    detail.className="operation-detail";
+    const cell=detail.insertCell();
+    cell.colSpan=row.cells.length;
+    cell.append($("editForm"));
+    row.after(detail);
+  }
   function render(){
     const dateRows=rowsForDate();
     const visible=currentRows(dateRows);
     updateStats(visible,dateRows);
     const shown=visible.slice(0,400);
+    storage.append(...cellFields,...extraFields);
+    if(!shown.some(x=>x.id===selected))selected=null;
     $("rows").innerHTML=shown.length?shown.map(x=>
       '<tr data-id="'+x.id+'" class="'+(x.id===selected?"selected":"")+'">'+
-      '<td>'+show(x.date||"Проверить дату")+'</td>'+
+      '<td><button type="button" class="row-date" aria-label="Редактировать операцию '+x.id+'" title="Редактировать операцию"><svg class="ui-icon" aria-hidden="true"><use href="#ic-edit"></use></svg>'+show(x.date||"Проверить дату")+'</button></td>'+
       '<td>'+show(x.direction==="Входящее"?"Входящие":x.direction==="Исходящее"?"Исходящие":"Не определено")+'</td>'+
       '<td><strong>'+show(x.name||"Не указан")+'</strong>'+(x.possibleDuplicate&&!x.duplicateConfirmed?'<div class="notice">Возможный дубль</div>':"")+'</td>'+
       '<td class="amount">'+fmt(x.amount)+'</td>'+
@@ -288,6 +305,7 @@
       '<td><span class="pill '+(x.status==="ready"?"info":x.status==="detected"?"info":"warn")+'">'+
       (x.status==="ready"?"Реквизиты заполнены":x.status==="detected"?"Документ определён":"Проверить")+"</span></td></tr>"
     ).join(""):'<tr><td colspan="9" class="empty">Операции не найдены</td></tr>';
+    if(selected!==null)attachRowEditor($("rows").querySelector('tr[data-id="'+selected+'"]'));
     syncTableScrollWidth();
     $("shownCount").textContent=ops.length?"Показано "+shown.length+" из "+visible.length+" по фильтру (всего "+ops.length+")":"Операций пока нет";
 
@@ -295,8 +313,7 @@
     if(!$("previewPanel").hidden)renderPreview();
   }
 
-  // Event delegation survives table rerenders and avoids opening the right
-  // editor when selecting a ledger account inside a cell.
+  // Ledger pickers can be used without opening the rest of the row.
   $("rows").addEventListener("click",event=>{
     const target=event.target;
     const row=target.closest("tr[data-id]");
@@ -308,8 +325,12 @@
       }else if(target.matches("[data-inline-cancel]"))render();
       return;
     }
+    if(selected===Number(row.dataset.id))return;
+    const column=target.closest("td")?.cellIndex ?? 0;
     selected=Number(row.dataset.id);
-    loadEditor();render();
+    loadEditor();
+    render();
+    (cellFields[column]||cellFields[0]).focus({preventScroll:true});
   });
   // Expand before iOS opens its native select; focus handles keyboard access.
   ["touchstart","pointerdown","focusin"].forEach(type=>{
@@ -344,8 +365,7 @@
   const articles=[...$("article").options].map(x=>x.value);
   function loadEditor(){
     const x=ops.find(v=>v.id===selected);
-    if(!x){$("operationNumber").textContent="";$("operationMeta").textContent="";return;}
-    $("operationNumber").textContent="№ "+String(ops.indexOf(x)+1).padStart(3,"0");
+    if(!x)return;
     $("operationMeta").textContent=(x.date||"Дата не определена")+" · "+fmt(x.amount)+(x.docNumber?" · Документ "+x.docNumber:"");
     const match=x.date?.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
     $("editDate").value=match?match[3]+"-"+match[2]+"-"+match[1]:"";
@@ -379,9 +399,10 @@
     event.preventDefault();
     const x=ops.find(v=>v.id===selected);
     if(!x)return;
+    const amount=Math.round(Number($("editAmount").value)*100)/100;
+    if(!Number.isFinite(amount)||amount<=0){toast("Укажите корректную положительную сумму");return;}
     x.date=C.dateText($("editDate").value);
-    x.amount=Math.round(Number($("editAmount").value)*100)/100;
-    if(!Number.isFinite(x.amount)||x.amount<=0){toast("Укажите корректную положительную сумму");return;}
+    x.amount=amount;
     const previousCounterparty=counterpartyKey(x);
     x.name=C.fixTengeText($("counterparty").value.trim().slice(0,300));
     x.originalName=x.name;
@@ -399,7 +420,7 @@
     x.docTypeSource="manual";
     x.duplicateConfirmed=$("confirmDuplicate").checked;
     C.markDuplicates(ops);
-    render();loadEditor();scheduleSave();
+    closeRowEditor();scheduleSave();
     toast(x.status==="ready"?"Реквизиты заполнены. Проводку необходимо сверить с 1С.":"Изменения сохранены. Проверьте оставшиеся поля или возможный дубль.");
   });
   $("article").addEventListener("change",()=>{
@@ -414,7 +435,13 @@
       $("operationKindHint").textContent="Вид операции в 1С: Прочее списание безналичных денежных средств (проверьте настройки своей базы).";
     }
   });
-  $("reset").addEventListener("click",loadEditor);
+  function closeRowEditor(){
+    const id=selected;
+    selected=null;
+    render();
+    $("rows").querySelector('tr[data-id="'+id+'"] .row-date')?.focus({preventScroll:true});
+  }
+  $("reset").addEventListener("click",closeRowEditor);
   $("search").addEventListener("input",render);
   $("counterpartyFilter")?.addEventListener("change",render);
   $("reclassifyDDS").addEventListener("click",()=>{
@@ -525,7 +552,7 @@
       const data=JSON.parse(await file.text());
       if(data.version!==2)throw Error("Этот формат черновика не поддерживается");
       ops=sanitizeImported(data.ops);ops.forEach(recomputeArticle);ops.forEach(C.refreshSuggestedDocument);ops.forEach(C.refreshSuggestedPosting);C.markDuplicates(ops);
-      selected=ops[0]?.id??null;fileLabel=String(data.fileLabel||file.name).slice(0,200);
+      selected=null;fileLabel=String(data.fileLabel||file.name).slice(0,200);
       balances=Array.isArray(data.balances)?data.balances:[];
       filter="all";directionFilter="all";resetFilters();
       loadEditor();render();scheduleSave();toast("Черновик загружен: "+ops.length+" операций");
@@ -730,7 +757,7 @@
       const data=await readStatement(file);
       ops=data.operations.map((x,i)=>({...x,id:i+1}));C.markDuplicates(ops);
       balances=data.balances;
-      selected=ops[0].id;fileLabel=file.name;filter="all";directionFilter="all";resetFilters();
+      selected=null;fileLabel=file.name;filter="all";directionFilter="all";resetFilters();
       loadEditor();render();scheduleSave();
       toast("Загружено "+ops.length+" операций. Требуют проверки: "+ops.filter(x=>x.status!=="ready").length);
     }catch(err){toast(err.message||"Ошибка чтения файла");}
@@ -740,4 +767,5 @@
   initTableScroll();
   restoreDraft();updateCounterpartyFilter();loadEditor();render();
 })();
+
 
