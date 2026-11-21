@@ -29,7 +29,8 @@ app.get("/vendor/xlsx.full.min.js", (_req,res) => {
   res.type("application/javascript");
   res.sendFile(path.join(__dirname,"node_modules","xlsx","dist","xlsx.full.min.js"));
 });
-for(const name of ["workspace-core.js","app.js"]){
+app.use("/vendor/pdfjs",express.static(path.join(__dirname,"vendor","pdfjs")));
+for(const name of ["workspace-core.js","app.js","alatau-pdf.mjs"]){
   app.get("/"+name,(_req,res)=>{
     res.set("Cache-Control","no-store");
     res.type("application/javascript");
@@ -45,3 +46,4 @@ app.get("/",(_req,res)=>{
   res.sendFile(path.join(__dirname,"index.html"));
 });
 app.listen(PORT,()=>console.log("STOLDOM.SITE listening on port "+PORT));
+
