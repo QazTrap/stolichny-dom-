@@ -252,12 +252,12 @@
     date:["дата операции","дата документа","дата платежа","дата валютирования","дата проводки","дата","operation date","transaction date"],
     payer:["наименование плательщика","плательщик","отправитель","от кого","payer","sender"],
     receiver:["наименование получателя","получатель","кому","receiver","beneficiary"],
-    name:["наименование контрагента","контрагент","название контрагента","counterparty"],
-    purpose:["назначение платежа","назначение","детали платежа","описание платежа","описание","purpose","details"],
-    amount:["сумма операции","сумма платежа","сумма в валюте счета","сумма","amount"],
-    debit:["сумма по дебету","дебетовая сумма","сумма дебет","расход","списание","дебет","debit"],
-    credit:["сумма по кредиту","кредитовая сумма","сумма кредит","приход","поступление","кредит","credit"],
-    direction:["индикатор дебета/кредита","индикатор дебета кредита","дебет/кредит","тип операции","direction","дебет кредит"],
+    name:["наименование контрагента","контрагент","название контрагента","counterparty","контрагент атауы","корреспондент"],
+    purpose:["назначение платежа","назначение","детали платежа","описание платежа","описание","purpose","details","description","төлем мақсаты"],
+    amount:["сумма операции","сумма платежа","сумма в валюте счета","сумма","amount","сумма в тенге","сомасы"],
+    debit:["сумма по дебету","дебетовая сумма","сумма дебет","расход","списание","дебет","debit","withdrawal","money out","шығыс"],
+    credit:["сумма по кредиту","кредитовая сумма","сумма кредит","приход","поступление","кредит","credit","deposit","money in","кіріс"],
+    direction:["индикатор дебета/кредита","индикатор дебета кредита","дебет/кредит","тип операции","направление","direction","дебет кредит"],
     bankDoc:["тип документа","вид документа","документ","document type"],
     number:["номер документа","№ документа","номер платежа","референс","reference","document number"],
     accountDebit:["счет дебета","счёт дебета","счет дебет","дебет счет","счет списания"],
@@ -269,7 +269,7 @@
   function colIndex(headers,key) {
     if(key==="date") {
       // "Дата выписки" is the export generation date, not the payment date.
-      for(const wanted of ["дата документа","дата операции","дата платежа","дата валютирования","дата проводки","operation date","transaction date","дата"]){
+      for(const wanted of ["дата документа","дата операции","дата платежа","дата валютирования","дата проводки","operation date","transaction date","booking date","date","күні","операция күні","дата"]){
         const i=headers.indexOf(wanted);
         if(i>=0)return i;
       }
@@ -279,25 +279,35 @@
     if(exact>=0)return exact;
     // Never accidentally treat "Сумма НДС", debit or credit as total amount.
     if(key==="amount")return -1;
+    if(key==="debit"||key==="credit"){
+      return headers.findIndex(h=>aliases[key].some(alias=>h.includes(alias)) &&
+        !/счет|счёт|индикатор|дебет.*кредит|credit.*debit|debit.*credit|остаток|сальдо/.test(h));
+    }
     return headers.findIndex(h=>aliases[key].some(a=>h.includes(a)));
   }
-  function parseRows(matrix, sheetName="") {
+  function parseRows(matrix, sheetName="", mapping=null) {
     if (!Array.isArray(matrix) || !matrix.length) return [];
-    let header=-1, headers=[];
-    for (let i=0;i<Math.min(matrix.length,30);i++) {
-      const h=(matrix[i]||[]).map(norm);
-      const hasDate=h.some(x=>aliases.date.some(a=>x===a || x.includes(a)));
-      const hasMoney=h.some(x=>[...aliases.amount,...aliases.debit,...aliases.credit].some(a=>x===a||x.includes(a)));
-      if(hasDate&&hasMoney){header=i;headers=h;break;}
+    let header=mapping?.header ?? -1;
+    let cols=mapping?.columns;
+    if(!cols){
+      for(let i=0;i<matrix.length;i++){
+        const headers=(matrix[i]||[]).map(norm);
+        if(colIndex(headers,"date")<0)continue;
+        const indices=Object.fromEntries(Object.keys(aliases).map(key=>[key,colIndex(headers,key)]));
+        if([indices.amount,indices.debit,indices.credit].some(index=>index>=0)){
+          header=i;
+          cols=indices;
+          break;
+        }
+      }
     }
-    if(header<0) return [];
-    const cols={};
-    for (const key of Object.keys(aliases)) cols[key]=colIndex(headers,key);
+    if(!cols)return [];
     const result=[];
     for(let rowIdx=header+1;rowIdx<matrix.length;rowIdx++){
       const row=matrix[rowIdx]||[];
       if(!row.some(v=>String(v??"").trim()))continue;
       const get=key=>cols[key]>=0?row[cols[key]]:"";
+      if(!dateText(get("date")) && row.some(cell=>/^(итого|всего|обороты|сальдо|остаток|total)(?:$|[ :])/i.test(String(cell).trim())))continue;
       const debit=money(get("debit")),credit=money(get("credit")),originalAmount=money(get("amount"));
       const hasDebit=Number.isFinite(debit)&&debit!==0, hasCredit=Number.isFinite(credit)&&credit!==0;
       const rawDirection=norm(get("direction"));
