@@ -110,6 +110,12 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
 .column-filter select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
 .column-filter:focus-within{outline:2px solid var(--blue);outline-offset:2px;border-radius:3px}
 .column-filter:has(option:checked:not([value=""])) span{background:var(--blue);color:#fff;border-color:var(--blue)}
+#importMapping{border:1px solid var(--line);border-radius:12px;max-width:min(580px,94vw);max-height:90vh;color:var(--ink)}
+#importMapping::backdrop{background:#10204466}
+#mappingColumns{margin-top:14px;display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+#mappingColumns label{display:grid;gap:4px;min-width:0}
+#mappingColumns select{width:100%;padding:6px}
+.mapping-actions{display:flex;flex-wrap:wrap;gap:8px}
 </style>
 </head>
 <body>
@@ -147,7 +153,8 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
      <input id="checkDate" type="date" class="search">
      <button id="clearDateFilter" class="btn outline" type="button" hidden>Сбросить дату</button>
     </div>
-    <label class="btn primary" for="fileInput"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-upload"></use></svg> Загрузить выписку</label><input id="fileInput" type="file" accept=".xlsx,.xls,.csv,.txt">
+    <label><input type="checkbox" id="manualImport"> Выбрать колонки вручную</label>
+    <label class="btn primary" for="fileInput"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-upload"></use></svg> Загрузить выписку</label><input id="fileInput" type="file" accept=".xlsx,.xls,.xlsm,.xlsb,.ods,.csv,.tsv,.txt">
    </div>
   </div>
   <section class="statement-balances" id="statementBalances" aria-label="Остатки по банку за период выписки" hidden>
@@ -203,8 +210,22 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
  </div>
  </main>
 </div>
+<dialog id="importMapping" aria-labelledby="mappingTitle">
+ <form method="dialog">
+  <h2 id="mappingTitle">Колонки выписки</h2>
+  <p id="mappingSheet"></p>
+  <label>Номер строки с заголовками <input id="mappingHeader" type="number" min="1" step="1" required></label>
+  <div id="mappingColumns"></div>
+  <p id="mappingFeedback" role="status"></p>
+  <div class="mapping-actions">
+   <button class="btn outline" value="cancel" formnovalidate>Отменить импорт</button>
+   <button class="btn outline" value="skip" formnovalidate>Пропустить лист</button>
+   <button class="btn primary" value="apply">Применить</button>
+  </div>
+ </form>
+</dialog>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
-<script src="/workspace-core.js" defer></script>
-<script src="/app.js?v=counterparty-filter-20261121" defer></script>
+<script src="/workspace-core.js?v=bank-layouts" defer></script>
+<script src="/app.js?v=bank-layouts" defer></script>
 </body></html>
