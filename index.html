@@ -28,6 +28,10 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
 .ui-icon.icon-xl{width:27px;height:27px}
 .ui-icon.icon-sm{width:15px;height:15px}
 .btn .ui-icon,.chip .ui-icon{flex-shrink:0}
+.chip[data-direction="Исходящее"] .ui-icon{color:#b42318}
+.chip[data-direction="Входящее"] .ui-icon{color:#087443}
+.chip.active[data-direction="Исходящее"] .ui-icon{color:#ffcdc8}
+.chip.active[data-direction="Входящее"] .ui-icon{color:#baf5cf}
 .chip{display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:background .15s,border-color .15s,box-shadow .15s}
 .chip:hover{border-color:#98b8e3;box-shadow:0 2px 8px #1478e812}
 .btn{transition:background .15s,border-color .15s,box-shadow .15s}
