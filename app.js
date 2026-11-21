@@ -313,7 +313,97 @@
     row.after(detail);
   }
   // One searchable menu services both row fields and filters.
-  let openMenu=null, lastRowTap=null;
+  let openMenu=null, lastRowTap=null, datePopup=null;
+  function statementDates(){
+    // ISO strings sort chronologically and avoid dependence on today's date.
+    return [...new Set(ops.map(x=>C.dateText(x.date)).filter(Boolean)
+      .map(date=>date.split(".").reverse().join("-")))].sort();
+  }
+  function syncDateTrigger(){
+    const iso=$("checkDate").value;
+    $("dateTriggerLabel").textContent=iso?iso.split("-").reverse().join("."):"дд.мм.гггг";
+    $("dateTrigger").disabled=!ops.some(x=>!!C.dateText(x.date));
+    $("dateTrigger").setAttribute("aria-label",iso?"Итоги за "+$("dateTriggerLabel").textContent+", выбрать другую дату":"Выбрать дату из выписки");
+  }
+  function closeDateCalendar(restoreFocus=false){
+    if(!datePopup)return;
+    datePopup.remove();
+    datePopup=null;
+    $("dateTrigger").setAttribute("aria-expanded","false");
+    if(restoreFocus)$("dateTrigger").focus({preventScroll:true});
+  }
+  function openDateCalendar(){
+    const anchor=$("dateTrigger");
+    if(anchor.disabled)return;
+    closeChoice();
+    closeDateCalendar();
+    const dates=statementDates();
+    if(!dates.length)return;
+    const available=new Set(dates);
+    const earliest=dates[0],latest=dates[dates.length-1];
+    const current=$("checkDate").value||earliest;
+    let year=Number(current.slice(0,4)),month=Number(current.slice(5,7))-1;
+    const pad=n=>String(n).padStart(2,"0");
+    const popup=document.createElement("div");
+    popup.className="statement-date-popup";
+    popup.setAttribute("role","dialog");
+    popup.setAttribute("aria-label","Календарь дат банковской выписки");
+    document.body.append(popup);
+    datePopup=popup;
+    anchor.setAttribute("aria-expanded","true");
+    function drawCalendar(){
+      const monthKey=year+"-"+pad(month+1);
+      const first=new Date(year,month,1);
+      const offset=(first.getDay()+6)%7;
+      const length=new Date(year,month+1,0).getDate();
+      const title=new Intl.DateTimeFormat("ru-RU",{month:"long",year:"numeric"}).format(first);
+      let cells='<span class="statement-date-empty"></span>'.repeat(offset);
+      for(let day=1;day<=length;day++){
+        const iso=monthKey+"-"+pad(day);
+        const has=available.has(iso);
+        const selected=$("checkDate").value===iso;
+        cells+='<button type="button" data-calendar-day="'+iso+'" class="'+
+          (has?"has-operations ":"")+(selected?"selected":"")+
+          '" aria-label="'+pad(day)+"."+pad(month+1)+"."+year+'">'+day+'</button>';
+      }
+      popup.innerHTML='<div class="statement-date-head"><strong>'+title+'</strong>'+
+        '<div class="statement-date-nav"><button type="button" data-calendar-prev aria-label="Предыдущий месяц">‹</button>'+
+        '<button type="button" data-calendar-next aria-label="Следующий месяц">›</button></div></div>'+
+        '<div class="statement-date-weekdays">'+["Пн","Вт","Ср","Чт","Пт","Сб","Вс"].map(x=>"<span>"+x+"</span>").join("")+'</div>'+
+        '<div class="statement-date-days">'+cells+'</div>';
+      popup.querySelector("[data-calendar-prev]").disabled=monthKey<=earliest.slice(0,7);
+      popup.querySelector("[data-calendar-next]").disabled=monthKey>=latest.slice(0,7);
+    }
+    popup.addEventListener("click",event=>{
+      if(event.target.closest("[data-calendar-prev]")){month--;if(month<0){month=11;year--;}drawCalendar();return;}
+      if(event.target.closest("[data-calendar-next]")){month++;if(month>11){month=0;year++;}drawCalendar();return;}
+      const day=event.target.closest("[data-calendar-day]");
+      if(!day)return;
+      $("checkDate").value=day.dataset.calendarDay;
+      closeDateCalendar();
+      $("checkDate").dispatchEvent(new Event("change",{bubbles:true}));
+      anchor.focus({preventScroll:true});
+    });
+    drawCalendar();
+    const box=anchor.getBoundingClientRect();
+    const left=Math.max(8,Math.min(box.right-popup.offsetWidth,innerWidth-popup.offsetWidth-8));
+    popup.style.left=left+"px";
+    popup.style.top=(box.bottom+popup.offsetHeight+8>innerHeight && box.top>popup.offsetHeight+8
+      ?box.top-popup.offsetHeight-5:box.bottom+5)+"px";
+  }
+  $("dateTrigger").addEventListener("click",()=>{
+    if(datePopup)closeDateCalendar();
+    else openDateCalendar();
+  });
+  document.addEventListener("pointerdown",event=>{
+    if(datePopup&&!datePopup.contains(event.target)&&!$("dateTrigger").contains(event.target))closeDateCalendar();
+  },true);
+  document.addEventListener("keydown",event=>{
+    if(datePopup&&event.key==="Escape"){
+      event.preventDefault();
+      closeDateCalendar(true);
+    }
+  });
   function closeChoice(restoreFocus=false){
     if(!openMenu)return;
     const {popup,anchor}=openMenu;
@@ -323,6 +413,7 @@
     if(restoreFocus&&anchor.isConnected)anchor.focus({preventScroll:true});
   }
   function openChoice(anchor,quick=null){
+    closeDateCalendar();
     closeChoice();
     if(anchor.disabled)return;
     if(anchor.matches("select[data-ledger-side]"))expandLedgerSelect(anchor);
@@ -436,8 +527,9 @@
   });
   document.addEventListener("scroll",event=>{
     if(openMenu&&!openMenu.popup.contains(event.target))closeChoice();
+    if(datePopup&&!datePopup.contains(event.target))closeDateCalendar();
   },true);
-  window.addEventListener("resize",()=>closeChoice());
+  window.addEventListener("resize",()=>{closeChoice();closeDateCalendar();});
   function fieldDropdown(id,label,value){
     return '<button type="button" class="row-dropdown" data-field="'+id+'" aria-haspopup="listbox" aria-label="'+show(label+": "+value)+'">'+show(value)+'</button>';
   }
@@ -467,6 +559,7 @@
     $("shownCount").textContent=ops.length?"Показано "+shown.length+" из "+visible.length+" по фильтру (всего "+ops.length+")":"Операций пока нет";
 
     if($("clearDateFilter"))$("clearDateFilter").hidden=!$("checkDate").value;
+    syncDateTrigger();
     if(!$("previewPanel").hidden)renderPreview();
   }
 
@@ -659,7 +752,7 @@
     $("checkDate").value="";
     $("dateColumnFilter").value="";
     render();
-    $("checkDate").focus();
+    $("dateTrigger").focus();
   });
   function issues(x){
     const a=[];
