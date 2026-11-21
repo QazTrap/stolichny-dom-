@@ -201,12 +201,17 @@
       balanceCheck.textContent=matches?"Контроль остатков: разница сходится":
         "Внимание: итог операций и изменение остатков расходятся на "+fmt(Math.abs(delta)/100)+". Сверьте исходный файл.";
     }
-    const narrowed=ops.length>0 && (visible.length!==ops.length||filter!=="all"||directionFilter!=="all");
+    const ddsFilter=$("ddsArticleFilter")?.value;
+    const narrowed=ops.length>0 && (visible.length!==ops.length||filter!=="all"||directionFilter!=="all"||!!ddsFilter);
     $("activeFilterNotice").hidden=!narrowed;
     if(narrowed){
-      const name=filter==="detected"?"Документы определены":
-        filter==="ready"?"Поля заполнены":filter==="review"?"Проверить":"Все статусы";
-      $("activeFilterText").textContent="Активен фильтр («"+name+"»). Показано "+visible.length+
+      const applied=[];
+      if(filter!=="all")applied.push(filter==="detected"?"Документы определены":
+        filter==="ready"?"Поля заполнены":"Проверить");
+      if(directionFilter!=="all")applied.push(directionFilter==="Входящее"?"Входящие":"Исходящие");
+      if(ddsFilter)applied.push("Статья ДДС: "+($("ddsArticleFilter").selectedOptions[0]?.textContent||"выбрана"));
+      if(!applied.length)applied.push("поиск или другие фильтры");
+      $("activeFilterText").textContent="Активен фильтр («"+applied.join(" · ")+"»). Показано "+visible.length+
         " из "+ops.length+" операций. Суммы в карточках относятся только к выбранным операциям.";
     }
     const pendingCount=ops.length-ready;
