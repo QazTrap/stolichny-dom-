@@ -139,6 +139,10 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
 .statement-date-days button.selected::after{background:#fff}
 .statement-date-days button:focus-visible{outline:2px solid #65a9ed;outline-offset:1px}
 .statement-date-empty{height:34px}
+.statement-date-footer{border-top:1px solid #e5ecf4;margin-top:10px;padding-top:10px}
+.statement-month-select{width:100%;min-height:36px;border:1px solid #bfd8f5;background:#eff6ff;color:#1567c3;border-radius:8px;font-weight:650;font:inherit;cursor:pointer}
+.statement-month-select:hover{background:#e1efff}
+.statement-month-select.active{background:#1478e8;color:white;border-color:#1478e8}
 .statement-balances{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px}
 .statement-balances[hidden]{display:none}
 .statement-balances>div{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px}
@@ -211,7 +215,7 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
   <div class="heading">
    <div class="titlewrap"><div class="folder"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-folder"></use></svg></div><div><h1>Обработка банковской выписки</h1><p>Проверьте и при необходимости отредактируйте операции перед загрузкой в 1С</p></div></div>
     <div class="heading-date-filter">
-     <label for="dateTrigger">Итоги за дату</label>
+     <label for="dateTrigger">Итоги за период</label>
      <input id="checkDate" type="date" hidden>
      <button id="dateTrigger" type="button" class="search date-trigger" aria-haspopup="dialog" aria-expanded="false" aria-label="Выбрать дату выписки" disabled><span id="dateTriggerLabel">дд.мм.гггг</span><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-calendar"></use></svg></button>
      <button id="clearDateFilter" class="btn outline" type="button" hidden>Сбросить дату</button>
@@ -293,8 +297,8 @@ main{min-width:0;padding:30px;max-width:1800px;width:100%;margin:auto}.heading{d
 </dialog>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
-<script src="/workspace-core.js?v=budget-levies-20261121-v1" defer></script>
-<script src="/app.js?v=statement-calendar-start-20261121-v1" defer></script>
+<script src="/workspace-core.js?v=month-filter-20261121-v1" defer></script>
+<script src="/app.js?v=month-filter-20261121-v1" defer></script>
 </body></html>
 
 
