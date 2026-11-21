@@ -478,3 +478,29 @@ test("inline table editing only changes the selected debit or credit account",()
   assert.equal(x.debitSource,"manual");
   assert.notEqual(x.status,"ready");
 });
+
+
+test("inline apply offers only eligible operations and updates ready status",()=>{
+  const source={id:1,date:"01.10.2026",amount:2500,direction:"Исходящее",
+    name:"ТОО Kaspi Pay",originalName:"ТОО Kaspi Pay",
+    purpose:"Услуги процессинга за 01/10/2026",knp:"859",
+    article:"Услуги эквайринга и процессинга",articleSource:"manual",
+    docType:"Платёжное поручение исходящее",docTypeSource:"manual",
+    debit:"7210",debitSource:"manual",credit:"1030",creditSource:"manual"};
+  const auto={...source,id:2,date:"02.10.2026",
+    purpose:"Услуги процессинга за 02/10/2026",
+    debit:"",debitSource:"",articleSource:"auto",docTypeSource:"auto"};
+  const protectedRow={...source,id:3,date:"03.10.2026",
+    purpose:"Услуги процессинга за 03/10/2026",
+    debit:"3310",debitSource:"manual"};
+  const operations=[source,auto,protectedRow];
+  assert.equal(C.validateOperation(auto),"detected");
+  assert.equal(C.countSimilarOperations(operations,source,["debit"]),1);
+  const result=C.applyPostingToSimilar(operations,source,C.operationRuleKey(source),["debit"]);
+  assert.deepEqual(result,{matched:2,updated:1});
+  assert.equal(auto.debit,"7210");
+  assert.equal(auto.debitSource,"manual");
+  assert.equal(auto.status,"ready");
+  assert.equal(protectedRow.debit,"3310");
+  assert.equal(C.countSimilarOperations(operations,source,["debit"]),0);
+});
