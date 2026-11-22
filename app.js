@@ -1282,7 +1282,7 @@
     const requireExcel=()=>{if(!window.XLSX)throw Error("Библиотека Excel не загрузилась. Проверьте соединение и обновите страницу.");};
     const ext=file.name.split(".").pop().toLowerCase();
     if(ext==="pdf"){
-      const {readAlatauPdf}=await import("./alatau-pdf.mjs?v=alatau-empty-20261122-v1");
+      const {readAlatauPdf}=await import("./alatau-pdf.mjs?v=alatau-zero-layout-20261122-v2");
       return readAlatauPdf(file,C);
     }
     let book;
