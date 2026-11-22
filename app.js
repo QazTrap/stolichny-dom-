@@ -1115,7 +1115,7 @@
       return;
     }
     if(!window.XLSX){toast("Не удалось загрузить библиотеку Excel");return;}
-    const headers=["№","Дата","Направление","Контрагент","БИН/ИИН","Назначение платежа","Комментарий банка","Сумма, ₸","Статья ДДС","Основание подбора ДДС","КНП","Документ 1С","Вид операции в 1С (предложение)","Дебет","Кредит","Номер документа","Статус","Что проверить","Лист источника"];
+    const headers=["№","Дата","Направление","Контрагент","БИН/ИИН","Назначение платежа","Комментарий банка","Сумма, "+(statementCurrency()==="KZT"?"₸":statementCurrency()),"Статья ДДС","Основание подбора ДДС","КНП","Документ 1С","Вид операции в 1С (предложение)","Дебет","Кредит","Номер документа","Статус","Что проверить","Лист источника"];
     const rows=ops.map((x,i)=>[i+1,x.date,x.direction,safeText(x.name),safeText(x.bin),safeText(x.purpose),safeText(x.comment),Number(x.amount),safeText(x.article),safeText(x.articleReason),safeText(x.knp),x.docType,safeText(C.suggestDocumentOperation(x.article,x.docType)),x.debit,x.credit,safeText(x.docNumber),
       x.status==="ready"?"Реквизиты заполнены":"Требует заполнения",safeText(reviewNotes(x).join("; ")||"Сверить с 1С"),safeText(x.sourceSheet)]);
     const workbook=XLSX.utils.book_new();
