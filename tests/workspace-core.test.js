@@ -629,3 +629,10 @@ test("does not shorten organization brands or short proprietor names",()=>{
   assert.equal(C.compactLegalDisplayName("ИП РЕЙМОВА"),"ИП РЕЙМОВА");
   assert.equal(C.compactLegalDisplayName("DOLINA AGRO LTD ISRAEL IL"),"DOLINA AGRO LTD ISRAEL IL");
 });
+
+test("abbreviates limited liability partnerships in company headers and transaction rows",()=>{
+  assert.equal(C.compactLegalDisplayName("Товарищество с ограниченной ответственностью Столичный Дом"),"ТОО Столичный Дом");
+  assert.equal(C.compactLegalDisplayName("Товарещество с ограниченной ответственностью Столичный Дом"),"ТОО Столичный Дом");
+  assert.equal(C.compactLegalDisplayName("ТОО Столичный Дом"),"ТОО Столичный Дом");
+  assert.equal(C.shortLegalName("Товарищество с ограниченной ответственностью Столичный Дом"),"ТОО Столичный Дом");
+});
