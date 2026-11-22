@@ -179,6 +179,9 @@
     const name=val("name")||"Организация не указана";
     $("companyMiniName").textContent=name;
     $("companyMiniName").title=name;
+    const period=C.statementPeriodLabel(info,ops);
+    $("companyMiniPeriod").textContent=period.text;
+    $("companyMiniPeriod").title=period.source==="operations"?"Даты первой и последней операций; банк не указал полный период выписки":period.source==="statement"?"Период, указанный банком в выписке":"Даты периода отсутствуют в файле";
     $("companyMiniBin").textContent=val("bin")?"ИИН/БИН "+val("bin"):"ИИН/БИН не указан";
     $("companyMiniBank").textContent=val("bank")||"Банк не указан";
     $("companyMiniAccount").textContent=val("account")?"Счёт "+val("account").slice(0,2)+"••••"+val("account").slice(-4):"Счёт не указан";
