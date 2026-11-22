@@ -59,3 +59,50 @@ test("rejects zero-operation PDF if its end balance does not reconcile",async()=
   page.find(x=>x.s==="Исходящий остаток: 12 345,67").s="Исходящий остаток: 12 344,67";
   assert.throws(()=>parseAlatauPages([page],C),/не сошлись/);
 });
+
+
+test("imports multi-page USD statement as USD, not tenge, with reconciled operations",async()=>{
+  const {parseAlatauPages}=await import("../alatau-pdf.mjs");
+  const first=zeroMovementAlatauPage().filter(p=>p.s!=="ИТОГО:"&&!(p.y===359));
+  first.find(p=>p.s.includes("KZ123456789012345678")).s="KZ123456789012345678 USD";
+  first.find(p=>p.s==="Обороты по кредиту:").s="Обороты по кредиту:";
+  first.find(p=>p.s==="Обороты по дебету:").s="Обороты по дебету:";
+  first.find(p=>p.y===191.2).s="9 000,00";
+  first.find(p=>p.y===206.2).s="9 000,00";
+  first.push(
+    {s:"20.11.2023",x:11,y:356.4},
+    {s:"1",x:120,y:356.4},
+    {s:"0,00",x:151,y:356.4},
+    {s:"9 000,00",x:197,y:356.4},
+    {s:"213",x:375,y:356.4},
+    {s:"Зачисление купленной валюты",x:419,y:358.8},
+    {s:"ТОО Пример",x:520,y:358.8},
+    {s:"123456789012",x:620,y:356.4}
+  );
+  const second=[
+    {s:"Дата операции",x:12.7,y:27},
+    {s:"Кредит",x:205.6,y:27},
+    {s:"20.11.2023",x:11,y:58.4},
+    {s:"2",x:120,y:58.4},
+    {s:"9 000,00",x:151,y:58.4},
+    {s:"0,00",x:197,y:58.4},
+    {s:"710",x:375,y:58.4},
+    {s:"Payment for goods",x:419,y:60.8},
+    {s:"DOLINA TEST LTD",x:520,y:60.8},
+    {s:"ИТОГО:",x:11,y:259}
+  ];
+  const result=parseAlatauPages([first,second],C);
+  assert.equal(result.company.currency,"USD");
+  assert.equal(result.operations.length,2);
+  assert.equal(result.operations[0].direction,"Входящее");
+  assert.equal(result.operations[1].direction,"Исходящее");
+  assert.deepEqual(C.totals(result.operations),{incoming:9000,outgoing:9000,net:0,count:2,unknown:0});
+});
+
+test("rejects multi-page USD statement if even one bank turnover differs",async()=>{
+  const {parseAlatauPages}=await import("../alatau-pdf.mjs");
+  const first=zeroMovementAlatauPage();
+  first.find(p=>p.s.includes("KZ123456789012345678")).s="KZ123456789012345678 USD";
+  first.find(p=>p.y===191.2).s="9 000,00";
+  assert.throws(()=>parseAlatauPages([first],C),/не сошлись/);
+});
