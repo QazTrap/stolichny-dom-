@@ -302,8 +302,8 @@
     for(let i=0;i<max;i++){
       const cells=Array.isArray(matrix[i])?matrix[i]:[matrix[i]];
       const normalized=cells.map(cell=>norm(cell));
-      if(normalized.includes("дата операции")&&
-        normalized.some(text=>["дебет","кредит","сумма","сумма операции"].includes(text)))break;
+      if(normalized.some(text=>["дата операции","дата документа","дата платежа","дата"].includes(text))&&
+        normalized.some(text=>["дебет","кредит","сумма","сумма операции","расход","приход"].includes(text)))break;
       for(let col=0;col<cells.length;col++){
         const cell=String(cells[col]??"").trim();
         if(!cell)continue;
@@ -311,8 +311,16 @@
         const label=norm((sameCell?sameCell[1]:cell).replace(/[:：]\s*$/,""));
         const field=aliasToField.get(label);
         if(!field||info[field])continue;
-        const next=sameCell?sameCell[2]:
-          cells.slice(col+1).find(value=>String(value??"").trim()&&!aliasToField.has(norm(value).replace(/[:：]\s*$/,"")));
+        let next=sameCell?sameCell[2]:"";
+        if(!sameCell){
+          for(let j=col+1;j<cells.length;j++){
+            const candidate=String(cells[j]??"").trim();
+            if(!candidate)continue;
+            const nextLabel=norm(candidate.replace(/[:：]\s*$/,""));
+            if(aliasToField.has(nextLabel))break;
+            next=candidate;break;
+          }
+        }
         const value=String(next??"").trim().slice(0,240);
         if(!value)continue;
         if(field==="bin"){if(/^\d{12}$/.test(value))info.bin=value;continue;}
