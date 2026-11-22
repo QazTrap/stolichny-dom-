@@ -5,7 +5,7 @@ export function parseAlatauPages(pages,C){
   // PDF.js may split a visual line into several text fragments.
   const firstText=first.map(p=>String(p.s||"")).join(" ");
   if(!/Alatau/i.test(firstText)||!/City/i.test(firstText)||!/Bank/i.test(firstText)||
-     !/\bKZT\b/i.test(firstText))throw layoutError();
+     !/\b(?:KZT|USD|EUR|RUB|GBP|CNY)\b/i.test(firstText))throw layoutError();
   function summary(label){
     const item=first.find(p=>p.s.startsWith(label));
     if(!item)throw layoutError();
@@ -30,6 +30,7 @@ export function parseAlatauPages(pages,C){
   if(accountMatch)company.account=accountMatch[0].toUpperCase();
   const currencyMatch=accountItem?.s.match(/\b(KZT|USD|EUR|RUB|GBP|CNY)\b/i);
   if(currencyMatch)company.currency=currencyMatch[1].toUpperCase();
+  if(!company.account||!company.currency)throw layoutError();
   const binLabel=headerItems.find(p=>/^ИИН\s*\(\s*БИН\s*\)\s*:/i.test(p.s));
   const binItem=binLabel&&headerItems.find(p=>
     Math.abs(p.y-binLabel.y)<4 && p.x>binLabel.x+30 && /^\d{12}$/.test(p.s));
