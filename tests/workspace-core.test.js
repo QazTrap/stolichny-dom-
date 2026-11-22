@@ -504,3 +504,59 @@ test("inline apply offers only eligible operations and updates ready status",()=
   assert.equal(protectedRow.debit,"3310");
   assert.equal(C.countSimilarOperations(operations,source,["debit"]),0);
 });
+
+
+test("extracts bank account owner from the header of a Kaspi statement",()=>{
+  const rows=[
+    ["Текущий счет: ",null,"KZ20722S000006737878"],
+    ["Валюта счета:",null,"KZT"],
+    ["Период:",null,"01.01.2025 - 31.12.2025"],
+    ["ИИН/БИН: ",null,"810923402307"],
+    ["Наименование: ",null,"ИП Тест"],
+    ["№ документа","Дата операции","Дебет","Кредит","Наименование бенефициара / отправителя денег"],
+    ["1","01.01.2025",100,"","ТОО Контрагент"],
+    ["Итого обороты в валюте счета"]
+  ];
+  const result=C.extractStatementCompany(rows);
+  assert.deepEqual(result,{
+    name:"ИП Тест",bin:"810923402307",bank:"Kaspi Bank",
+    account:"KZ20722S000006737878",period:"01.01.2025 - 31.12.2025",currency:"KZT"
+  });
+});
+
+test("does not misidentify transaction counterparties as the statement owner",()=>{
+  const rows=[
+    ["Выписка сформирована"],
+    ["Дата операции","Дебет","Кредит","Наименование бенефициара / отправителя денег","БИН"],
+    ["02.11.2026",200,"","ТОО Получатель","123456789012"]
+  ];
+  const result=C.extractStatementCompany(rows);
+  assert.deepEqual(result,{name:"",bin:"",bank:"",account:"",period:"",currency:""});
+});
+
+test("accepts clearly labelled same-cell company metadata and keeps missing fields empty",()=>{
+  const rows=[
+    ["Наименование организации: ТОО Пример"],
+    ["БИН: 123456789012"],
+    ["Расчётный счёт: KZ20722S000006737878"],
+    ["Банк: Alatau City Bank"],
+    ["Валюта счёта: KZT"]
+  ];
+  const result=C.extractStatementCompany(rows);
+  assert.equal(result.name,"ТОО Пример");
+  assert.equal(result.bin,"123456789012");
+  assert.equal(result.bank,"Alatau City Bank");
+  assert.equal(result.account,"KZ20722S000006737878");
+  assert.equal(result.period,"");
+});
+
+test("does not show a single owner when sheets contain conflicting identities",()=>{
+  const combined=C.mergeStatementCompanies([
+    {name:"ИП А",bin:"123456789012",bank:"Kaspi Bank",account:"KZ20722S000006737878"},
+    {name:"ИП Б",bin:"210987654321",bank:"Kaspi Bank",account:"KZ20722S000006737878"}
+  ]);
+  assert.equal(combined.name,"");
+  assert.equal(combined.bin,"");
+  assert.equal(combined.bank,"Kaspi Bank");
+  assert.equal(combined.account,"KZ20722S000006737878");
+});
