@@ -20,6 +20,9 @@
   const balanceLabels=["Вх.остаток на начало периода в нац.валюте","Исх.остаток на конец периода в нац.валюте"].map(C.norm);
   let balances=[],company={};
   const sessionKey="stoldom.workspace.v2";
+  const ledgerVisibilityKey="stoldom.ledgerColumnsHidden.v1";
+  let ledgerColumnsHidden=false;
+  try{ledgerColumnsHidden=localStorage.getItem(ledgerVisibilityKey)==="1";}catch{}
   let ops=[],selected=null,filter="all",directionFilter="all",fileLabel="",saveTimer=0,selectedMonth="",periodFrom="",periodTo="";
   function toast(message){
     $("toast").textContent=String(message);
@@ -428,6 +431,22 @@
     [5,$("credit")],[6,$("article")],[7,$("docType")]
   ]);
   const storage=$("rowEditStorage");
+  function syncLedgerVisibility(){
+    $("operationsTable").classList.toggle("ledger-columns-hidden",ledgerColumnsHidden);
+    const toggle=$("toggleLedgerColumns");
+    toggle.setAttribute("aria-pressed",String(ledgerColumnsHidden));
+    const action=ledgerColumnsHidden?"Показать":"Скрыть";
+    toggle.setAttribute("aria-label",action+" столбцы Дт и Кт");
+    toggle.title=action+" столбцы Дт и Кт";
+    const detailCell=$("rows").querySelector("tr.operation-detail td");
+    if(detailCell)detailCell.colSpan=ledgerColumnsHidden?7:9;
+    syncTableScrollWidth();
+  }
+  $("toggleLedgerColumns").addEventListener("click",()=>{
+    ledgerColumnsHidden=!ledgerColumnsHidden;
+    try{localStorage.setItem(ledgerVisibilityKey,ledgerColumnsHidden?"1":"0");}catch{}
+    syncLedgerVisibility();
+  });
   const extraFields=[$("customArticle"),$("editForm")];
   for(const [,accounts] of ledgerGroups){
     for(const [number,title] of accounts)$("ledgerCodes").append(new Option(number+" · "+title,number));
@@ -438,7 +457,7 @@
     const detail=document.createElement("tr");
     detail.className="operation-detail";
     const cell=detail.insertCell();
-    cell.colSpan=row.cells.length;
+    cell.colSpan=row.cells.length-(ledgerColumnsHidden?2:0);
     cell.append($("editForm"));
     row.after(detail);
   }
@@ -746,9 +765,9 @@
       '<td>'+fieldDropdown("article","Статья ДДС",x.article||"Не указана")+'</td>'+
       '<td>'+fieldDropdown("docType","Тип документа 1С",x.docType||"Не выбран")+'</td>'+
       '<td class="statement-comment" title="'+show(x.comment?x.comment:(x.purpose?"Назначение платежа из выписки: "+x.purpose:"В выписке не найден ни комментарий, ни назначение платежа"))+'"><span class="comment-preview">'+show(x.comment||x.purpose||"—")+'</span></td></tr>'
-    ).join(""):'<tr><td colspan="9" class="empty">Операции не найдены</td></tr>';
+    ).join(""):'<tr><td colspan="'+(ledgerColumnsHidden?7:9)+'" class="empty">Операции не найдены</td></tr>';
     if(selected!==null)attachRowEditor($("rows").querySelector('tr[data-id="'+selected+'"]'));
-    syncTableScrollWidth();
+    syncLedgerVisibility();
     $("shownCount").textContent=ops.length?"Показано "+shown.length+" из "+visible.length+" по фильтру (всего "+ops.length+")":"Операций пока нет";
 
     if($("clearDateFilter"))$("clearDateFilter").hidden=!$("checkDate").value&&!selectedMonth&&!periodFrom;
