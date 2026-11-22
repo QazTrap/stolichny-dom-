@@ -560,3 +560,25 @@ test("does not show a single owner when sheets contain conflicting identities",(
   assert.equal(combined.bank,"Kaspi Bank");
   assert.equal(combined.account,"KZ20722S000006737878");
 });
+
+
+test("shows the bank's official statement period in the compact owner strip",()=>{
+  assert.deepEqual(C.statementPeriodLabel({period:"01.10.2026 - 31.10.2026"},
+    [{date:"02.10.2026"},{date:"28.10.2026"}]),{
+    text:"Период: 01.10.2026 — 31.10.2026",source:"statement"});
+});
+
+test("identifies actual transaction date span when bank statement period is missing",()=>{
+  const result=C.statementPeriodLabel({},[
+    {date:"31.10.2026"},{date:"03.10.2026"},{date:"15.10.2026"}
+  ]);
+  assert.deepEqual(result,{
+    text:"Операции: 03.10.2026 — 31.10.2026",source:"operations"
+  });
+});
+
+test("does not invent dates when an imported statement has no valid dates",()=>{
+  assert.deepEqual(C.statementPeriodLabel({},[{date:""}]),{
+    text:"Период не указан",source:"unknown"
+  });
+});
