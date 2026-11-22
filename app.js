@@ -18,7 +18,7 @@
   const show=x=>C.escapeHtml(x);
   const formatBalance=new Intl.NumberFormat("ru-RU",{style:"currency",currency:"KZT",currencyDisplay:"narrowSymbol"});
   const balanceLabels=["Вх.остаток на начало периода в нац.валюте","Исх.остаток на конец периода в нац.валюте"].map(C.norm);
-  let balances=[];
+  let balances=[],company={};
   const sessionKey="stoldom.workspace.v2";
   let ops=[],selected=null,filter="all",directionFilter="all",fileLabel="",saveTimer=0,selectedMonth="",periodFrom="",periodTo="";
   function toast(message){
@@ -29,7 +29,7 @@
   }
   function saveDraft(){
     try {
-      sessionStorage.setItem(sessionKey, JSON.stringify({version:2,ops,fileLabel,balances,savedAt:new Date().toISOString()}));
+      sessionStorage.setItem(sessionKey, JSON.stringify({version:2,ops,fileLabel,balances,company,savedAt:new Date().toISOString()}));
       if($("draftStatus")) $("draftStatus").textContent="Черновик в этой вкладке сохранён";
     } catch {
       if($("draftStatus")) $("draftStatus").textContent="Автосохранение в этой вкладке недоступно";
@@ -67,6 +67,7 @@
       selected=null;
       fileLabel=String(parsed.fileLabel||"Черновик").slice(0,200);
       balances=Array.isArray(parsed.balances)?parsed.balances:[];
+      company=C.mergeStatementCompanies([parsed.company||{}]);
       if(ops.length) toast("Восстановлен черновик текущей вкладки: "+ops.length+" операций");
     }catch{try{sessionStorage.removeItem(sessionKey);}catch{}}
   }
@@ -167,6 +168,26 @@
     return dateRows.filter(x=>(filter==="all"||x.status===filter)&&(directionFilter==="all"||x.direction===directionFilter)&&
       (!query||C.norm([x.name,x.originalName,x.purpose,x.article,x.docType,x.bin,x.docNumber,x.date,x.comment].join(" ")).includes(query)));
   }
+
+  function updateStatementCompany(){
+    const card=$("statementCompany");
+    card.hidden=!ops.length;
+    if(!ops.length){card.open=false;return;}
+    const info=company||{};
+    const val=key=>String(info[key]||"").trim();
+    const fallback=(key)=>val(key)||"Не указано";
+    const name=val("name")||"Организация не указана";
+    $("companyMiniName").textContent=name;
+    $("companyMiniName").title=name;
+    $("companyMiniBin").textContent=val("bin")?"ИИН/БИН "+val("bin"):"ИИН/БИН не указан";
+    $("companyMiniBank").textContent=val("bank")||"Банк не указан";
+    $("companyMiniAccount").textContent=val("account")?"Счёт "+val("account").slice(0,2)+"••••"+val("account").slice(-4):"Счёт не указан";
+    for(const [id,key] of [["companyNameFull","name"],["companyBinFull","bin"],
+      ["companyBankFull","bank"],["companyAccountFull","account"],
+      ["companyPeriodFull","period"],["companyCurrencyFull","currency"]]){
+      $(id).textContent=fallback(key);
+    }
+  }
   function updateStats(visible,dateRows){
     const ready=ops.filter(x=>x.status==="ready").length;
     $("allChip").textContent=dateRows.length;
@@ -231,6 +252,7 @@
     });
     if($("statementBalances"))$("statementBalances").hidden=!fileLabel;
     $("tableCaption").textContent=fileLabel||"Операции";
+    updateStatementCompany();
   }
 
   // A practical local list, not the user's live 1C chart of accounts.
@@ -1028,7 +1050,7 @@
   $("clearDraft").addEventListener("click",()=>{
     if(!ops.length)return;
     if(!confirm("Очистить текущие операции?"))return;
-    ops=[];balances=[];selected=null;fileLabel="";filter="all";directionFilter="all";resetFilters();
+    ops=[];balances=[];company={};selected=null;fileLabel="";filter="all";directionFilter="all";resetFilters();
     try{sessionStorage.removeItem(sessionKey);}catch{}
     loadEditor();render();toast("Данные текущей вкладки очищены");
   });
@@ -1110,7 +1132,7 @@
     const operations=C.parseRows(rows,"Клиент-банк");
     if(!operations.length||operations.length!==documents.length)throw Error("Не все документы файла 1С содержат сумму операции. Проверьте выгрузку.");
     // The exchange file does not reliably identify the balance currency.
-    return {operations,balances:[]};
+    return {operations,balances:[],company:{account:[...accounts][0]||""}};
   }
   function mapSheet(rows,sheet){
     const dialog=$("importMapping"), header=$("mappingHeader"), fields=$("mappingColumns");
@@ -1195,6 +1217,7 @@
       book=XLSX.read(await file.arrayBuffer(),{type:"array",cellDates:true});
     }
     const all=[];
+    const companyCandidates=[];
     const balanceValues=balanceLabels.map(()=>new Set());
     for(const sheet of book.SheetNames){
       const rows=XLSX.utils.sheet_to_json(book.Sheets[sheet],{header:1,defval:"",raw:true});
@@ -1221,11 +1244,12 @@
         }
       }
       all.push(...operations);
+      companyCandidates.push(C.extractStatementCompany(rows));
       collectStatementBalances(rows,balanceValues);
       if(all.length>20000)throw Error("Слишком много операций (максимум 20 000)");
     }
     if(!all.length)throw Error("В файле не найдена таблица операций с колонками «Дата» и «Сумма/Дебет/Кредит»");
-    return {operations:all,balances:balanceValues.map(values=>values.size===1?[...values][0]:null)};
+    return {operations:all,balances:balanceValues.map(values=>values.size===1?[...values][0]:null),company:C.mergeStatementCompanies(companyCandidates)};
   }
   $("fileInput").addEventListener("change",async e=>{
     const file=e.target.files?.[0];
@@ -1241,6 +1265,8 @@
       await letSpinnerPaint();
       ops=data.operations.map((x,i)=>({...x,id:i+1}));C.markDuplicates(ops);
       balances=data.balances;
+      company=C.mergeStatementCompanies([data.company||{}]);
+      $("statementCompany").open=false;
       selected=null;fileLabel=file.name;filter="all";directionFilter="all";resetFilters();
       loadEditor();render();scheduleSave();
       toast("Загружено "+ops.length+" операций. Требуют проверки: "+ops.filter(x=>x.status!=="ready").length);
