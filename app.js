@@ -48,7 +48,7 @@
         id:i+1,date:C.dateText(str("date")),name:str("name"),originalName:str("originalName")||str("name"),
         purpose:str("purpose"),comment:str("comment"),amount,direction:["Входящее","Исходящее"].includes(str("direction"))?str("direction"):"",
         docType:str("docType"),docTypeSource:str("docTypeSource"),article:str("article"),articleSource:str("articleSource"),articleReason:str("articleReason"),articleConfidence:str("articleConfidence"),knp:str("knp"),bankRef:str("bankRef"),debit:str("debit"),credit:str("credit"),debitSource:str("debitSource"),creditSource:str("creditSource"),debitReason:str("debitReason"),creditReason:str("creditReason"),
-        bin:str("bin"),sourceDoc:str("sourceDoc"),docNumber:str("docNumber"),sourceSheet:str("sourceSheet"),
+        bin:str("bin"),counterpartyAccount:str("counterpartyAccount"),sourceDoc:str("sourceDoc"),docNumber:str("docNumber"),sourceSheet:str("sourceSheet"),
         possibleDuplicate:false,duplicateConfirmed:!!x.duplicateConfirmed,status:"review"
       };
     });
@@ -443,7 +443,7 @@
     row.after(detail);
   }
   // One searchable menu services both row fields and filters.
-  let openMenu=null, lastRowTap=null, datePopup=null;
+  let openMenu=null, lastRowTap=null, lastCounterpartyTap=null, datePopup=null;
   function statementDates(){
     // ISO strings sort chronologically and avoid dependence on today's date.
     return [...new Set(ops.map(x=>C.dateText(x.date)).filter(Boolean)
@@ -732,12 +732,14 @@
     const shown=visible.slice(0,400);
     storage.append(...cellFields.values(),...extraFields);
     lastRowTap=null;
+    lastCounterpartyTap=null;
+    hideCounterpartyInfo();
     if(!shown.some(x=>x.id===selected))selected=null;
     $("rows").innerHTML=shown.length?shown.map(x=>
       '<tr data-id="'+x.id+'" tabindex="0">'+
       '<td>'+show(x.date||"Проверить дату")+'</td>'+
       '<td>'+directionDropdown(x.direction)+'</td>'+
-      '<td><strong>'+show(x.name||"Не указан")+'</strong>'+(x.possibleDuplicate&&!x.duplicateConfirmed?'<div class="notice">Возможный дубль</div>':"")+'</td>'+
+      '<td><button type="button" class="counterparty-trigger" data-counterparty-id="'+x.id+'" title="Дважды нажмите для реквизитов контрагента" aria-label="'+show("Реквизиты контрагента: "+(x.name||"Не указан"))+'">'+show(x.name||"Не указан")+'</button>'+(x.possibleDuplicate&&!x.duplicateConfirmed?'<div class="notice">Возможный дубль</div>':"")+'</td>'+
       '<td class="amount">'+fmt(x.amount)+'</td>'+
       '<td class="account-cell">'+accountPicker(x,"debit")+'</td>'+
       '<td class="account-cell">'+accountPicker(x,"credit")+'</td>'+
@@ -754,6 +756,53 @@
     if(!$("previewPanel").hidden)renderPreview();
   }
 
+
+  function hideCounterpartyInfo(){
+    const card=$("counterpartyInfo");
+    if(card)card.hidden=true;
+  }
+  function showCounterpartyInfo(x,anchor){
+    if(!x)return;
+    closeChoice();
+    closeDateCalendar();
+    lastRowTap=null;
+    const card=$("counterpartyInfo");
+    $("counterpartyInfoName").textContent=x.originalName||x.name||"Не указан";
+    const bin=String(x.bin||"").trim();
+    $("counterpartyInfoBin").textContent=/^\d{12}$/.test(bin)?bin:"Не указан в выписке";
+    const account=String(x.counterpartyAccount||"").trim();
+    $("counterpartyInfoAccount").textContent=/^KZ[A-Z0-9]{18}$/i.test(account)?account:"Не указан в выписке";
+    card.hidden=false;
+    card.style.left="8px";
+    card.style.top="8px";
+    const rect=anchor.getBoundingClientRect();
+    const width=card.offsetWidth,height=card.offsetHeight;
+    const left=Math.max(8,Math.min(rect.left,window.innerWidth-width-8));
+    const below=rect.bottom+height+8<=window.innerHeight;
+    const top=below?rect.bottom+7:Math.max(8,rect.top-height-7);
+    card.style.left=left+"px";
+    card.style.top=top+"px";
+  }
+  $("counterpartyInfoClose").addEventListener("click",hideCounterpartyInfo);
+  document.addEventListener("pointerdown",event=>{
+    const card=$("counterpartyInfo");
+    if(!card.hidden&&!card.contains(event.target)&&!event.target.closest(".counterparty-trigger"))hideCounterpartyInfo();
+  },true);
+  document.addEventListener("keydown",event=>{
+    if(event.key==="Escape"&&!$("counterpartyInfo").hidden)hideCounterpartyInfo();
+  });
+  document.addEventListener("scroll",event=>{
+    if(!$("counterpartyInfo").hidden&&!$("counterpartyInfo").contains(event.target))hideCounterpartyInfo();
+  },true);
+  window.addEventListener("resize",hideCounterpartyInfo);
+  $("rows").addEventListener("keydown",event=>{
+    const trigger=event.target.closest(".counterparty-trigger");
+    if(trigger&&["Enter"," "].includes(event.key)){
+      event.preventDefault();
+      showCounterpartyInfo(ops.find(x=>x.id===Number(trigger.dataset.counterpartyId)),trigger);
+    }
+  });
+
   // Ledger pickers can be used without opening the rest of the row.
   $("rows").addEventListener("click",event=>{
     const target=event.target;
@@ -766,6 +815,17 @@
       }else if(target.matches("[data-inline-cancel]"))render();
       return;
     }
+    const counterpartyTrigger=target.closest(".counterparty-trigger");
+    if(counterpartyTrigger){
+      lastRowTap=null;
+      const id=Number(row.dataset.id),now=performance.now();
+      if(lastCounterpartyTap?.id===id&&(event.detail>=2||now-lastCounterpartyTap.time<450)){
+        lastCounterpartyTap=null;
+        showCounterpartyInfo(ops.find(x=>x.id===id),counterpartyTrigger);
+      }else lastCounterpartyTap={id,time:now};
+      return;
+    }
+    lastCounterpartyTap=null;
     const dropdown=target.closest(".row-dropdown");
     if(!dropdown&&target.closest("input,button,select,textarea"))return;
     const id=Number(row.dataset.id);
@@ -1122,7 +1182,7 @@
     }
     if(section)throw Error("Файл обмена обрывается внутри раздела. Выгрузите его полностью.");
     if(accounts.size!==1)throw Error("Для обмена 1С нужна выписка с одним расчётным счётом. Выгрузите один счёт за период.");
-    const rows=[["Дата операции","Сумма","Направление","Контрагент","БИН/ИИН контрагента","Назначение платежа","Номер документа","КНП"]];
+    const rows=[["Дата операции","Сумма","Направление","Контрагент","БИН/ИИН контрагента","Назначение платежа","Номер документа","КНП","Счёт контрагента"]];
     for(const doc of documents){
       const outgoing=accounts.has(doc.ПлательщикСчет),incoming=accounts.has(doc.ПолучательСчет);
       if(outgoing===incoming)throw Error("В файле 1С есть документ с неоднозначным направлением. Выгрузите табличную выписку.");
@@ -1130,7 +1190,7 @@
       rows.push([(outgoing?doc.ДатаСписано:doc.ДатаПоступило)||doc.Дата,doc.Сумма,outgoing?"Исходящее":"Входящее",
         doc[party+"1"]||doc[party]||"",doc[party+"БИН"]||doc[party+"ИНН"]||"",
         doc.НазначениеПлатежа||[1,2,3,4,5,6].map(n=>doc["НазначениеПлатежа"+n]).filter(Boolean).join(" "),
-        doc.Номер,doc.КНП]);
+        doc.Номер,doc.КНП,doc[party+"Счет"]||""]);
     }
     const operations=C.parseRows(rows,"Клиент-банк");
     if(!operations.length||operations.length!==documents.length)throw Error("Не все документы файла 1С содержат сумму операции. Проверьте выгрузку.");
