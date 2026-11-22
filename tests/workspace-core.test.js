@@ -616,3 +616,16 @@ test("does not invent a counterparty account from the bank header or invalid cel
   ]);
   assert.equal(row.counterpartyAccount,"");
 });
+
+
+test("shows compact proprietor name without changing the legal identity",()=>{
+  const full="Индивидуальный предприниматель Примерова Алина Викторовна Мир цветов";
+  assert.equal(C.compactLegalDisplayName(full),"ИП Примерова А. В. Мир цветов");
+  assert.equal(C.shortLegalName(full),"ИП Примерова Алина Викторовна Мир цветов");
+});
+
+test("does not shorten organization brands or short proprietor names",()=>{
+  assert.equal(C.compactLegalDisplayName("Товарищество с ограниченной ответственностью Kaspi Pay"),"ТОО Kaspi Pay");
+  assert.equal(C.compactLegalDisplayName("ИП РЕЙМОВА"),"ИП РЕЙМОВА");
+  assert.equal(C.compactLegalDisplayName("DOLINA AGRO LTD ISRAEL IL"),"DOLINA AGRO LTD ISRAEL IL");
+});
