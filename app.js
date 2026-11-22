@@ -174,8 +174,8 @@
 
   function updateStatementCompany(){
     const card=$("statementCompany");
-    card.hidden=!ops.length;
-    if(!ops.length){card.open=false;return;}
+    card.hidden=!fileLabel;
+    if(!fileLabel){card.open=false;return;}
     const info=company||{};
     const val=key=>String(info[key]||"").trim();
     const fallback=(key)=>val(key)||"Не указано";
@@ -212,14 +212,14 @@
     // Whole-statement controls must never depend on status, date or search.
     // Otherwise the user may mistake partial results for the bank's turnover.
     const whole=C.totals(ops);
-    $("statementReconcile").hidden=!ops.length;
+    $("statementReconcile").hidden=!fileLabel;
     $("statementReconcileNumbers").textContent=ops.length?
       whole.count+" операций · поступления "+fmt(whole.incoming)+
       " · списания "+fmt(whole.outgoing)+" · разница "+fmt(whole.net):"";
     const balanceCheck=$("statementBalanceCheck");
     const haveBalances=Number.isFinite(balances[0])&&Number.isFinite(balances[1]);
-    balanceCheck.hidden=!haveBalances||!ops.length;
-    if(haveBalances&&ops.length){
+    balanceCheck.hidden=!haveBalances||!fileLabel;
+    if(haveBalances&&fileLabel){
       const actual=Math.round((balances[1]-balances[0])*100);
       const calculated=Math.round(whole.net*100);
       const delta=actual-calculated;
@@ -242,7 +242,7 @@
         " из "+ops.length+" операций. Суммы в карточках относятся только к выбранным операциям.";
     }
     const pendingCount=ops.length-ready;
-    $("bottomMessage").textContent=!ops.length?"Загрузите банковскую выписку, чтобы начать работу.":
+    $("bottomMessage").textContent=!ops.length?(fileLabel?"Выписка загружена. За указанный период операций нет.":"Загрузите банковскую выписку, чтобы начать работу."):
       "Реквизиты заполнены: "+ready+" из "+ops.length+". "+
       (pendingCount>0?"Ещё "+pendingCount+" операций требуют заполнения. ":"")+
       "Перед переносом обязательно сверьте Дт/Кт, ДДС и документы с 1С.";
@@ -765,7 +765,7 @@
       '<td>'+fieldDropdown("article","Статья ДДС",x.article||"Не указана")+'</td>'+
       '<td>'+fieldDropdown("docType","Тип документа 1С",x.docType||"Не выбран")+'</td>'+
       '<td class="statement-comment" title="'+show(x.comment?x.comment:(x.purpose?"Назначение платежа из выписки: "+x.purpose:"В выписке не найден ни комментарий, ни назначение платежа"))+'"><span class="comment-preview">'+show(x.comment||x.purpose||"—")+'</span></td></tr>'
-    ).join(""):'<tr><td colspan="'+(ledgerColumnsHidden?7:9)+'" class="empty">Операции не найдены</td></tr>';
+    ).join(""):'<tr><td colspan="'+(ledgerColumnsHidden?7:9)+'" class="empty">'+(fileLabel?"В выписке нет операций за выбранный период":"Операции не найдены")+'</td></tr>';
     if(selected!==null)attachRowEditor($("rows").querySelector('tr[data-id="'+selected+'"]'));
     syncLedgerVisibility();
     $("shownCount").textContent=ops.length?"Показано "+shown.length+" из "+visible.length+" по фильтру (всего "+ops.length+")":"Операций пока нет";
@@ -1130,8 +1130,8 @@
     }catch(e){toast("Не удалось сформировать Excel: "+e.message);}
   });
   $("clearDraft").addEventListener("click",()=>{
-    if(!ops.length)return;
-    if(!confirm("Очистить текущие операции?"))return;
+    if(!ops.length&&!fileLabel)return;
+    if(!confirm("Очистить текущую выписку и операции?"))return;
     ops=[];balances=[];company={};selected=null;fileLabel="";filter="all";directionFilter="all";resetFilters();
     try{sessionStorage.removeItem(sessionKey);}catch{}
     loadEditor();render();toast("Данные текущей вкладки очищены");
@@ -1282,7 +1282,7 @@
     const requireExcel=()=>{if(!window.XLSX)throw Error("Библиотека Excel не загрузилась. Проверьте соединение и обновите страницу.");};
     const ext=file.name.split(".").pop().toLowerCase();
     if(ext==="pdf"){
-      const {readAlatauPdf}=await import("./alatau-pdf.mjs");
+      const {readAlatauPdf}=await import("./alatau-pdf.mjs?v=alatau-empty-20261122-v1");
       return readAlatauPdf(file,C);
     }
     let book;
@@ -1351,7 +1351,7 @@
       $("statementCompany").open=false;
       selected=null;fileLabel=file.name;filter="all";directionFilter="all";resetFilters();
       loadEditor();render();scheduleSave();
-      toast("Загружено "+ops.length+" операций. Требуют проверки: "+ops.filter(x=>x.status!=="ready").length);
+      toast(ops.length?"Загружено "+ops.length+" операций. Требуют проверки: "+ops.filter(x=>x.status!=="ready").length:"Выписка загружена: операций нет. Реквизиты и остатки банка обновлены.");
     }catch(err){toast(err.message||"Ошибка чтения файла");}
     finally{
       showProcessing(false);
