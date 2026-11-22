@@ -249,6 +249,19 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 .statement-company-details b{display:block;font-weight:600;font-size:12px;overflow-wrap:anywhere;user-select:text}
 @media(max-width:960px){.statement-company-meta{gap:7px 10px}.statement-company-details{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:720px){.statement-company{margin:0 0 12px}.statement-company>summary{flex-wrap:wrap;gap:5px 12px}.statement-company-name{width:calc(100% - 30px)}.statement-company-name strong{max-width:100%}.statement-company-chevron{margin-left:auto;order:1}.statement-company-period{order:2;width:100%;font-size:11px;padding-left:24px}.statement-company-meta{order:3;width:100%;justify-content:flex-start;gap:5px 12px}.statement-company-details{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Double-click counterparty peek: compact, no row selection or editor. */
+.counterparty-trigger{display:inline;border:0;background:transparent;padding:0;color:inherit;font:inherit;font-weight:750;text-align:left;line-height:inherit;white-space:normal;cursor:pointer;touch-action:manipulation}
+.counterparty-trigger:hover{color:#156ec7}
+.counterparty-trigger:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:3px}
+.counterparty-info{position:fixed;z-index:70;max-width:calc(100vw - 16px);width:325px;background:#fff;border:1px solid #d7e2f1;border-radius:12px;box-shadow:0 12px 30px rgba(25,54,93,.16);padding:0;color:var(--ink);overflow:auto;max-height:calc(100vh - 16px)}
+.counterparty-info-head{padding:13px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;border-bottom:1px solid #e6edf6}
+.counterparty-info-head strong{font-size:14px;line-height:1.4;overflow-wrap:anywhere}
+.counterparty-info-head button{appearance:none;background:transparent;border:0;font-size:22px;line-height:1;color:#75869e;cursor:pointer;padding:0 2px}
+.counterparty-info-fields{padding:12px 14px 14px;display:grid;gap:10px}
+.counterparty-info-fields>div{min-width:0}
+.counterparty-info-fields dt{font-size:11px;color:var(--muted);margin-bottom:3px}
+.counterparty-info-fields dd{font-size:13px;font-weight:650;margin:0;overflow-wrap:anywhere;user-select:text;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -390,11 +403,19 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
   </div>
  </form>
 </dialog>
+
+<div id="counterpartyInfo" class="counterparty-info" role="dialog" aria-label="Реквизиты контрагента из выписки" hidden>
+ <div class="counterparty-info-head"><strong id="counterpartyInfoName">Контрагент</strong><button id="counterpartyInfoClose" type="button" aria-label="Закрыть реквизиты контрагента">×</button></div>
+ <dl class="counterparty-info-fields">
+  <div><dt>БИН / ИИН</dt><dd id="counterpartyInfoBin">Не указан в выписке</dd></div>
+  <div><dt>ИИК / банковский счёт контрагента</dt><dd id="counterpartyInfoAccount">Не указан в выписке</dd></div>
+ </dl>
+</div>
 <div id="workspaceBusy" class="workspace-busy" role="status" aria-live="polite" aria-atomic="true" hidden><div class="workspace-busy-card"><span class="workspace-spinner" aria-hidden="true"></span><span id="workspaceBusyText">Обрабатываем данные…</span></div></div>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
-<script src="/workspace-core.js?v=company-period-20261122-v1" defer></script>
-<script src="/app.js?v=company-period-20261122-v1" defer></script>
+<script src="/workspace-core.js?v=counterparty-peek-20261122-v1" defer></script>
+<script src="/app.js?v=counterparty-peek-20261122-v1" defer></script>
 </body></html>
 
 
