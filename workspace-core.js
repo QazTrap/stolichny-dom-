@@ -280,6 +280,70 @@
     x.docTypeSource="auto";
     return changed;
   }
+
+  // Read owner identity only from the statement header, not from transaction
+  // counterparties. Unknown fields remain empty (never guessed).
+  function extractStatementCompany(matrix, bankHint="") {
+    const info={name:"",bin:"",bank:"",account:"",period:"",currency:""};
+    if(!Array.isArray(matrix))return info;
+    const labels={
+      name:["наименование","наименование клиента","наименование организации","организация","владелец счета","клиент","получатель выписки"],
+      bin:["иин/бин","бин/иин","бин","иин","иин/бИН владельца","иин/бин клиента","бин/иин клиента"],
+      account:["текущий счет","текущий счёт","расчетный счет","расчётный счёт","номер счета","номер счёта","иик","иик клиента","iban","счет клиента","счёт клиента"],
+      bank:["банк","наименование банка","обслуживающий банк","банк клиента"],
+      period:["период","период выписки","за период"],
+      currency:["валюта счета","валюта счёта","валюта"]
+    };
+    const aliasToField=new Map();
+    for(const [field,names] of Object.entries(labels)){
+      for(const name of names)aliasToField.set(norm(name),field);
+    }
+    const max=Math.min(90,matrix.length);
+    for(let i=0;i<max;i++){
+      const cells=Array.isArray(matrix[i])?matrix[i]:[matrix[i]];
+      const normalized=cells.map(cell=>norm(cell));
+      if(normalized.includes("дата операции")&&
+        normalized.some(text=>["дебет","кредит","сумма","сумма операции"].includes(text)))break;
+      for(let col=0;col<cells.length;col++){
+        const cell=String(cells[col]??"").trim();
+        if(!cell)continue;
+        const sameCell=cell.match(/^(.{2,55}?)\s*[:：]\s*(.+)$/u);
+        const label=norm((sameCell?sameCell[1]:cell).replace(/[:：]\s*$/,""));
+        const field=aliasToField.get(label);
+        if(!field||info[field])continue;
+        const next=sameCell?sameCell[2]:
+          cells.slice(col+1).find(value=>String(value??"").trim()&&!aliasToField.has(norm(value).replace(/[:：]\s*$/,"")));
+        const value=String(next??"").trim().slice(0,240);
+        if(!value)continue;
+        if(field==="bin"){if(/^\d{12}$/.test(value))info.bin=value;continue;}
+        if(field==="account"){if(/^KZ[A-Z0-9]{18}$/i.test(value))info.account=value.toUpperCase();continue;}
+        if(field==="currency"){if(/^(KZT|USD|EUR|RUB|GBP|CNY)$/i.test(value))info.currency=value.toUpperCase();continue;}
+        if(field==="period"){if(/^\d{2}\.\d{2}\.\d{4}\s*[-–—]\s*\d{2}\.\d{2}\.\d{4}$/.test(value))info.period=value;continue;}
+        if(field==="bank"){if(value.length>=3)info.bank=value;continue;}
+        if(field==="name"&&value.length>=3&&!/^\d+$/.test(value))info.name=value;
+      }
+    }
+    // Kaspi bank statement schema has a distinct header and footer.
+    // This identifies the export format, not a bank from its counterparties.
+    if(!info.bank && info.account && matrix.some(row=>
+      (Array.isArray(row)?row:[row]).some(cell=>norm(cell)==="итого обороты в валюте счета")) &&
+      matrix.some(row=>(Array.isArray(row)?row:[row]).some(cell=>norm(cell)==="наименование бенефициара / отправителя денег"))){
+      info.bank="Kaspi Bank";
+    }
+    if(!info.bank&&bankHint)info.bank=String(bankHint).slice(0,120);
+    return info;
+  }
+  function mergeStatementCompanies(items) {
+    const fields=["name","bin","bank","account","period","currency"];
+    const result=Object.fromEntries(fields.map(field=>[field,""]));
+    for(const field of fields){
+      const values=[...new Set(items.map(item=>String(item?.[field]||"").trim()).filter(Boolean))];
+      // An aggregated file may contain different accounts or organizations.
+      // Never display a single owner's identity if the source is ambiguous.
+      result[field]=values.length===1?values[0]:"";
+    }
+    return result;
+  }
   const aliases = {
     date:["дата операции","дата документа","дата платежа","дата валютирования","дата проводки","дата","operation date","transaction date"],
     payer:["наименование плательщика","плательщик","отправитель","от кого","payer","sender"],
@@ -533,6 +597,6 @@
     const outgoing=roundMoney(rows.filter(x=>x.direction==="Исходящее").reduce((s,x)=>s+Number(x.amount||0),0));
     return {incoming,outgoing,net:roundMoney(incoming-outgoing),count:rows.length,unknown:rows.filter(x=>!x.direction).length};
   }
-  return {norm,fixTengeText,escapeHtml,money,dateText,shortLegalName,suggestArticle,suggestArticleDetailed,suggestPosting,refreshSuggestedPosting,suggestDocumentType,suggestDocumentOperation,refreshSuggestedDocument,parseRows,markDuplicates,validateOperation,reconciliationNotes,setManualPostingAccount,operationRuleKey,countSimilarOperations,applyPostingToSimilar,filterPeriod,totals,BANK_FEE_DOCUMENT};
+  return {extractStatementCompany,mergeStatementCompanies,norm,fixTengeText,escapeHtml,money,dateText,shortLegalName,suggestArticle,suggestArticleDetailed,suggestPosting,refreshSuggestedPosting,suggestDocumentType,suggestDocumentOperation,refreshSuggestedDocument,parseRows,markDuplicates,validateOperation,reconciliationNotes,setManualPostingAccount,operationRuleKey,countSimilarOperations,applyPostingToSimilar,filterPeriod,totals,BANK_FEE_DOCUMENT};
 });
 
