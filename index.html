@@ -238,6 +238,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 .statement-company-name{display:flex;align-items:center;gap:8px;min-width:0;font-weight:750;font-size:13px}
 .statement-company-name .ui-icon{width:17px;height:17px;color:#527294}
 .statement-company-name strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:340px}
+.statement-company-period{font-size:12px;font-weight:600;color:#526580;white-space:nowrap;font-variant-numeric:tabular-nums;flex:0 0 auto}
 .statement-company-meta{display:flex;flex:1;justify-content:flex-end;min-width:0;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
 .statement-company-meta span{white-space:nowrap}
 .statement-company-chevron{width:16px;height:16px;color:#718198;transition:transform .15s;flex:none}
@@ -247,7 +248,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 .statement-company-details small{display:block;font-size:11px;color:var(--muted);margin-bottom:2px}
 .statement-company-details b{display:block;font-weight:600;font-size:12px;overflow-wrap:anywhere;user-select:text}
 @media(max-width:960px){.statement-company-meta{gap:7px 10px}.statement-company-details{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:720px){.statement-company{margin:0 0 12px}.statement-company>summary{flex-wrap:wrap;gap:5px 12px}.statement-company-name{width:calc(100% - 30px)}.statement-company-name strong{max-width:100%}.statement-company-chevron{margin-left:auto;order:1}.statement-company-meta{order:2;width:100%;justify-content:flex-start;gap:5px 12px}.statement-company-details{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:720px){.statement-company{margin:0 0 12px}.statement-company>summary{flex-wrap:wrap;gap:5px 12px}.statement-company-name{width:calc(100% - 30px)}.statement-company-name strong{max-width:100%}.statement-company-chevron{margin-left:auto;order:1}.statement-company-period{order:2;width:100%;font-size:11px;padding-left:24px}.statement-company-meta{order:3;width:100%;justify-content:flex-start;gap:5px 12px}.statement-company-details{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -294,6 +295,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
   <details class="statement-company" id="statementCompany" hidden>
    <summary aria-label="Информация о компании из банковской выписки">
     <span class="statement-company-name"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-landmark"></use></svg><strong id="companyMiniName">Компания не указана</strong></span>
+    <span class="statement-company-period" id="companyMiniPeriod" title="Период выписки">Период не указан</span>
     <span class="statement-company-meta"><span id="companyMiniBin">ИИН/БИН не указан</span><span id="companyMiniBank">Банк не указан</span><span id="companyMiniAccount">Счёт не указан</span></span>
     <svg class="ui-icon statement-company-chevron" aria-hidden="true" focusable="false"><use href="#ic-chevron-down"></use></svg>
    </summary>
@@ -391,8 +393,8 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 <div id="workspaceBusy" class="workspace-busy" role="status" aria-live="polite" aria-atomic="true" hidden><div class="workspace-busy-card"><span class="workspace-spinner" aria-hidden="true"></span><span id="workspaceBusyText">Обрабатываем данные…</span></div></div>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
-<script src="/workspace-core.js?v=company-mini-20261122-v1" defer></script>
-<script src="/app.js?v=company-mini-20261122-v1" defer></script>
+<script src="/workspace-core.js?v=company-period-20261122-v1" defer></script>
+<script src="/app.js?v=company-period-20261122-v1" defer></script>
 </body></html>
 
 
