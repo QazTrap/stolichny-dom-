@@ -53,7 +53,7 @@ export function parseAlatauPages(pages,C){
   const allText=pages.flat().map(p=>String(p.s||"")).join(" ");
   if(rounded(credited)===0&&rounded(debited)===0&&
      rounded(balances[0])===rounded(balances[1])&&
-     /ИТОГО\s*:/i.test(allText)&&/Дата\s+операции/i.test(allText)){
+     /ИТОГО\s*:?/i.test(allText)&&/Дата/i.test(allText)&&/операции/i.test(allText)){
     return {operations:[],balances,company};
   }
   const rows=[headers];
