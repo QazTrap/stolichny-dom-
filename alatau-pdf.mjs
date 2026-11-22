@@ -37,7 +37,7 @@ export function parseAlatauPages(pages,C){
     company.name=headerItems.filter(p=>
       p!==clientLabel && p.y>=clientLabel.y-2 && p.y<bottom-2 &&
       p.x>clientLabel.x+35 &&
-      !/^Клиент\s*:/i.test(p.s))
+      !/^Клиент\s*:/i.test(p.s) && !/^\d{12}$/.test(p.s))
       .sort((a,b)=>a.y-b.y||a.x-b.x)
       .map(p=>p.s.trim()).filter(Boolean).join(" ").slice(0,240);
   }
