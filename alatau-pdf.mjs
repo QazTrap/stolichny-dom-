@@ -13,6 +13,19 @@ export function parseAlatauPages(pages,C){
     return amount;
   }
   const balances=[summary("Входящий остаток:"),summary("Исходящий остаток:")];
+  // Use the first page's header only: never interpret counterparties as
+  // the statement owner's company identity.
+  const heading=first.find(p=>p.s==="Дата операции");
+  const headerItems=first.filter(p=>!heading||p.y<heading.y-2)
+    .sort((a,b)=>a.y-b.y||a.x-b.x);
+  const metadataRows=[];
+  for(const item of headerItems){
+    const previous=metadataRows[metadataRows.length-1];
+    if(previous&&Math.abs(previous.y-item.y)<=2)previous.cells.push(item.s);
+    else metadataRows.push({y:item.y,cells:[item.s]});
+  }
+  const company=C.extractStatementCompany(metadataRows.map(row=>row.cells),"Alatau City Bank");
+  if(!company.currency)company.currency="KZT";
   const rows=[headers];
   for(const page of pages){
     const heading=page.find(p=>p.s==="Дата операции");
@@ -48,7 +61,7 @@ export function parseAlatauPages(pages,C){
     cents(balances[0])+cents(totals.net)!==cents(balances[1])){
     throw Error("Операции PDF не сошлись с итогами банка. Импорт отменён.");
   }
-  return {operations,balances};
+  return {operations,balances,company};
 }
 
 export async function readAlatauPdf(file,C){
