@@ -341,6 +341,21 @@
     if(!info.bank&&bankHint)info.bank=String(bankHint).slice(0,120);
     return info;
   }
+
+  // Prefer the bank's declared statement period. If absent, show the span
+  // covered by actual operations and label it accordingly (not the official period).
+  function statementPeriodLabel(company,operations=[]) {
+    const declared=String(company?.period||"").trim();
+    const parseRange=declared.match(/^(\d{2}\.\d{2}\.\d{4})\s*[-–—]\s*(\d{2}\.\d{2}\.\d{4})$/);
+    if(parseRange)return {text:"Период: "+parseRange[1]+" — "+parseRange[2],source:"statement"};
+    if(declared)return {text:"Период: "+declared.slice(0,120),source:"statement"};
+    const dates=(Array.isArray(operations)?operations:[]).map(op=>dateText(op.date))
+      .filter(date=>/^\d{2}\.\d{2}\.\d{4}$/.test(date));
+    if(!dates.length)return {text:"Период не указан",source:"unknown"};
+    const ordered=dates.map(date=>({date,iso:date.slice(6)+"-"+date.slice(3,5)+"-"+date.slice(0,2)}))
+      .sort((a,b)=>a.iso.localeCompare(b.iso));
+    return {text:"Операции: "+ordered[0].date+" — "+ordered[ordered.length-1].date,source:"operations"};
+  }
   function mergeStatementCompanies(items) {
     const fields=["name","bin","bank","account","period","currency"];
     const result=Object.fromEntries(fields.map(field=>[field,""]));
@@ -605,6 +620,6 @@
     const outgoing=roundMoney(rows.filter(x=>x.direction==="Исходящее").reduce((s,x)=>s+Number(x.amount||0),0));
     return {incoming,outgoing,net:roundMoney(incoming-outgoing),count:rows.length,unknown:rows.filter(x=>!x.direction).length};
   }
-  return {extractStatementCompany,mergeStatementCompanies,norm,fixTengeText,escapeHtml,money,dateText,shortLegalName,suggestArticle,suggestArticleDetailed,suggestPosting,refreshSuggestedPosting,suggestDocumentType,suggestDocumentOperation,refreshSuggestedDocument,parseRows,markDuplicates,validateOperation,reconciliationNotes,setManualPostingAccount,operationRuleKey,countSimilarOperations,applyPostingToSimilar,filterPeriod,totals,BANK_FEE_DOCUMENT};
+  return {extractStatementCompany,mergeStatementCompanies,statementPeriodLabel,norm,fixTengeText,escapeHtml,money,dateText,shortLegalName,suggestArticle,suggestArticleDetailed,suggestPosting,refreshSuggestedPosting,suggestDocumentType,suggestDocumentOperation,refreshSuggestedDocument,parseRows,markDuplicates,validateOperation,reconciliationNotes,setManualPostingAccount,operationRuleKey,countSimilarOperations,applyPostingToSimilar,filterPeriod,totals,BANK_FEE_DOCUMENT};
 });
 
