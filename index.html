@@ -262,6 +262,18 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 .counterparty-info-fields>div{min-width:0}
 .counterparty-info-fields dt{font-size:11px;color:var(--muted);margin-bottom:3px}
 .counterparty-info-fields dd{font-size:13px;font-weight:650;margin:0;overflow-wrap:anywhere;user-select:text;font-variant-numeric:tabular-nums}
+
+/* Compact debit/credit visibility control. Hiding is presentation-only. */
+.operations-heading{display:inline-flex;align-items:center;gap:11px;min-width:0}
+.ledger-visibility-toggle{border:1px solid #d8e3f2;background:#f7faff;color:#395776;border-radius:7px;font-size:12px;font-weight:650;line-height:1.25;padding:5px 9px;white-space:nowrap}
+.ledger-visibility-toggle:hover{background:#eaf3ff;border-color:#b7d0ed}
+.ledger-visibility-toggle:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.ledger-visibility-toggle[aria-pressed="true"]{background:#eef2f6;color:#7a8798;border-color:#e0e5ed}
+#operationsTable.ledger-columns-hidden thead th:nth-child(5),
+#operationsTable.ledger-columns-hidden thead th:nth-child(6),
+#operationsTable.ledger-columns-hidden tbody tr:not(.operation-detail)>td:nth-child(5),
+#operationsTable.ledger-columns-hidden tbody tr:not(.operation-detail)>td:nth-child(6){display:none}
+#operationsTable.ledger-columns-hidden{min-width:730px}
 </style>
 </head>
 <body>
@@ -343,11 +355,11 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
    <div class="workspace">
    <section class="tablecard">
     <div class="tabletop">
-     <strong>Операции</strong>
+     <div class="operations-heading"><strong>Операции</strong><button type="button" class="ledger-visibility-toggle" id="toggleLedgerColumns" aria-controls="operationsTable" aria-pressed="false" title="Скрыть столбцы Дт и Кт">Дт/Кт</button></div>
      <span class="muted" id="tableCaption">Сначала загрузите банковскую выписку</span>
     </div>
     <div class="table-scroll-top" id="tableScrollTop" aria-label="Горизонтальная прокрутка таблицы операций" role="region" tabindex="0"><div id="tableScrollTopSpacer"></div></div>
-    <div class="tablewrap" id="tableScrollBottom"><table><thead><tr><th scope="col"><label class="column-filter">Дата<select id="dateColumnFilter" aria-label="Фильтр по дате" title="Выбрать дату" disabled><option value="">Все даты</option></select></label></th><th>Направление</th><th scope="col"><label class="column-filter">Контрагент<select id="counterpartyFilter" aria-label="Фильтр по контрагенту" title="Выбрать контрагента" disabled><option value="">Все контрагенты</option></select></label></th><th scope="col"><label class="column-filter">Сумма<select id="amountColumnFilter" aria-label="Фильтр по сумме" title="Выбрать сумму" disabled><option value="">Все суммы</option></select></label></th><th title="Предварительный счёт дебета">Дт</th><th title="Предварительный счёт кредита">Кт</th><th scope="col"><label class="column-filter">Статья ДДС<select id="ddsArticleFilter" aria-label="Фильтр по статье ДДС" title="Выбрать статью ДДС" disabled><option value="">Все статьи ДДС</option></select></label></th><th>Тип документа 1С</th><th>Комментарии из выписки</th></tr></thead><tbody id="rows"></tbody></table></div>
+    <div class="tablewrap" id="tableScrollBottom"><table id="operationsTable"><thead><tr><th scope="col"><label class="column-filter">Дата<select id="dateColumnFilter" aria-label="Фильтр по дате" title="Выбрать дату" disabled><option value="">Все даты</option></select></label></th><th>Направление</th><th scope="col"><label class="column-filter">Контрагент<select id="counterpartyFilter" aria-label="Фильтр по контрагенту" title="Выбрать контрагента" disabled><option value="">Все контрагенты</option></select></label></th><th scope="col"><label class="column-filter">Сумма<select id="amountColumnFilter" aria-label="Фильтр по сумме" title="Выбрать сумму" disabled><option value="">Все суммы</option></select></label></th><th title="Предварительный счёт дебета">Дт</th><th title="Предварительный счёт кредита">Кт</th><th scope="col"><label class="column-filter">Статья ДДС<select id="ddsArticleFilter" aria-label="Фильтр по статье ДДС" title="Выбрать статью ДДС" disabled><option value="">Все статьи ДДС</option></select></label></th><th>Тип документа 1С</th><th>Комментарии из выписки</th></tr></thead><tbody id="rows"></tbody></table></div>
     <div class="pagination"><span id="shownCount">Операций пока нет</span></div>
    </section>
    <div id="rowEditStorage" hidden>
@@ -415,7 +427,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="/workspace-core.js?v=counterparty-peek-20261122-v1" defer></script>
-<script src="/app.js?v=counterparty-peek-20261122-v1" defer></script>
+<script src="/app.js?v=ledger-toggle-20261122-v1" defer></script>
 </body></html>
 
 
