@@ -2,7 +2,10 @@ const headers=["Дата операции","№ документа","Дебет"
 const layoutError=()=>new Error("Не удалось распознать таблицу Alatau City Bank. Загрузите текстовый PDF стандартной выписки или Excel.");
 export function parseAlatauPages(pages,C){
   const first=pages[0]||[];
-  if(!first.some(p=>/Alatau City Bank/i.test(p.s))||!first.some(p=>/\bKZT\b/i.test(p.s)))throw layoutError();
+  // PDF.js may split a visual line into several text fragments.
+  const firstText=first.map(p=>String(p.s||"")).join(" ");
+  if(!/Alatau/i.test(firstText)||!/City/i.test(firstText)||!/Bank/i.test(firstText)||
+     !/\bKZT\b/i.test(firstText))throw layoutError();
   function summary(label){
     const item=first.find(p=>p.s.startsWith(label));
     if(!item)throw layoutError();
@@ -41,10 +44,22 @@ export function parseAlatauPages(pages,C){
       .sort((a,b)=>a.y-b.y||a.x-b.x)
       .map(p=>p.s.trim()).filter(Boolean).join(" ").slice(0,240);
   }
+  // A genuine bank statement can contain no transactions at all. In that
+  // case PDF.js may not provide stable table column coordinates. Check the
+  // bank's explicit zero debit/credit totals and unchanged balances instead.
+  const credited=summary("Обороты по кредиту:");
+  const debited=summary("Обороты по дебету:");
+  const rounded=value=>Math.round(value*100);
+  const allText=pages.flat().map(p=>String(p.s||"")).join(" ");
+  if(rounded(credited)===0&&rounded(debited)===0&&
+     rounded(balances[0])===rounded(balances[1])&&
+     /ИТОГО\s*:/i.test(allText)&&/Дата\s+операции/i.test(allText)){
+    return {operations:[],balances,company};
+  }
   const rows=[headers];
   for(const page of pages){
-    const heading=page.find(p=>p.s==="Дата операции");
-    const credit=page.find(p=>p.s==="Кредит"&&Math.abs(p.y-heading?.y)<2);
+    const heading=page.find(p=>/^Дата\s+операции$/i.test(String(p.s||"").trim()));
+    const credit=page.find(p=>/^Кредит$/i.test(String(p.s||"").trim())&&Math.abs(p.y-heading?.y)<8);
     if(!heading||!credit)throw layoutError();
     // Column positions in the bank's landscape form, scaled to its header.
     const scale=(credit.x-heading.x)/193.7;
