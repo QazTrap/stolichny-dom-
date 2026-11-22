@@ -74,6 +74,14 @@
     for (const [re,short] of rules) if (re.test(name)) return name.replace(re,short);
     return name;
   }
+  // Only the visual label is shortened; full bank/legal name is preserved.
+  function compactLegalDisplayName(value) {
+    const name=shortLegalName(value);
+    if(!/^ИП\s+/iu.test(name)||name.length<=37)return name;
+    const match=name.match(/^ИП\s+([А-ЯЁ][А-ЯЁа-яё-]*)\s+([А-ЯЁ][А-ЯЁа-яё-]*)\s+([А-ЯЁ][А-ЯЁа-яё-]*)(?=\s|$)/iu);
+    if(!match)return name;
+    return "ИП "+match[1]+" "+match[2][0].toUpperCase()+". "+match[3][0].toUpperCase()+"."+name.slice(match[0].length);
+  }
   // КНП is a useful signal, but the payment description and direction take priority.
   // All results remain suggestions, never verified 1C catalogue entries.
   function suggestArticleDetailed(purpose,direction,knp="",counterparty="") {
@@ -636,6 +644,6 @@
     const outgoing=roundMoney(rows.filter(x=>x.direction==="Исходящее").reduce((s,x)=>s+Number(x.amount||0),0));
     return {incoming,outgoing,net:roundMoney(incoming-outgoing),count:rows.length,unknown:rows.filter(x=>!x.direction).length};
   }
-  return {extractStatementCompany,mergeStatementCompanies,statementPeriodLabel,norm,fixTengeText,escapeHtml,money,dateText,shortLegalName,suggestArticle,suggestArticleDetailed,suggestPosting,refreshSuggestedPosting,suggestDocumentType,suggestDocumentOperation,refreshSuggestedDocument,parseRows,markDuplicates,validateOperation,reconciliationNotes,setManualPostingAccount,operationRuleKey,countSimilarOperations,applyPostingToSimilar,filterPeriod,totals,BANK_FEE_DOCUMENT};
+  return {extractStatementCompany,mergeStatementCompanies,statementPeriodLabel,norm,fixTengeText,escapeHtml,money,dateText,shortLegalName,compactLegalDisplayName,suggestArticle,suggestArticleDetailed,suggestPosting,refreshSuggestedPosting,suggestDocumentType,suggestDocumentOperation,refreshSuggestedDocument,parseRows,markDuplicates,validateOperation,reconciliationNotes,setManualPostingAccount,operationRuleKey,countSimilarOperations,applyPostingToSimilar,filterPeriod,totals,BANK_FEE_DOCUMENT};
 });
 
