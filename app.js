@@ -189,7 +189,7 @@
     const val=key=>String(info[key]||"").trim();
     const fallback=(key)=>val(key)||"Не указано";
     const name=val("name")||"Организация не указана";
-    $("companyMiniName").textContent=name;
+    $("companyMiniName").textContent=C.compactLegalDisplayName(name);
     $("companyMiniName").title=name;
     const period=C.statementPeriodLabel(info,ops);
     $("companyMiniPeriod").textContent=period.text;
@@ -767,7 +767,7 @@
       '<tr data-id="'+x.id+'" tabindex="0">'+
       '<td>'+show(x.date||"Проверить дату")+'</td>'+
       '<td>'+directionDropdown(x.direction)+'</td>'+
-      '<td><button type="button" class="counterparty-trigger" data-counterparty-id="'+x.id+'" title="Дважды нажмите для реквизитов контрагента" aria-label="'+show("Реквизиты контрагента: "+(x.name||"Не указан"))+'">'+show(x.name||"Не указан")+'</button>'+(x.possibleDuplicate&&!x.duplicateConfirmed?'<div class="notice">Возможный дубль</div>':"")+'</td>'+
+      '<td><button type="button" class="counterparty-trigger" data-counterparty-id="'+x.id+'" title="Дважды нажмите для реквизитов контрагента" aria-label="'+show("Реквизиты контрагента: "+(x.originalName||x.name||"Не указан"))+'">'+show(C.compactLegalDisplayName(x.name||"Не указан"))+'</button>'+(x.possibleDuplicate&&!x.duplicateConfirmed?'<div class="notice">Возможный дубль</div>':"")+'</td>'+
       '<td class="amount">'+fmt(x.amount)+'</td>'+
       '<td class="account-cell">'+accountPicker(x,"debit")+'</td>'+
       '<td class="account-cell">'+accountPicker(x,"credit")+'</td>'+
