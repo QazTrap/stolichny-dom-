@@ -7,7 +7,7 @@ export function parseAlatauPages(pages,C){
     const item=first.find(p=>p.s.startsWith(label));
     if(!item)throw layoutError();
     const inline=item.s.slice(label.length).trim();
-    const next=first.find(p=>Math.abs(p.y-item.y)<1&&p.x>item.x+10&&/^\d/.test(p.s));
+    const next=first.find(p=>Math.abs(p.y-item.y)<5&&p.x>item.x+35&&/^\d/.test(p.s));
     const amount=C.money(inline||next?.s);
     if(!Number.isFinite(amount))throw layoutError();
     return amount;
