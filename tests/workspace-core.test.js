@@ -582,3 +582,37 @@ test("does not invent dates when an imported statement has no valid dates",()=>{
     text:"Период не указан",source:"unknown"
   });
 });
+
+
+test("reads counterparty BIN and IBAN from explicit Kaspi-style operation columns",()=>{
+  const [row]=C.parseRows([
+    ["Дата операции","Дебет","Кредит","Наименование бенефициара / отправителя денег",
+      "Назначение платежа","ИИН/БИН бенефициара / отправителя денег",
+      "Счёт бенефициара / отправителя денег"],
+    ["22.11.2026",1500,"","ТОО Тест","Оплата услуг","123456789012","KZ20722S000006737878"]
+  ]);
+  assert.equal(row.bin,"123456789012");
+  assert.equal(row.counterpartyAccount,"KZ20722S000006737878");
+  assert.equal(row.debit,"");
+  assert.equal(row.credit,"1030");
+});
+
+test("chooses sender IBAN for incoming and recipient IBAN for outgoing",()=>{
+  const [incoming,outgoing]=C.parseRows([
+    ["Дата операции","Дебет","Кредит","Контрагент","Назначение платежа",
+      "Счёт плательщика","Счёт получателя"],
+    ["22.11.2026","",1500,"ТОО Отправитель","Оплата","KZ20722S000006737878","KZ99876S000006737878"],
+    ["22.11.2026",500,"","ТОО Получатель","Оплата","KZ20722S000006737878","KZ99876S000006737878"]
+  ]);
+  assert.equal(incoming.counterpartyAccount,"KZ20722S000006737878");
+  assert.equal(outgoing.counterpartyAccount,"KZ99876S000006737878");
+});
+
+test("does not invent a counterparty account from the bank header or invalid cells",()=>{
+  const [row]=C.parseRows([
+    ["Текущий счет:","","KZ20722S000006737878"],
+    ["Дата операции","Дебет","Кредит","Контрагент","Назначение платежа","Счёт контрагента"],
+    ["22.11.2026",100,"","ТОО Контрагент","Оплата","3310"]
+  ]);
+  assert.equal(row.counterpartyAccount,"");
+});
