@@ -14,9 +14,18 @@
     layer.hidden=!active;
     document.body.classList.toggle("is-processing",active);
   }
-  const fmt=n=>new Intl.NumberFormat("ru-RU",{minimumFractionDigits:0,maximumFractionDigits:2}).format(Number(n)||0)+" ₸";
+  const statementCurrency=()=>{
+    const code=String(company?.currency||"KZT").toUpperCase();
+    return /^(KZT|USD|EUR|RUB|GBP|CNY)$/.test(code)?code:"KZT";
+  };
+  const fmt=n=>new Intl.NumberFormat("ru-RU",{minimumFractionDigits:0,maximumFractionDigits:2})
+    .format(Number(n)||0)+(statementCurrency()==="KZT"?" ₸":" "+statementCurrency());
   const show=x=>C.escapeHtml(x);
-  const formatBalance=new Intl.NumberFormat("ru-RU",{style:"currency",currency:"KZT",currencyDisplay:"narrowSymbol"});
+  const formatBalance=n=>{
+    const code=statementCurrency();
+    return new Intl.NumberFormat("ru-RU",{style:"currency",currency:code,
+      currencyDisplay:code==="KZT"?"narrowSymbol":"code"}).format(Number(n)||0);
+  };
   const balanceLabels=["Вх.остаток на начало периода в нац.валюте","Исх.остаток на конец периода в нац.валюте"].map(C.norm);
   let balances=[],company={};
   const sessionKey="stoldom.workspace.v2";
@@ -254,7 +263,7 @@
       const value=$(id);
       if(!value)return;
       const amount=balances[index];
-      value.textContent=Number.isFinite(amount)?formatBalance.format(amount):"—";
+      value.textContent=Number.isFinite(amount)?formatBalance(amount):"—";
     });
     if($("statementBalances"))$("statementBalances").hidden=!fileLabel;
     $("tableCaption").textContent=fileLabel||"Операции";
@@ -1282,7 +1291,7 @@
     const requireExcel=()=>{if(!window.XLSX)throw Error("Библиотека Excel не загрузилась. Проверьте соединение и обновите страницу.");};
     const ext=file.name.split(".").pop().toLowerCase();
     if(ext==="pdf"){
-      const {readAlatauPdf}=await import("./alatau-pdf.mjs?v=alatau-zero-layout-20261122-v2");
+      const {readAlatauPdf}=await import("./alatau-pdf.mjs?v=alatau-usd-20261122-v3");
       return readAlatauPdf(file,C);
     }
     let book;
