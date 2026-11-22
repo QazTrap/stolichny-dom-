@@ -13,19 +13,34 @@ export function parseAlatauPages(pages,C){
     return amount;
   }
   const balances=[summary("Входящий остаток:"),summary("Исходящий остаток:")];
-  // Use the first page's header only: never interpret counterparties as
-  // the statement owner's company identity.
+  // Parse the PDF header using text coordinates. Its client name is often
+  // split over several lines, not laid out as Excel label/value cells.
   const heading=first.find(p=>p.s==="Дата операции");
   const headerItems=first.filter(p=>!heading||p.y<heading.y-2)
     .sort((a,b)=>a.y-b.y||a.x-b.x);
-  const metadataRows=[];
-  for(const item of headerItems){
-    const previous=metadataRows[metadataRows.length-1];
-    if(previous&&Math.abs(previous.y-item.y)<=2)previous.cells.push(item.s);
-    else metadataRows.push({y:item.y,cells:[item.s]});
+  const company={name:"",bin:"",bank:"Alatau City Bank",account:"",period:"",currency:""};
+  const periodItem=headerItems.find(p=>/за период с/i.test(p.s));
+  const periodMatch=periodItem?.s.match(/с\s+(\d{2}\.\d{2}\.\d{4})\s+по\s+(\d{2}\.\d{2}\.\d{4})/i);
+  if(periodMatch)company.period=periodMatch[1]+" — "+periodMatch[2];
+  const accountItem=headerItems.find(p=>/\bKZ[A-Z0-9]{18}\b/i.test(p.s));
+  const accountMatch=accountItem?.s.match(/\bKZ[A-Z0-9]{18}\b/i);
+  if(accountMatch)company.account=accountMatch[0].toUpperCase();
+  const currencyMatch=accountItem?.s.match(/\b(KZT|USD|EUR|RUB|GBP|CNY)\b/i);
+  if(currencyMatch)company.currency=currencyMatch[1].toUpperCase();
+  const binLabel=headerItems.find(p=>/^ИИН\s*\(\s*БИН\s*\)\s*:/i.test(p.s));
+  const binItem=binLabel&&headerItems.find(p=>
+    Math.abs(p.y-binLabel.y)<4 && p.x>binLabel.x+30 && /^\d{12}$/.test(p.s));
+  if(binItem)company.bin=binItem.s;
+  const clientLabel=headerItems.find(p=>/^Клиент\s*:/i.test(p.s));
+  if(clientLabel){
+    const bottom=binLabel?.y??clientLabel.y+45;
+    company.name=headerItems.filter(p=>
+      p!==clientLabel && p.y>=clientLabel.y-2 && p.y<bottom-2 &&
+      p.x>clientLabel.x+35 &&
+      !/^Клиент\s*:/i.test(p.s))
+      .sort((a,b)=>a.y-b.y||a.x-b.x)
+      .map(p=>p.s.trim()).filter(Boolean).join(" ").slice(0,240);
   }
-  const company=C.extractStatementCompany(metadataRows.map(row=>row.cells),"Alatau City Bank");
-  if(!company.currency)company.currency="KZT";
   const rows=[headers];
   for(const page of pages){
     const heading=page.find(p=>p.s==="Дата операции");
@@ -55,7 +70,9 @@ export function parseAlatauPages(pages,C){
   const operations=C.parseRows(rows,"Alatau City Bank");
   const totals=C.totals(operations);
   const cents=value=>Math.round(value*100);
-  if(!operations.length||operations.length!==rows.length-1||totals.unknown||
+  // A statement with zero transactions is valid when the bank also reports
+  // zero debit/credit turnover and the opening and closing balances reconcile.
+  if(operations.length!==rows.length-1||totals.unknown||
     cents(totals.incoming)!==cents(summary("Обороты по кредиту:"))||
     cents(totals.outgoing)!==cents(summary("Обороты по дебету:"))||
     cents(balances[0])+cents(totals.net)!==cents(balances[1])){
