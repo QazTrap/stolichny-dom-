@@ -382,7 +382,18 @@
     number:["номер документа","№ документа","номер платежа","референс","reference","document number"],
     accountDebit:["счет дебета","счёт дебета","счет дебет","дебет счет","счет списания"],
     accountCredit:["счет кредита","счёт кредита","счет кредит","кредит счет","счет зачисления"],
-    bin:["бин/иин контрагента","бин контрагента","иин контрагента","бин","иин","бин/иин","иин/бин"],
+    bin:["бин/иин контрагента","бин контрагента","иин контрагента","бин","иин","бин/иин","иин/бин",
+      "иин/бин бенефициара / отправителя денег","бин/иин бенефициара / отправителя денег",
+      "иин (бин) бенефициара / отправителя денег","иин/бин бенефициара/отправителя денег",
+      "иин/бин получателя","иин/бин плательщика","бин получателя","бин плательщика"],
+    partyAccount:["счёт контрагента","счет контрагента","иик контрагента","iban контрагента",
+      "счет бенефициара / отправителя денег","счёт бенефициара / отправителя денег",
+      "иик бенефициара / отправителя денег","счет бенефициара/отправителя денег",
+      "счёт бенефициара/отправителя денег","номер счета бенефициара / отправителя денег",
+      "номер счёта бенефициара / отправителя денег","банковский счет контрагента"],
+    payerAccount:["счет плательщика","счёт плательщика","иик плательщика","iban плательщика","номер счета плательщика","номер счёта плательщика"],
+    receiverAccount:["счет получателя","счёт получателя","иик получателя","iban получателя","номер счета получателя","номер счёта получателя",
+      "счет бенефициара","счёт бенефициара","иик бенефициара"],
     knp:["кнп","код назначения платежа"],
     bankRef:["референс операции абис","референс операции","идентификатор транзакции","transaction id"]
   };
@@ -447,6 +458,11 @@
       const companyName=embeddedBin?partyText.slice(0,embeddedBin.index).trim():partyText;
       const purpose=fixTengeText(get("purpose")||"").trim();
       const comment=fixTengeText(get("comment")||"").trim().slice(0,3000);
+      // Only explicit counterparty IBAN columns; never reuse the owner's header account.
+      const counterpartAccountRaw=String(get("partyAccount")||
+        (direction==="Входящее"?get("payerAccount"):direction==="Исходящее"?get("receiverAccount"):"")||"")
+        .replace(/\s+/g,"").toUpperCase();
+      const counterpartyAccount=/^KZ[A-Z0-9]{18}$/.test(counterpartAccountRaw)?counterpartAccountRaw:"";
       const rawKnp=String(get("knp")??"").trim();
       const knp=/^\d{1,3}$/.test(rawKnp)?rawKnp.padStart(3,"0"):rawKnp;
       const articleSuggestion=suggestArticleDetailed(purpose,direction,knp,companyName);
@@ -460,7 +476,7 @@
         debit:/^\d{4}$/.test(bankDebit)?bankDebit:"", debitSource:/^\d{4}$/.test(bankDebit)?"statement":"",
         credit:/^\d{4}$/.test(bankCredit)?bankCredit:"", creditSource:/^\d{4}$/.test(bankCredit)?"statement":"",
         debitReason:"",creditReason:"",
-        bin:String(get("bin")||embeddedBin?.[1]||"").trim(), sourceDoc:String(get("bankDoc")||"").trim(),
+        bin:String(get("bin")||embeddedBin?.[1]||"").trim(), counterpartyAccount, sourceDoc:String(get("bankDoc")||"").trim(),
         docNumber:String(get("number")||"").trim(), sourceSheet:sheetName,
         possibleDuplicate:false, duplicateConfirmed:false, status:"review"
       };
