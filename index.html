@@ -274,6 +274,48 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 #operationsTable.ledger-columns-hidden tbody tr:not(.operation-detail)>td:nth-child(5),
 #operationsTable.ledger-columns-hidden tbody tr:not(.operation-detail)>td:nth-child(6){display:none}
 #operationsTable.ledger-columns-hidden{min-width:730px}
+
+/* AI sidebar and locally prepared reconciliation draft */
+.ai-sidebar{display:grid;gap:9px;margin:12px 0;padding:12px;background:#f7faff;border:1px solid #d9e5f2;border-radius:12px}
+.ai-sidebar-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px}
+.ai-sidebar-head strong{font-size:13px;color:#173e69}
+.ai-sidebar-head span{font-size:10px;color:#647896;background:#e7eff9;padding:4px 6px;border-radius:12px}
+.ai-sidebar label{font-weight:650;font-size:12px;color:#36506c}
+.ai-sidebar textarea{width:100%;resize:vertical;min-height:74px;background:#fff;color:#173553;border:1px solid #cbd9e9;border-radius:9px;padding:8px 10px;font:inherit;font-size:12px}
+.ai-sidebar .btn{width:100%;font-size:12px;white-space:normal;line-height:1.4;min-height:40px;text-align:left;justify-content:flex-start}
+.ai-sidebar-act{background:#1478e8;color:white;border-color:#1478e8}
+.ai-sidebar-act:hover{background:#0866cf}
+.ai-sidebar-disabled:disabled{background:#edf1f7;color:#71839a;border:1px solid #e0e8f1;cursor:not-allowed;opacity:1}
+.ai-sidebar small{font-size:11px;color:#64758a;line-height:1.5}
+#reconciliationDialog{width:min(960px,calc(100vw - 24px));max-width:960px;max-height:calc(100vh - 36px);overflow:auto;border:1px solid #d4e0ef;border-radius:16px;box-shadow:0 22px 75px #10204444;padding:20px;background:#fff;color:var(--ink)}
+#reconciliationDialog::backdrop{background:#152b4f77}
+.recon-dialog-head{display:flex;justify-content:space-between;gap:14px;margin-bottom:14px}
+.recon-dialog-head h2{font-size:19px;margin:0 0 4px}.recon-dialog-head p{font-size:12px;color:var(--muted);margin:0}
+.recon-dialog-head button{width:34px;height:34px;border:0;background:#edf3fb;border-radius:8px;color:#566c88;font-size:23px;cursor:pointer}
+.recon-warning{font-size:12px;color:#775722;background:#fff8e9;border:1px solid #f1dfb9;padding:9px 11px;border-radius:8px;line-height:1.5}
+.recon-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:15px 0}
+.recon-grid label,.recon-input-row label{display:grid;gap:4px;font-size:12px;font-weight:650;color:#36506e;min-width:0}
+.recon-grid input,.recon-input-row input{width:100%;min-width:0;border:1px solid #cbd8e8;border-radius:7px;padding:8px;font-size:13px;color:#102044;background:#fff;min-height:37px}
+#reconForm h3{font-size:15px;margin:17px 0 4px}
+.recon-rows{display:grid;gap:7px;margin:12px 0}
+.recon-input-row{display:grid;grid-template-columns:140px minmax(160px,1fr) 120px 120px 32px;align-items:end;gap:8px}
+.recon-remove{height:37px;border:1px solid #d7e0eb;border-radius:7px;background:#f8fafd;color:#8e4d4d;font-size:21px;cursor:pointer}
+.recon-error{color:#bd342e;font-size:12px;min-height:16px}.recon-actions{display:flex;gap:10px;flex-wrap:wrap}
+.recon-preview{margin-top:19px;border-top:1px solid #dbe6f3;padding-top:16px}
+.recon-paper h2{font-size:18px;text-align:center;margin:0 0 16px}.recon-paper>p{font-size:13px;margin:7px 0}
+.recon-paper table{width:100%;min-width:0;border-collapse:collapse;margin:14px 0;font-size:12px}
+.recon-paper th,.recon-paper td{border:1px solid #cdd7e3;padding:8px;text-align:left;white-space:normal;position:static}
+.recon-paper th{background:#f4f7fb}.recon-paper td:nth-child(n+3){text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.recon-paper .recon-signatures{margin-top:26px}
+@media(max-width:800px){.recon-input-row{grid-template-columns:1fr 1fr}.recon-input-row label:nth-child(2){grid-column:2}.recon-input-row .recon-remove{grid-column:1/-1;width:40px;margin-left:auto}}
+@media(max-width:550px){#reconciliationDialog{padding:14px}.recon-grid{grid-template-columns:1fr}.recon-input-row label:nth-child(2){grid-column:1/-1}.recon-paper{overflow-x:auto}.recon-paper table{font-size:10px}.recon-paper th,.recon-paper td{padding:5px}}
+@media print{body:has(#reconciliationDialog[open])>*:not(#reconciliationDialog){display:none!important}
+ #reconciliationDialog{display:block!important;position:static!important;max-height:none!important;overflow:visible!important;border:0!important;box-shadow:none!important;width:100%!important;max-width:none!important;padding:0!important}
+ #reconciliationDialog::backdrop{display:none}
+ #reconciliationDialog .recon-edit,#reconciliationDialog .recon-dialog-head{display:none!important}
+ #reconPreview{display:block!important;border:0!important;margin:0!important;padding:0!important}
+ #reconciliationDialog .recon-paper{overflow:visible}
+}
 </style>
 </head>
 <body>
@@ -300,6 +342,15 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
    </div>
    <div class="search-field"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-search"></use></svg><input class="search" id="search" type="search" aria-label="Поиск по операциям, контрагентам, статьям ДДС и назначению" placeholder="Поиск по операциям и ДДС"></div>
   </div>
+  <section class="ai-sidebar" aria-labelledby="aiSidebarTitle">
+   <div class="ai-sidebar-head"><strong id="aiSidebarTitle">STOLDOM AI Agent</strong><span>В разработке</span></div>
+   <label for="aiSidebarPrompt">Команда для ИИ-бухгалтера</label>
+   <textarea id="aiSidebarPrompt" rows="3" placeholder="Например: проверь НДС, разнеси зарплату, сделай реализацию..."></textarea>
+   <button class="btn ai-sidebar-disabled" type="button" disabled>Выполнить с ИИ · В разработке</button>
+   <button class="btn ai-sidebar-act" id="openReconciliation" type="button">Создать акт сверки</button>
+   <small>Ручной черновик доступен сейчас. Автозаполнение из 1С — в разработке.</small>
+   <button class="btn ai-sidebar-disabled" type="button" disabled>Подключить базу 1С для работы с ИИ · В разработке</button>
+  </section>
   <div class="company"><strong>Данные компании</strong><span class="muted">После загрузки выписки — над таблицей операций</span></div>
   <div class="support">Поддержка<br>support@stoldom.site</div>
  </aside>
@@ -416,6 +467,32 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
  </form>
 </dialog>
 
+<dialog id="reconciliationDialog" aria-labelledby="reconDialogTitle">
+ <div class="recon-dialog-head"><div><h2 id="reconDialogTitle">Создать акт сверки</h2><p>Черновик по вручную введённым данным взаиморасчётов</p></div><button id="reconClose" type="button" aria-label="Закрыть">×</button></div>
+ <p class="recon-warning recon-edit">Автозаполнение из 1С пока в разработке. Банковская выписка не содержит все реализации, поступления и зачёты. Используйте подтверждённые регистры учёта.</p>
+ <form id="reconForm" class="recon-edit">
+  <div class="recon-grid">
+   <label>Ваша организация <input id="reconOrganization" type="text" maxlength="250" required placeholder="ТОО или ИП"></label>
+   <label>Контрагент <input id="reconCounterparty" type="text" maxlength="250" required list="reconCounterparties" placeholder="Наименование"></label>
+   <datalist id="reconCounterparties"></datalist>
+   <label>Договор (при наличии) <input id="reconContract" type="text" maxlength="250" placeholder="Номер и дата"></label>
+   <label>Период с <input id="reconFrom" type="date" required></label>
+   <label>Период по <input id="reconTo" type="date" required></label>
+   <label>Начальное сальдо: дебет, ₸ <input id="reconOpeningDebit" type="number" min="0" step="0.01" value="0"></label>
+   <label>Начальное сальдо: кредит, ₸ <input id="reconOpeningCredit" type="number" min="0" step="0.01" value="0"></label>
+  </div>
+  <h3>Документы взаиморасчётов</h3>
+  <p class="muted">Введите проводки по выбранному счёту и договору. В каждой строке используйте дебет или кредит.</p>
+  <div id="reconRows" class="recon-rows"></div>
+  <button class="btn outline" id="reconAddRow" type="button">+ Добавить документ</button>
+  <p id="reconFeedback" class="recon-error" role="alert"></p>
+  <div class="recon-actions">
+   <button class="btn primary" type="submit">Сформировать черновик</button>
+   <button class="btn outline" id="reconPrint" type="button" hidden>Печать / сохранить PDF</button>
+  </div>
+ </form>
+ <section id="reconPreview" class="recon-preview" aria-label="Черновик акта сверки" hidden></section>
+</dialog>
 <div id="counterpartyInfo" class="counterparty-info" role="dialog" aria-label="Реквизиты контрагента из выписки" hidden>
  <div class="counterparty-info-head"><strong id="counterpartyInfoName">Контрагент</strong><button id="counterpartyInfoClose" type="button" aria-label="Закрыть реквизиты контрагента">×</button></div>
  <dl class="counterparty-info-fields">
@@ -428,6 +505,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="/workspace-core.js?v=compact-names-20261122-v2" defer></script>
 <script src="/app.js?v=compact-names-20261122-v1" defer></script>
+<script src="/reconciliation.js?v=20261125-act-draft-1" defer></script>
 </body></html>
 
 
