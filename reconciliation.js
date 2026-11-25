@@ -99,6 +99,7 @@
     result.append(elem("p","Период: с "+dateText(from)+" по "+dateText(to)));
     result.append(elem("p","По данным организации: "+$("reconOrganization").value.trim()));
     result.append(elem("p","Контрагент: "+$("reconCounterparty").value.trim()));
+    result.append(elem("p","Счёт учёта: "+$("reconAccount").value.trim()));
     if($("reconContract").value.trim())result.append(elem("p","Договор: "+$("reconContract").value.trim()));
     result.append(elem("p","Данные второй стороны не получены. Не является согласованным актом.","recon-warning"));
     const table=elem("table");
