@@ -472,29 +472,26 @@
   }
   // One searchable menu services both row fields and filters.
   let openMenu=null, lastRowTap=null, lastCounterpartyTap=null, datePopup=null;
-  const markedCounterparties=new Set();
-  function counterpartySelectionKey(x){
-    const bin=String(x.bin||"").trim();
-    if(/^\d{12}$/.test(bin))return "bin:"+bin;
-    const account=String(x.counterpartyAccount||"").trim().toUpperCase();
-    if(account)return "account:"+account;
-    const name=C.norm(x.originalName||x.name);
-    return name?"name:"+name:"row:"+x.id;
-  }
+  const markedOperationIds=new Set();
+  const rowTapDelay=410;
   function counterpartyButton(x){
-    const key=counterpartySelectionKey(x);
-    const active=markedCounterparties.has(key);
-    return '<button type="button" class="counterparty-trigger'+(active?' counterparty-selected':'')+'" aria-pressed="'+String(active)+'" data-counterparty-key="'+show(key)+'" data-counterparty-id="'+x.id+'" title="Дважды нажмите для реквизитов контрагента" aria-label="'+show("Реквизиты контрагента: "+(x.originalName||x.name||"Не указан"))+'">'+show(C.compactLegalDisplayName(x.name||"Не указан"))+'</button>';
+    return '<button type="button" class="counterparty-trigger" data-counterparty-id="'+x.id+'" title="Дважды нажмите для реквизитов контрагента" aria-label="'+show("Реквизиты контрагента: "+(x.originalName||x.name||"Не указан"))+'">'+show(C.compactLegalDisplayName(x.name||"Не указан"))+'</button>';
   }
-  function toggleCounterparty(key){
-    const active=!markedCounterparties.has(key);
-    if(active)markedCounterparties.add(key);
-    else markedCounterparties.delete(key);
-    $("rows").querySelectorAll(".counterparty-trigger").forEach(button=>{
-      if(button.dataset.counterpartyKey!==key)return;
-      button.classList.toggle("counterparty-selected",active);
-      button.setAttribute("aria-pressed",String(active));
-    });
+  function markOperation(id,active){
+    if(active)markedOperationIds.add(id);
+    else markedOperationIds.delete(id);
+    $("rows").querySelector('tr[data-id="'+id+'"]')?.classList.toggle("operation-marked",active);
+  }
+  function finishRowTap(){
+    if(!lastRowTap)return;
+    clearTimeout(lastRowTap.timer);
+    markOperation(lastRowTap.id,!lastRowTap.wasMarked);
+    lastRowTap=null;
+  }
+  function resetOperationMarks(){
+    clearTimeout(lastRowTap?.timer);
+    lastRowTap=null;
+    markedOperationIds.clear();
   }
   function statementDates(){
     // ISO strings sort chronologically and avoid dependence on today's date.
@@ -783,12 +780,12 @@
     updateStats(visible,dateRows);
     const shown=visible.slice(0,400);
     storage.append(...cellFields.values(),...extraFields);
-    lastRowTap=null;
+    finishRowTap();
     lastCounterpartyTap=null;
     hideCounterpartyInfo();
     if(!shown.some(x=>x.id===selected))selected=null;
     $("rows").innerHTML=shown.length?shown.map(x=>
-      '<tr data-id="'+x.id+'" tabindex="0">'+
+      '<tr data-id="'+x.id+'"'+(markedOperationIds.has(x.id)?' class="operation-marked"':'')+' tabindex="0">'+
       '<td>'+show(x.date||"Проверить дату")+'</td>'+
       '<td>'+directionDropdown(x.direction)+'</td>'+
       '<td>'+counterpartyButton(x)+(x.possibleDuplicate&&!x.duplicateConfirmed?'<div class="notice">Возможный дубль</div>':"")+'</td>'+
@@ -817,7 +814,7 @@
     if(!x)return;
     closeChoice();
     closeDateCalendar();
-    lastRowTap=null;
+    finishRowTap();
     const card=$("counterpartyInfo");
     $("counterpartyInfoName").textContent=x.originalName||x.name||"Не указан";
     const bin=String(x.bin||"").trim();
@@ -869,9 +866,8 @@
     }
     const counterpartyTrigger=target.closest(".counterparty-trigger");
     if(counterpartyTrigger){
-      lastRowTap=null;
+      finishRowTap();
       const id=Number(row.dataset.id),now=performance.now();
-      toggleCounterparty(counterpartyTrigger.dataset.counterpartyKey);
       if(lastCounterpartyTap?.id===id&&(event.detail>=2||now-lastCounterpartyTap.time<450)){
         lastCounterpartyTap=null;
         showCounterpartyInfo(ops.find(x=>x.id===id),counterpartyTrigger);
@@ -883,7 +879,7 @@
     if(!dropdown&&target.closest("input,button,select,textarea"))return;
     const id=Number(row.dataset.id);
     if(dropdown){
-      lastRowTap=null;
+      finishRowTap();
       const operation=ops.find(x=>x.id===id);
       const field=dropdown.dataset.field;
       const key=field==="operationDirection"?"direction":field;
@@ -904,12 +900,21 @@
       return;
     }
     const now=performance.now();
-    if(lastRowTap?.id===id&&(event.detail===2||now-lastRowTap.time<410)){
+    if(lastRowTap?.id===id&&(event.detail===2||now-lastRowTap.time<rowTapDelay)){
+      clearTimeout(lastRowTap.timer);
+      // Native double-click timing can exceed the touch double-tap interval.
+      markOperation(id,lastRowTap.wasMarked);
+      lastRowTap=null;
       openRowEditor(row);
-    }else lastRowTap={id,time:now};
+      return;
+    }
+    finishRowTap();
+    const wasMarked=markedOperationIds.has(id);
+    const timer=setTimeout(()=>markOperation(id,!wasMarked),rowTapDelay);
+    lastRowTap={id,time:now,wasMarked,timer};
   });
   function openRowEditor(row){
-    lastRowTap=null;
+    finishRowTap();
     const id=Number(row.dataset.id);
     if(selected===id)return;
     selected=id;
@@ -1166,12 +1171,12 @@
   $("clearDraft").addEventListener("click",()=>{
     if(!ops.length&&!fileLabel)return;
     if(!confirm("Очистить текущую выписку и операции?"))return;
-    ops=[];balances=[];company={};selected=null;markedCounterparties.clear();fileLabel="";filter="all";directionFilter="all";resetFilters();
+    ops=[];balances=[];company={};selected=null;resetOperationMarks();fileLabel="";filter="all";directionFilter="all";resetFilters();
     try{sessionStorage.removeItem(sessionKey);}catch{}
     loadEditor();render();toast("Данные текущей вкладки очищены");
   });
   function resetFilters(){
-    lastRowTap=null;
+    finishRowTap();
     periodFrom="";periodTo="";
     selectedMonth="";
     closeDateCalendar();
@@ -1396,7 +1401,7 @@
       balances=data.balances;
       company=C.mergeStatementCompanies([data.company||{}]);
       $("statementCompany").open=false;
-      selected=null;markedCounterparties.clear();fileLabel=file.name;filter="all";directionFilter="all";resetFilters();
+      selected=null;resetOperationMarks();fileLabel=file.name;filter="all";directionFilter="all";resetFilters();
       loadEditor();render();scheduleSave();
       toast(ops.length?"Загружено "+ops.length+" операций. Требуют проверки: "+ops.filter(x=>x.status!=="ready").length:"Выписка загружена: операций нет. Реквизиты и остатки банка обновлены.");
     }catch(err){toast(err.message||"Ошибка чтения файла");}

@@ -253,7 +253,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 /* Double-click counterparty peek: compact, no row selection or editor. */
 .counterparty-trigger{display:inline;border:0;background:transparent;padding:0;color:inherit;font:inherit;font-weight:750;text-align:left;line-height:inherit;white-space:normal;cursor:pointer;touch-action:manipulation}
 .counterparty-trigger:hover{color:#156ec7}
-.counterparty-trigger.counterparty-selected,.counterparty-trigger.counterparty-selected:hover{color:#16834b}
+#operationsTable tr.operation-marked>td{background-color:var(--green2)}
 .counterparty-trigger:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:3px}
 .counterparty-info{position:fixed;z-index:70;max-width:calc(100vw - 16px);width:325px;background:#fff;border:1px solid #d7e2f1;border-radius:12px;box-shadow:0 12px 30px rgba(25,54,93,.16);padding:0;color:var(--ink);overflow:auto;max-height:calc(100vh - 16px)}
 .counterparty-info-head{padding:13px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;border-bottom:1px solid #e6edf6}
@@ -510,7 +510,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="/workspace-core.js?v=alatau-xls-20261125" defer></script>
-<script src="/app.js?v=counterparty-multiselect-20261125" defer></script>
+<script src="/app.js?v=operation-marks-20261125" defer></script>
 <script src="/reconciliation.js?v=20261125-act-draft-2" defer></script>
 <script>
 document.querySelectorAll('.ai-sidebar [data-ai-prompt]').forEach(function(button){
