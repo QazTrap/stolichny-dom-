@@ -472,6 +472,15 @@
   }
   // One searchable menu services both row fields and filters.
   let openMenu=null, lastRowTap=null, lastCounterpartyTap=null, datePopup=null;
+  let markedCounterpartyId=null;
+  function markCounterparty(id){
+    markedCounterpartyId=id;
+    $("rows").querySelectorAll(".counterparty-trigger").forEach(button=>{
+      const active=Number(button.dataset.counterpartyId)===id;
+      button.classList.toggle("counterparty-selected",active);
+      button.setAttribute("aria-pressed",String(active));
+    });
+  }
   function statementDates(){
     // ISO strings sort chronologically and avoid dependence on today's date.
     return [...new Set(ops.map(x=>C.dateText(x.date)).filter(Boolean)
@@ -767,7 +776,7 @@
       '<tr data-id="'+x.id+'" tabindex="0">'+
       '<td>'+show(x.date||"Проверить дату")+'</td>'+
       '<td>'+directionDropdown(x.direction)+'</td>'+
-      '<td><button type="button" class="counterparty-trigger" data-counterparty-id="'+x.id+'" title="Дважды нажмите для реквизитов контрагента" aria-label="'+show("Реквизиты контрагента: "+(x.originalName||x.name||"Не указан"))+'">'+show(C.compactLegalDisplayName(x.name||"Не указан"))+'</button>'+(x.possibleDuplicate&&!x.duplicateConfirmed?'<div class="notice">Возможный дубль</div>':"")+'</td>'+
+      '<td><button type="button" class="counterparty-trigger'+(x.id===markedCounterpartyId?' counterparty-selected':'')+'" aria-pressed="'+String(x.id===markedCounterpartyId)+'" data-counterparty-id="'+x.id+'" title="Дважды нажмите для реквизитов контрагента" aria-label="'+show("Реквизиты контрагента: "+(x.originalName||x.name||"Не указан"))+'">'+show(C.compactLegalDisplayName(x.name||"Не указан"))+'</button>'+(x.possibleDuplicate&&!x.duplicateConfirmed?'<div class="notice">Возможный дубль</div>':"")+'</td>'+
       '<td class="amount">'+fmt(x.amount)+'</td>'+
       '<td class="account-cell">'+accountPicker(x,"debit")+'</td>'+
       '<td class="account-cell">'+accountPicker(x,"credit")+'</td>'+
@@ -847,6 +856,7 @@
     if(counterpartyTrigger){
       lastRowTap=null;
       const id=Number(row.dataset.id),now=performance.now();
+      markCounterparty(id);
       if(lastCounterpartyTap?.id===id&&(event.detail>=2||now-lastCounterpartyTap.time<450)){
         lastCounterpartyTap=null;
         showCounterpartyInfo(ops.find(x=>x.id===id),counterpartyTrigger);
@@ -1141,7 +1151,7 @@
   $("clearDraft").addEventListener("click",()=>{
     if(!ops.length&&!fileLabel)return;
     if(!confirm("Очистить текущую выписку и операции?"))return;
-    ops=[];balances=[];company={};selected=null;fileLabel="";filter="all";directionFilter="all";resetFilters();
+    ops=[];balances=[];company={};selected=null;markedCounterpartyId=null;fileLabel="";filter="all";directionFilter="all";resetFilters();
     try{sessionStorage.removeItem(sessionKey);}catch{}
     loadEditor();render();toast("Данные текущей вкладки очищены");
   });
@@ -1358,7 +1368,7 @@
       balances=data.balances;
       company=C.mergeStatementCompanies([data.company||{}]);
       $("statementCompany").open=false;
-      selected=null;fileLabel=file.name;filter="all";directionFilter="all";resetFilters();
+      selected=null;markedCounterpartyId=null;fileLabel=file.name;filter="all";directionFilter="all";resetFilters();
       loadEditor();render();scheduleSave();
       toast(ops.length?"Загружено "+ops.length+" операций. Требуют проверки: "+ops.filter(x=>x.status!=="ready").length:"Выписка загружена: операций нет. Реквизиты и остатки банка обновлены.");
     }catch(err){toast(err.message||"Ошибка чтения файла");}
