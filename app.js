@@ -473,23 +473,16 @@
   // One searchable menu services both row fields and filters.
   let openMenu=null, lastRowTap=null, lastCounterpartyTap=null, datePopup=null;
   const markedOperationIds=new Set();
-  const rowTapDelay=410;
+  const doubleTapInterval=410;
   function counterpartyButton(x){
     return '<button type="button" class="counterparty-trigger" data-counterparty-id="'+x.id+'" title="Дважды нажмите для реквизитов контрагента" aria-label="'+show("Реквизиты контрагента: "+(x.originalName||x.name||"Не указан"))+'">'+show(C.compactLegalDisplayName(x.name||"Не указан"))+'</button>';
   }
-  function markOperation(id,active){
+  function markOperation(row,id,active){
     if(active)markedOperationIds.add(id);
     else markedOperationIds.delete(id);
-    $("rows").querySelector('tr[data-id="'+id+'"]')?.classList.toggle("operation-marked",active);
-  }
-  function finishRowTap(){
-    if(!lastRowTap)return;
-    clearTimeout(lastRowTap.timer);
-    markOperation(lastRowTap.id,!lastRowTap.wasMarked);
-    lastRowTap=null;
+    row.classList.toggle("operation-marked",active);
   }
   function resetOperationMarks(){
-    clearTimeout(lastRowTap?.timer);
     lastRowTap=null;
     markedOperationIds.clear();
   }
@@ -780,7 +773,7 @@
     updateStats(visible,dateRows);
     const shown=visible.slice(0,400);
     storage.append(...cellFields.values(),...extraFields);
-    finishRowTap();
+    lastRowTap=null;
     lastCounterpartyTap=null;
     hideCounterpartyInfo();
     if(!shown.some(x=>x.id===selected))selected=null;
@@ -814,7 +807,7 @@
     if(!x)return;
     closeChoice();
     closeDateCalendar();
-    finishRowTap();
+    lastRowTap=null;
     const card=$("counterpartyInfo");
     $("counterpartyInfoName").textContent=x.originalName||x.name||"Не указан";
     const bin=String(x.bin||"").trim();
@@ -866,7 +859,7 @@
     }
     const counterpartyTrigger=target.closest(".counterparty-trigger");
     if(counterpartyTrigger){
-      finishRowTap();
+      lastRowTap=null;
       const id=Number(row.dataset.id),now=performance.now();
       if(lastCounterpartyTap?.id===id&&(event.detail>=2||now-lastCounterpartyTap.time<450)){
         lastCounterpartyTap=null;
@@ -879,7 +872,7 @@
     if(!dropdown&&target.closest("input,button,select,textarea"))return;
     const id=Number(row.dataset.id);
     if(dropdown){
-      finishRowTap();
+      lastRowTap=null;
       const operation=ops.find(x=>x.id===id);
       const field=dropdown.dataset.field;
       const key=field==="operationDirection"?"direction":field;
@@ -900,21 +893,17 @@
       return;
     }
     const now=performance.now();
-    if(lastRowTap?.id===id&&(event.detail===2||now-lastRowTap.time<rowTapDelay)){
-      clearTimeout(lastRowTap.timer);
-      // Native double-click timing can exceed the touch double-tap interval.
-      markOperation(id,lastRowTap.wasMarked);
-      lastRowTap=null;
+    if(lastRowTap?.id===id&&(event.detail===2||now-lastRowTap.time<doubleTapInterval)){
+      markOperation(row,id,lastRowTap.wasMarked);
       openRowEditor(row);
       return;
     }
-    finishRowTap();
     const wasMarked=markedOperationIds.has(id);
-    const timer=setTimeout(()=>markOperation(id,!wasMarked),rowTapDelay);
-    lastRowTap={id,time:now,wasMarked,timer};
+    markOperation(row,id,!wasMarked);
+    lastRowTap={id,time:now,wasMarked};
   });
   function openRowEditor(row){
-    finishRowTap();
+    lastRowTap=null;
     const id=Number(row.dataset.id);
     if(selected===id)return;
     selected=id;
@@ -1176,7 +1165,7 @@
     loadEditor();render();toast("Данные текущей вкладки очищены");
   });
   function resetFilters(){
-    finishRowTap();
+    lastRowTap=null;
     periodFrom="";periodTo="";
     selectedMonth="";
     closeDateCalendar();
