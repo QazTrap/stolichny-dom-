@@ -475,6 +475,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
    <label>Ваша организация <input id="reconOrganization" type="text" maxlength="250" required placeholder="ТОО или ИП"></label>
    <label>Контрагент <input id="reconCounterparty" type="text" maxlength="250" required list="reconCounterparties" placeholder="Наименование"></label>
    <datalist id="reconCounterparties"></datalist>
+   <label>Счёт взаиморасчётов <input id="reconAccount" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required placeholder="1210 или 3310"></label>
    <label>Договор (при наличии) <input id="reconContract" type="text" maxlength="250" placeholder="Номер и дата"></label>
    <label>Период с <input id="reconFrom" type="date" required></label>
    <label>Период по <input id="reconTo" type="date" required></label>
@@ -505,7 +506,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="/workspace-core.js?v=compact-names-20261122-v2" defer></script>
 <script src="/app.js?v=compact-names-20261122-v1" defer></script>
-<script src="/reconciliation.js?v=20261125-act-draft-1" defer></script>
+<script src="/reconciliation.js?v=20261125-act-draft-2" defer></script>
 </body></html>
 
 
