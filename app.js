@@ -60,7 +60,7 @@
         id:i+1,date:C.dateText(str("date")),name:str("name"),originalName:str("originalName")||str("name"),
         purpose:str("purpose"),comment:str("comment"),amount,direction:["Входящее","Исходящее"].includes(str("direction"))?str("direction"):"",
         docType:str("docType"),docTypeSource:str("docTypeSource"),article:str("article"),articleSource:str("articleSource"),articleReason:str("articleReason"),articleConfidence:str("articleConfidence"),knp:str("knp"),bankRef:str("bankRef"),debit:str("debit"),credit:str("credit"),debitSource:str("debitSource"),creditSource:str("creditSource"),debitReason:str("debitReason"),creditReason:str("creditReason"),
-        bin:str("bin"),counterpartyAccount:str("counterpartyAccount"),sourceDoc:str("sourceDoc"),docNumber:str("docNumber"),sourceSheet:str("sourceSheet"),
+        isBankFee:x.isBankFee===true,bik:str("bik"),bin:str("bin"),counterpartyAccount:str("counterpartyAccount"),sourceDoc:str("sourceDoc"),docNumber:str("docNumber"),sourceSheet:str("sourceSheet"),
         possibleDuplicate:false,duplicateConfirmed:!!x.duplicateConfirmed,status:"review"
       };
     });
@@ -86,7 +86,7 @@
   function recomputeArticle(x) {
     // Never overwrite a choice explicitly saved by the accountant.
     if(x.articleSource==="manual")return false;
-    const proposal=C.suggestArticleDetailed(x.purpose,x.direction,x.knp,x.originalName||x.name);
+    const proposal=C.suggestArticleDetailed(x.isBankFee?"Комиссия банка":x.purpose,x.direction,x.knp,x.originalName||x.name);
     const changed=x.article!==proposal.article;
     x.article=proposal.article;
     x.articleSource=x.article?"auto":"";
@@ -1320,9 +1320,22 @@
     const all=[];
     const companyCandidates=[];
     const balanceValues=balanceLabels.map(()=>new Set());
+    let recognizedAlatau=false;
     for(const sheet of book.SheetNames){
       const rows=XLSX.utils.sheet_to_json(book.Sheets[sheet],{header:1,defval:"",raw:true});
       if(!rows.some(row=>row.some(value=>String(value).trim())))continue;
+      const ws=book.Sheets[sheet];
+      const start=XLSX.utils.decode_range(ws["!ref"]).s;
+      const alatau=C.parseAlatauSheet(rows,sheet,(r,c)=>
+        ws[XLSX.utils.encode_cell({r:start.r+r,c:start.c+c})]?.w);
+      if(alatau){
+        recognizedAlatau=true;
+        companyCandidates.push(alatau.company);
+        alatau.balances.forEach((amount,i)=>{if(Number.isFinite(amount))balanceValues[i].add(amount);});
+        if(all.length+alatau.operations.length>20000)throw Error("Слишком много операций (максимум 20 000)");
+        all.push(...alatau.operations);
+        continue;
+      }
       let operations=C.parseRows(rows,sheet);
       if(!operations.length){
         operations=await mapSheet(rows,sheet);
@@ -1349,7 +1362,7 @@
       collectStatementBalances(rows,balanceValues);
       if(all.length>20000)throw Error("Слишком много операций (максимум 20 000)");
     }
-    if(!all.length)throw Error("В файле не найдена таблица операций с колонками «Дата» и «Сумма/Дебет/Кредит»");
+    if(!all.length&&!recognizedAlatau)throw Error("В файле не найдена таблица операций с колонками «Дата» и «Сумма/Дебет/Кредит»");
     return {operations:all,balances:balanceValues.map(values=>values.size===1?[...values][0]:null),company:C.mergeStatementCompanies(companyCandidates)};
   }
   $("fileInput").addEventListener("change",async e=>{

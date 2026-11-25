@@ -296,7 +296,7 @@
     if(!Array.isArray(matrix))return info;
     const labels={
       name:["наименование","наименование клиента","наименование организации","организация","владелец счета","клиент","получатель выписки"],
-      bin:["иин/бин","бин/иин","бин","иин","иин/бИН владельца","иин/бин клиента","бин/иин клиента"],
+      bin:["иин (бин)","иин/бин","бин/иин","бин","иин","иин/бИН владельца","иин/бин клиента","бин/иин клиента"],
       account:["текущий счет","текущий счёт","расчетный счет","расчётный счёт","номер счета","номер счёта","иик","иик клиента","iban","счет клиента","счёт клиента"],
       bank:["банк","наименование банка","обслуживающий банк","банк клиента"],
       period:["период","период выписки","за период"],
@@ -473,11 +473,12 @@
       const counterpartyAccount=/^KZ[A-Z0-9]{18}$/.test(counterpartAccountRaw)?counterpartAccountRaw:"";
       const rawKnp=String(get("knp")??"").trim();
       const knp=/^\d{1,3}$/.test(rawKnp)?rawKnp.padStart(3,"0"):rawKnp;
-      const articleSuggestion=suggestArticleDetailed(purpose,direction,knp,companyName);
+      const articleSuggestion=suggestArticleDetailed(mapping?.isBankFee?"Комиссия банка":purpose,direction,knp,companyName);
       const article=articleSuggestion.article;
       const bankDebit=String(get("accountDebit")||"").trim(),bankCredit=String(get("accountCredit")||"").trim();
       const docType=suggestDocumentType(direction,article);
       const entry={
+        ...(mapping?.isBankFee?{isBankFee:true}:{}),
         id:0, date:dateText(get("date")), name:shortLegalName(companyName), originalName:companyName, purpose, comment,
         amount:roundMoney(Math.abs(amount)), direction, docType, docTypeSource:docType?"auto":"", article, articleSource:article?"auto":"",
         articleReason:articleSuggestion.reason,articleConfidence:articleSuggestion.confidence,knp,bankRef:String(get("bankRef")??"").trim(),
@@ -492,6 +493,59 @@
       result.push(entry);
     }
     return result;
+  }
+  // Alatau's account statement has a dedicated fee column. Match the table
+  // itself because the turnover summary above it uses some of the same labels.
+  function parseAlatauSheet(rows, sheetName, formattedId) {
+    const fields={
+      date:["дата, время операции","дата и время операции"], number:["№ документа","номер документа"],
+      debit:["расход (дебет)"], credit:["приход (кредит)"], fee:["комиссия"],
+      name:["корреспондент"], bin:["иин (бин)","иин/бин"], bik:["бик"],
+      partyAccount:["счет","cчет"], purpose:["назначения платежа","назначение платежа"], knp:["кнп"]
+    };
+    let cols,header=-1;
+    for(let i=0;i<rows.length;i++){
+      const labels=rows[i].map(norm);
+      if(!labels.includes("комиссия"))continue;
+      cols=Object.fromEntries(Object.entries(fields).map(([key,names])=>
+        [key,labels.findIndex(label=>names.includes(label))]));
+      if(Object.values(cols).every(col=>col>=0)){header=i;break;}
+    }
+    if(header<0)return null;
+    const preamble=rows.slice(0,header);
+    const company=extractStatementCompany(preamble,"Alatau City Bank");
+    const balances=["входящий","исходящий"].map(label=>{
+      for(const row of preamble){
+        const col=row.findIndex(cell=>norm(cell).replace(/:$/,"")===label);
+        if(col<0)continue;
+        const amount=row.slice(col+1).map(money).find(Number.isFinite);
+        if(amount!==undefined)return amount;
+      }
+      return null;
+    });
+    const operations=[];
+    for(let i=header+1;i<rows.length;i++){
+      const row=rows[i];
+      if(!dateText(row[cols.date]))continue;
+      const values=row.slice();
+      for(const key of ["bin","number","knp"]){
+        const col=cols[key];
+        const raw=values[col];
+        const display=typeof raw==="number" && formattedId?.(i,col);
+        values[col]=display && /^\d+$/.test(display)?display:String(raw??"");
+        if(key==="bin" && typeof raw==="number" && /^\d{1,11}$/.test(values[col]))
+          values[col]=values[col].padStart(12,"0");
+      }
+      for(const key of ["credit","debit","fee"]){
+        const amount=money(values[cols[key]]);
+        if(!Number.isFinite(amount)||amount===0)continue;
+        const columns={...cols,debit:key==="credit"?-1:cols[key],credit:key==="credit"?cols.credit:-1};
+        const [op]=parseRows([values],sheetName,{header:-1,columns,isBankFee:key==="fee"});
+        op.bik=String(values[cols.bik]??"").trim();
+        operations.push(op);
+      }
+    }
+    return {operations,company,balances};
   }
   function duplicateKey(x) {
     if(!x.date||!x.direction||!x.amount) return "";
@@ -644,6 +698,6 @@
     const outgoing=roundMoney(rows.filter(x=>x.direction==="Исходящее").reduce((s,x)=>s+Number(x.amount||0),0));
     return {incoming,outgoing,net:roundMoney(incoming-outgoing),count:rows.length,unknown:rows.filter(x=>!x.direction).length};
   }
-  return {extractStatementCompany,mergeStatementCompanies,statementPeriodLabel,norm,fixTengeText,escapeHtml,money,dateText,shortLegalName,compactLegalDisplayName,suggestArticle,suggestArticleDetailed,suggestPosting,refreshSuggestedPosting,suggestDocumentType,suggestDocumentOperation,refreshSuggestedDocument,parseRows,markDuplicates,validateOperation,reconciliationNotes,setManualPostingAccount,operationRuleKey,countSimilarOperations,applyPostingToSimilar,filterPeriod,totals,BANK_FEE_DOCUMENT};
+  return {parseAlatauSheet,extractStatementCompany,mergeStatementCompanies,statementPeriodLabel,norm,fixTengeText,escapeHtml,money,dateText,shortLegalName,compactLegalDisplayName,suggestArticle,suggestArticleDetailed,suggestPosting,refreshSuggestedPosting,suggestDocumentType,suggestDocumentOperation,refreshSuggestedDocument,parseRows,markDuplicates,validateOperation,reconciliationNotes,setManualPostingAccount,operationRuleKey,countSimilarOperations,applyPostingToSimilar,filterPeriod,totals,BANK_FEE_DOCUMENT};
 });
 
