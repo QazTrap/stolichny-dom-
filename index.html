@@ -348,7 +348,11 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
    <textarea id="aiSidebarPrompt" rows="3" placeholder="Например: проверь НДС, разнеси зарплату, сделай реализацию..."></textarea>
    <button class="btn ai-sidebar-disabled" type="button" disabled>Выполнить с ИИ · В разработке</button>
    <button class="btn ai-sidebar-act" id="openReconciliation" type="button">Создать акт сверки</button>
-   <small>Ручной черновик доступен сейчас. Автозаполнение из 1С — в разработке.</small>
+   <button class="btn ai-sidebar-act" type="button" data-ai-prompt="Разнеси банковскую выписку" aria-label="Разнести выписку — подготовить команду">Разнести выписку</button>
+   <button class="btn ai-sidebar-act" type="button" data-ai-prompt="Проверь НДС" aria-label="Проверить НДС — подготовить команду">Проверить НДС</button>
+   <button class="btn ai-sidebar-act" type="button" data-ai-prompt="Сделай реализацию" aria-label="Сделать реализацию — подготовить команду">Сделать реализацию</button>
+   <button class="btn ai-sidebar-act" type="button" data-ai-prompt="Разнеси зарплату" aria-label="Разнести зарплату — подготовить команду">Разнести зарплату</button>
+   <small>Акт сверки доступен вручную. Остальные кнопки подставляют команды ИИ; выполнение в 1С — в разработке.</small>
    <button class="btn ai-sidebar-disabled" type="button" disabled>Подключить базу 1С для работы с ИИ · В разработке</button>
   </section>
   <div class="company"><strong>Данные компании</strong><span class="muted">После загрузки выписки — над таблицей операций</span></div>
@@ -507,6 +511,14 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 <script src="/workspace-core.js?v=compact-names-20261122-v2" defer></script>
 <script src="/app.js?v=compact-names-20261122-v1" defer></script>
 <script src="/reconciliation.js?v=20261125-act-draft-2" defer></script>
+<script>
+document.querySelectorAll('.ai-sidebar [data-ai-prompt]').forEach(function(button){
+ button.addEventListener('click',function(){
+  var prompt=document.getElementById('aiSidebarPrompt');
+  if(prompt){prompt.value=button.dataset.aiPrompt;prompt.focus();}
+ });
+});
+</script>
 </body></html>
 
 
