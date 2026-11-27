@@ -1121,8 +1121,8 @@
           wrap.append(table);card.append(wrap);
         }
         const downloads=document.createElement("div");downloads.className="kgd-downloads";
-        for(const [format,label] of [["xlsx","Скачать Excel"],["pdf","Скачать PDF"],["docx","Скачать Word"]]){
-          const button=document.createElement("button");button.type="button";button.className="btn outline";button.textContent=label;
+        for(const [format,label] of [["pdf","Скачать PDF"],["docx","Скачать Word"]]){
+          const button=document.createElement("button");button.type="button";button.className="btn primary";button.textContent=label;
           button.addEventListener("click",async()=>{
             button.disabled=true;
             try{
