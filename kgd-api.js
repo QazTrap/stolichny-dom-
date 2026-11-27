@@ -2,6 +2,7 @@
 const express = require("express");
 const {timingSafeEqual, createHash} = require("node:crypto");
 const sessionAuth=require("./kgd-session");
+const {lookupVat}=require("./kgd-vat");
 const ENDPOINT = "https://kgd.gov.kz/services/isnaportal/public/get-sur-data";
 const ORIGINS = new Set(["https://stoldom.site","https://www.stoldom.site"]);
 const PATH = "/api/kgd/counterparty";
@@ -72,7 +73,9 @@ module.exports=function mountKgd(app){
       if(!response.ok)return res.status(response.status===400?400:response.status===404?404:502).json({error:response.status===400?"КГД отклонил запрос.":response.status===404?"Сведения не найдены.":"КГД не обработал запрос."});
       const data=await response.json();
       if(!data||typeof data!=="object"||Array.isArray(data)||String(data.xin||"")!==xin)return res.status(502).json({error:"Не удалось подтвердить ответ КГД."});
-      return res.json({ok:true,source:"КГД",data:normalize(data)});
+      const result=normalize(data);
+      const vat=await lookupVat(xin,process.env.KGD_VAT_API_TOKEN||token);
+      return res.json({ok:true,source:"КГД",data:{...result,...vat}});
     }catch{
       return res.status(502).json({error:"Сервис КГД недоступен или вернул некорректный ответ."});
     }finally{active--;}
