@@ -1096,7 +1096,20 @@
             const line=document.createElement("span");line.textContent=kgdText(row.year)+" — работники: "+kgdText(row.workersCount)+", налоги: "+kgdText(row.taxIn)+" ₸, КНН: "+kgdText(row.knn)+", НДС: "+kgdText(row.vatAmount)+" ₸";card.append(line);
           }
         }
-        lookupResults.append(card);lookupStatus.textContent="Официальные сведения КГД";
+        const downloads=document.createElement("div");downloads.className="kgd-downloads";
+        for(const [format,label] of [["xlsx","Скачать Excel"],["pdf","Скачать PDF"],["docx","Скачать Word"]]){
+          const button=document.createElement("button");button.type="button";button.className="btn outline";button.textContent=label;
+          button.addEventListener("click",async()=>{
+            button.disabled=true;
+            try{
+              if(!window.KgdExport)throw Error("Модуль скачивания не загрузился. Обновите страницу.");
+              await window.KgdExport.download(format,d,kgdFields);
+            }catch(err){lookupStatus.textContent=err.message||"Не удалось скачать документ.";}
+            finally{button.disabled=false;}
+          });
+          downloads.append(button);
+        }
+        card.append(downloads);lookupResults.append(card);lookupStatus.textContent="Официальные сведения КГД";
       }catch(err){if(sequence===lookupSequence&&lookupDialog.open)lookupStatus.textContent=err.name==="TimeoutError"?"КГД не ответил вовремя.":(err.message==="Failed to fetch"?"Сервер КГД недоступен.":err.message);}
     }
     function findCounterparties(){

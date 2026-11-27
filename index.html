@@ -280,6 +280,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
  .counterparty-lookup-results{display:grid;gap:8px}
  .counterparty-lookup-result{display:grid;gap:5px;padding:12px;border:1px solid var(--line);border-radius:9px;overflow-wrap:anywhere;font-size:13px}
  .counterparty-lookup-result strong{font-size:14px}
+ .kgd-downloads{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.kgd-downloads .btn{min-height:34px;padding:7px 12px;font-size:12px}
  .amount-header-tools{display:flex;align-items:center;justify-content:space-between;gap:12px}
  @media(min-width:1201px){.amount-header-tools .ledger-visibility-toggle{margin-inline-end:32px}}
  @media(max-width:550px){.operations-heading{width:100%;flex-wrap:wrap}.operations-heading .search-field{width:100%}}
@@ -541,7 +542,8 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="/workspace-core.js?v=alatau-xls-20261125" defer></script>
-<script src="/app.js?v=kgd-session-20261127" defer></script>
+<script src="/kgd-export.js?v=20261127-1" defer></script>
+<script src="/app.js?v=kgd-downloads-20261127" defer></script>
 <script src="/reconciliation.js?v=20261125-act-draft-2" defer></script>
 <script>
 document.querySelectorAll('.ai-sidebar [data-ai-prompt]').forEach(function(button){
