@@ -36,11 +36,11 @@
     X.writeFile(wb,r.filename+".xlsx",{compression:true});
   }
   function esc(v){return String(v).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\ufffe\uffff]/g,"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;"}[c]));}
-  function paragraph(t,{bold=false,size=22,color="17233A"}={}){
-    return '<w:p><w:pPr><w:spacing w:after="80"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/>'+(bold?"<w:b/>":"")+'<w:color w:val="'+color+'"/><w:sz w:val="'+size+'"/></w:rPr><w:t xml:space="preserve">'+esc(t)+'</w:t></w:r></w:p>';
+  function paragraph(t,{bold=false,size=22,color="17233A",pageBreak=false,after=80}={}){
+    return '<w:p><w:pPr>'+(pageBreak?'<w:pageBreakBefore/>':'')+'<w:spacing w:after="'+after+'"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/>'+(bold?"<w:b/>":"")+'<w:color w:val="'+color+'"/><w:sz w:val="'+size+'"/></w:rPr><w:t xml:space="preserve">'+esc(t)+'</w:t></w:r></w:p>';
   }
-  function table(rows,widths){
-    return '<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:tblBorders>'+["top","left","bottom","right","insideH","insideV"].map(k=>'<w:'+k+' w:val="single" w:sz="4" w:color="D4DBE4"/>').join("")+'</w:tblBorders></w:tblPr><w:tblGrid>'+widths.map(w=>'<w:gridCol w:w="'+w+'"/>').join("")+'</w:tblGrid>'+rows.map((row,i)=>'<w:tr><w:trPr>'+(i===0?"<w:tblHeader/>":"")+'<w:cantSplit/></w:trPr>'+row.map((cell,j)=>'<w:tc><w:tcPr><w:tcW w:w="'+widths[j]+'" w:type="dxa"/>'+(i===0?'<w:shd w:fill="E7EDF5"/>':"")+'</w:tcPr>'+paragraph(cell,{bold:i===0,size:20})+'</w:tc>').join("")+'</w:tr>').join("")+'</w:tbl>';
+  function table(rows,widths,{labels=false}={}){
+    return '<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:tblBorders>'+["top","left","bottom","right","insideH","insideV"].map(k=>'<w:'+k+' w:val="single" w:sz="4" w:color="D4DBE4"/>').join("")+'</w:tblBorders></w:tblPr><w:tblGrid>'+widths.map(w=>'<w:gridCol w:w="'+w+'"/>').join("")+'</w:tblGrid>'+rows.map((row,i)=>'<w:tr><w:trPr>'+(i===0?"<w:tblHeader/>":"")+'<w:cantSplit/></w:trPr>'+row.map((cell,j)=>'<w:tc><w:tcPr><w:tcW w:w="'+widths[j]+'" w:type="dxa"/>'+(i===0?'<w:shd w:fill="E7EDF5"/>':labels&&j===0?'<w:shd w:fill="F1F4F8"/>':"")+'</w:tcPr>'+paragraph(cell,{bold:labels?j===0:i===0,size:20,after:labels?30:80})+'</w:tc>').join("")+'</w:tr>').join("")+'</w:tbl>';
   }
   function concat(parts){const out=new Uint8Array(parts.reduce((n,p)=>n+p.length,0));let offset=0;for(const p of parts){out.set(p,offset);offset+=p.length;}return out;}
   const crcTable=Uint32Array.from({length:256},(_,n)=>{for(let k=0;k<8;k++)n=n&1?0xedb88320^(n>>>1):n>>>1;return n>>>0;});
@@ -64,7 +64,7 @@
   }
   function docx(r,images){
     const xml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
-    const body=(images?imageParagraph(1,"STOLDOM",550000,550000):"")+paragraph("STOLDOM.SITE",{bold:true,size:22,color:"315D91"})+paragraph(TITLE,{bold:true,size:34})+paragraph(SOURCE)+paragraph("Дата формирования: "+r.date)+table([["Показатель","Значение"],...r.rows],[3300,5700])+(r.statistics.length?paragraph("Статистика по годам",{bold:true,size:26})+table([STATS,...r.statistics],[1000,1300,1900,1200,1500,2100]):"")+(images?.qr?imageParagraph(2,"QR",1200000,1200000)+paragraph("Открыть карточку контрагента",{size:18}):"");
+    const body=(images?imageParagraph(1,"STOLDOM",550000,550000):"")+paragraph("STOLDOM.SITE",{bold:true,size:22,color:"315D91"})+paragraph(TITLE,{bold:true,size:34})+paragraph(SOURCE)+paragraph("Дата формирования: "+r.date)+table([["Показатель","Значение"],...r.rows],[3600,5400],{labels:true})+(r.statistics.length?paragraph("Статистика по годам",{bold:true,size:26,pageBreak:true})+table([STATS,...r.statistics],[1000,1300,1900,1200,1500,2100]):"")+(images?.qr?imageParagraph(2,"QR",1200000,1200000)+paragraph("Открыть карточку контрагента",{size:18}):"");
     return zip({
       "[Content_Types].xml":xml+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>',
       "_rels/.rels":xml+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
@@ -126,7 +126,7 @@
       pages.push(new Uint8Array(await blob.arrayBuffer()));
     }
     async function row(label,value){
-      const split=M+398,labels=wrap(label,365,21),values=wrap(value,RIGHT-split-24,22,true);
+      const split=M+398,labels=wrap(label,365,21,true),values=wrap(value,RIGHT-split-24,22,false);
       const total=Math.max(labels.length,values.length);
       if(total*LH+12<=BOTTOM-282&&y+total*LH+12>BOTTOM){await finish();start();}
       let pos=0;
@@ -136,7 +136,7 @@
         const take=Math.min(total-pos,n),height=take*LH+12;
         ctx.fillStyle="#f1f4f8";ctx.fillRect(M,y,398,height);
         ctx.strokeStyle="#d4dbe4";ctx.lineWidth=1;ctx.strokeRect(M,y,RIGHT-M,height);
-        for(let i=0;i<take;i++){if(labels[pos+i]!==undefined)draw(labels[pos+i],M+12,y+24+i*LH,21,false,"#526174");if(values[pos+i]!==undefined)draw(values[pos+i],split+12,y+24+i*LH,22,true);}
+        for(let i=0;i<take;i++){if(labels[pos+i]!==undefined)draw(labels[pos+i],M+12,y+24+i*LH,21,true);if(values[pos+i]!==undefined)draw(values[pos+i],split+12,y+24+i*LH,22,false);}
         y+=height;pos+=take;
       }
     }
@@ -153,7 +153,7 @@
         labels.forEach((label,i)=>{draw(label,x+10,y+27,18,true,"#526174");x+=widths[i];});
         y+=42;
       };
-      if(y+140>BOTTOM){await finish();start();}
+      await finish();start();
       header();
       for(const [i,data] of r.statistics.entries()){
         if(y+42>BOTTOM){await finish();start();header();}
