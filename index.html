@@ -267,6 +267,9 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 
 /* Compact debit/credit visibility control. Hiding is presentation-only. */
 .operations-heading{display:inline-flex;align-items:center;gap:11px;min-width:0}
+ .operations-heading .search-field{width:clamp(180px,28vw,360px);max-width:100%}
+ .amount-header-tools{display:flex;align-items:center;justify-content:space-between;gap:12px}
+ @media(max-width:550px){.operations-heading{width:100%;flex-wrap:wrap}.operations-heading .search-field{width:100%}}
 .ledger-visibility-toggle{border:1px solid #d8e3f2;background:#f7faff;color:#395776;border-radius:7px;font-size:12px;font-weight:650;line-height:1.25;padding:5px 9px;white-space:nowrap}
 .ledger-visibility-toggle:hover{background:#eaf3ff;border-color:#b7d0ed}
 .ledger-visibility-toggle:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
@@ -342,7 +345,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
      <button class="chip" data-filter="ready"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-check-circle"></use></svg><span class="chip-label">Полностью заполнены <span class="chip-count">(<span id="readyChip">0</span>)</span></span></button>
      <button class="chip" id="reclassifyDDS" type="button" hidden style="display:none!important"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-rotate-cw"></use></svg><span class="chip-label">Пересчитать ДДС</span></button>
    </div>
-   <div class="search-field"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-search"></use></svg><input class="search" id="search" type="search" aria-label="Поиск по операциям, контрагентам, статьям ДДС и назначению" placeholder="Поиск по операциям и ДДС"></div>
+   
   </div>
   <section class="ai-sidebar" aria-labelledby="aiSidebarTitle" hidden style="display:none!important">
    <div class="ai-sidebar-head"><strong id="aiSidebarTitle">STOLDOM AI Agent</strong><span>В разработке</span></div>
@@ -412,11 +415,11 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
    <div class="workspace">
    <section class="tablecard">
     <div class="tabletop">
-     <div class="operations-heading"><strong>Операции</strong><button type="button" class="ledger-visibility-toggle" id="toggleLedgerColumns" aria-controls="operationsTable" aria-pressed="false" title="Скрыть столбцы Дт и Кт">Дт/Кт</button></div>
+     <div class="operations-heading"><strong>Операции</strong><div class="search-field"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-search"></use></svg><input class="search" id="search" type="search" aria-label="Поиск по операциям, контрагентам, статьям ДДС и назначению" placeholder="Поиск по операциям и ДДС"></div></div>
      <span class="muted" id="tableCaption">Сначала загрузите банковскую выписку</span>
     </div>
     <div class="table-scroll-top" id="tableScrollTop" aria-label="Горизонтальная прокрутка таблицы операций" role="region" tabindex="0"><div id="tableScrollTopSpacer"></div></div>
-    <div class="tablewrap" id="tableScrollBottom"><table id="operationsTable"><thead><tr><th scope="col"><label class="column-filter">Дата<select id="dateColumnFilter" aria-label="Фильтр по дате" title="Выбрать дату" disabled><option value="">Все даты</option></select></label></th><th>Направление</th><th scope="col"><label class="column-filter">Контрагент<select id="counterpartyFilter" aria-label="Фильтр по контрагенту" title="Выбрать контрагента" disabled><option value="">Все контрагенты</option></select></label></th><th scope="col"><label class="column-filter">Сумма<select id="amountColumnFilter" aria-label="Фильтр по сумме" title="Выбрать сумму" disabled><option value="">Все суммы</option></select></label></th><th title="Предварительный счёт дебета">Дт</th><th title="Предварительный счёт кредита">Кт</th><th scope="col"><label class="column-filter">Статья ДДС<select id="ddsArticleFilter" aria-label="Фильтр по статье ДДС" title="Выбрать статью ДДС" disabled><option value="">Все статьи ДДС</option></select></label></th><th>Тип документа 1С</th><th>Комментарии из выписки</th></tr></thead><tbody id="rows"></tbody></table></div>
+    <div class="tablewrap" id="tableScrollBottom"><table id="operationsTable"><thead><tr><th scope="col"><label class="column-filter">Дата<select id="dateColumnFilter" aria-label="Фильтр по дате" title="Выбрать дату" disabled><option value="">Все даты</option></select></label></th><th>Направление</th><th scope="col"><label class="column-filter">Контрагент<select id="counterpartyFilter" aria-label="Фильтр по контрагенту" title="Выбрать контрагента" disabled><option value="">Все контрагенты</option></select></label></th><th scope="col"><div class="amount-header-tools"><label class="column-filter">Сумма<select id="amountColumnFilter" aria-label="Фильтр по сумме" title="Выбрать сумму" disabled><option value="">Все суммы</option></select></label><button type="button" class="ledger-visibility-toggle" id="toggleLedgerColumns" aria-controls="operationsTable" aria-pressed="false" title="Скрыть столбцы Дт и Кт">Дт/Кт</button></div></th><th title="Предварительный счёт дебета">Дт</th><th title="Предварительный счёт кредита">Кт</th><th scope="col"><label class="column-filter">Статья ДДС<select id="ddsArticleFilter" aria-label="Фильтр по статье ДДС" title="Выбрать статью ДДС" disabled><option value="">Все статьи ДДС</option></select></label></th><th>Тип документа 1С</th><th>Комментарии из выписки</th></tr></thead><tbody id="rows"></tbody></table></div>
     <div class="pagination"><span id="shownCount">Операций пока нет</span></div>
    </section>
    <div id="rowEditStorage" hidden>
