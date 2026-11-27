@@ -259,7 +259,8 @@
     if(statusIcon)statusIcon.setAttribute("href","#ic-alert");
     $("bottomStatusIcon").parentElement.classList.add("pending");
     $("export").disabled=!downloadsEnabled || ops.length===0;
-    $("exportJson").disabled=ops.length===0;
+    $("exportJson").disabled=visible.length===0;
+    $("exportJson").title="Скачать все "+visible.length+" операций по текущему фильтру (JSON для 1С)";
     ["openingBalance","closingBalance"].forEach((id,index)=>{
       const value=$(id);
       if(!value)return;
@@ -1277,19 +1278,22 @@
     return /^[\s]*[=+@-]/.test(text)?"'"+text:text;
   }
   $("exportJson").addEventListener("click",()=>{
-    if(!ops.length)return;
-    const pending=ops.filter(x=>x.status!=="ready").length;
-    const message="Выгрузить все "+ops.length+" операций (независимо от фильтров)? "+
-      (pending?"Не заполнены реквизиты "+pending+" операций. ":"")+
-      "JSON содержит предложения для сверки, а не проведённые документы. Договоры выбираются в базе 1С. Для импорта потребуется STOLDOM Connector.";
+    const selectedRows=currentRows(rowsForDate());
+    if(!selectedRows.length){toast("По текущему фильтру нет операций для экспорта.");return;}
+    const pending=selectedRows.filter(x=>x.status!=="ready").length;
+    const totals=C.totals(selectedRows);
+    const message="Выгрузить "+selectedRows.length+" из "+ops.length+" операций по текущему фильтру?\n"+
+      "Поступления: "+fmt(totals.incoming)+"; списания: "+fmt(totals.outgoing)+".\n"+
+      (pending?"У "+pending+" операций не заполнены реквизиты; они будут переданы как есть. ":"")+
+      "JSON предназначен для непроведённых документов. Проверьте реквизиты в 1С.";
     if(!confirm(message))return;
     try{
       if(!window.StoldomExchange)throw Error("Модуль JSON не загружен. Обновите страницу.");
-      const data=window.StoldomExchange.create(ops,company,{filename:fileLabel,reviewNotes,operationType:x=>C.suggestDocumentOperation(x.article,x.docType)});
+      const data=window.StoldomExchange.create(selectedRows,company,{filename:fileLabel,reviewNotes,operationType:x=>C.suggestDocumentOperation(x.article,x.docType)});
       const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:"application/json;charset=utf-8"}));
-      const a=document.createElement("a");a.href=url;a.download="STOLDOM_1C_"+new Date().toISOString().slice(0,10)+".json";
+      const a=document.createElement("a");a.href=url;a.download="STOLDOM_1C_"+(directionFilter==="Входящее"?"incoming_":directionFilter==="Исходящее"?"outgoing_":"")+new Date().toISOString().slice(0,10)+".json";
       document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
-      toast("JSON скачан. Импорт через STOLDOM Connector — в разработке.");
+      toast("JSON скачан: "+selectedRows.length+" операций по фильтру. Незаполненные поля сохранены.");
     }catch(e){toast("Не удалось сформировать JSON: "+e.message);}
   });
   $("export").addEventListener("click",()=>{

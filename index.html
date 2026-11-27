@@ -486,7 +486,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
    </div>
    <datalist id="ledgerCodes"></datalist>
   </div>
-  <div class="bottom"><div class="ready"><span class="check" id="bottomStatusIcon"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-help"></use></svg></span><span id="bottomMessage">Загрузите банковскую выписку, чтобы начать работу.</span></div><div class="bottomactions"><button class="btn" id="exportJson" type="button" disabled title="JSON для будущей обработки STOLDOM Connector"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-download"></use></svg>Скачать JSON для 1С</button><button class="btn in-development" id="export" type="button" disabled title="Функция в разработке"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-download"></use></svg><span class="feature-label">Скачать Excel для подготовки 1С</span><span class="feature-status"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-wrench"></use></svg>В разработке</span></button><button type="button" class="btn in-development" disabled title="Функция в разработке"><span class="feature-label">Отправить в 1С</span><span class="feature-status"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-wrench"></use></svg>В разработке</span></button></div></div>
+  <div class="bottom"><div class="ready"><span class="check" id="bottomStatusIcon"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-help"></use></svg></span><span id="bottomMessage">Загрузите банковскую выписку, чтобы начать работу.</span></div><div class="bottomactions"><button class="btn" id="exportJson" type="button" disabled title="JSON для 1С: операции по текущему фильтру"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-download"></use></svg>Скачать JSON для 1С</button><button class="btn in-development" id="export" type="button" disabled title="Функция в разработке"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-download"></use></svg><span class="feature-label">Скачать Excel для подготовки 1С</span><span class="feature-status"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-wrench"></use></svg>В разработке</span></button><button type="button" class="btn in-development" disabled title="Функция в разработке"><span class="feature-label">Отправить в 1С</span><span class="feature-status"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-wrench"></use></svg>В разработке</span></button></div></div>
   <section class="tablecard" id="previewPanel" style="margin-top:12px;padding:16px" hidden>
    <h2 style="font-size:17px;margin:0 0 12px">Предварительная проверка перед экспортом</h2>
    <div id="previewContent"></div>
@@ -567,7 +567,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 <script src="/kgd-brand.js?v=1" defer></script>
 <script src="/kgd-export.js?v=20261127-labels-stats-page" defer></script>
 <script src="/stoldom-exchange.js?v=1" defer></script>
-<script src="/app.js?v=connector-json-20261127" defer></script>
+<script src="/app.js?v=connector-filtered-json-20261127" defer></script>
 <script src="/reconciliation.js?v=20261125-act-draft-2" defer></script>
 <script>
 document.querySelectorAll('.ai-sidebar [data-ai-prompt]').forEach(function(button){
