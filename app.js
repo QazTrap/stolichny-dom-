@@ -259,8 +259,7 @@
     if(statusIcon)statusIcon.setAttribute("href","#ic-alert");
     $("bottomStatusIcon").parentElement.classList.add("pending");
     $("export").disabled=!downloadsEnabled || ops.length===0;
-    $("exportJson").disabled=visible.length===0;
-    $("exportJson").title="Скачать все "+visible.length+" операций по текущему фильтру (JSON для 1С)";
+    syncMarkedExport(visible);
     ["openingBalance","closingBalance"].forEach((id,index)=>{
       const value=$(id);
       if(!value)return;
@@ -479,10 +478,20 @@
   function counterpartyButton(x){
     return '<button type="button" class="counterparty-trigger" data-counterparty-id="'+x.id+'" title="Дважды нажмите для реквизитов контрагента" aria-label="'+show("Реквизиты контрагента: "+(x.originalName||x.name||"Не указан"))+'">'+show(C.compactLegalDisplayName(x.name||"Не указан"))+'</button>';
   }
+  function syncMarkedExport(visible){
+    const button=$("exportJson"), count=markedOperationIds.size;
+    button.disabled=count===0&&visible.length===0;
+    button.title=count?"Скачать только выделенные операции, включая скрытые фильтром":"Скачать операции по текущему фильтру";
+    button.replaceChildren();
+    const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("class","ui-icon");svg.setAttribute("aria-hidden","true");
+    const use=document.createElementNS("http://www.w3.org/2000/svg","use");use.setAttribute("href","#ic-download");svg.append(use);
+    button.append(svg,document.createTextNode(count?"Скачать выделенные ("+count+") · JSON":"Скачать JSON для 1С"));
+  }
   function markOperation(row,id,active){
     if(active)markedOperationIds.add(id);
     else markedOperationIds.delete(id);
     row.classList.toggle("operation-marked",active);
+    syncMarkedExport(currentRows(rowsForDate()));
   }
   function resetOperationMarks(){
     lastRowTap=null;
@@ -1278,11 +1287,12 @@
     return /^[\s]*[=+@-]/.test(text)?"'"+text:text;
   }
   $("exportJson").addEventListener("click",()=>{
-    const selectedRows=currentRows(rowsForDate());
+    const marked=markedOperationIds.size>0;
+    const selectedRows=marked?ops.filter(x=>markedOperationIds.has(x.id)):currentRows(rowsForDate());
     if(!selectedRows.length){toast("По текущему фильтру нет операций для экспорта.");return;}
     const pending=selectedRows.filter(x=>x.status!=="ready").length;
     const totals=C.totals(selectedRows);
-    const message="Выгрузить "+selectedRows.length+" из "+ops.length+" операций по текущему фильтру?\n"+
+    const message="Выгрузить "+selectedRows.length+" из "+ops.length+" операций "+(marked?"из зелёного выделения (включая скрытые фильтром)":"по текущему фильтру")+"?\n"+
       "Поступления: "+fmt(totals.incoming)+"; списания: "+fmt(totals.outgoing)+".\n"+
       (pending?"У "+pending+" операций не заполнены реквизиты; они будут переданы как есть. ":"")+
       "JSON предназначен для непроведённых документов. Проверьте реквизиты в 1С.";
@@ -1291,9 +1301,9 @@
       if(!window.StoldomExchange)throw Error("Модуль JSON не загружен. Обновите страницу.");
       const data=window.StoldomExchange.create(selectedRows,company,{filename:fileLabel,reviewNotes,operationType:x=>C.suggestDocumentOperation(x.article,x.docType)});
       const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:"application/json;charset=utf-8"}));
-      const a=document.createElement("a");a.href=url;a.download="STOLDOM_1C_"+(directionFilter==="Входящее"?"incoming_":directionFilter==="Исходящее"?"outgoing_":"")+new Date().toISOString().slice(0,10)+".json";
+      const a=document.createElement("a");a.href=url;a.download="STOLDOM_1C_"+(marked?"selected_":directionFilter==="Входящее"?"incoming_":directionFilter==="Исходящее"?"outgoing_":"")+new Date().toISOString().slice(0,10)+".json";
       document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
-      toast("JSON скачан: "+selectedRows.length+" операций по фильтру. Незаполненные поля сохранены.");
+      toast("JSON скачан: "+selectedRows.length+" операций "+(marked?"из выделения":"по фильтру")+". Незаполненные поля сохранены.");
     }catch(e){toast("Не удалось сформировать JSON: "+e.message);}
   });
   $("export").addEventListener("click",()=>{
