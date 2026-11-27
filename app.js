@@ -1041,7 +1041,7 @@
     function findCounterparties(){
       lookupResults.replaceChildren();
       const query=C.norm(lookupInput.value);
-      if(!ops.length){lookupStatus.textContent="Сначала загрузите банковскую выписку.";return;}
+      if(!ops.length){lookupStatus.textContent="";return;}
       if(!query){lookupStatus.textContent="Введите БИН, ИИН или наименование.";return;}
       const found=new Map();
       for(const op of ops){
@@ -1069,12 +1069,12 @@
     }
     $("openCounterpartyLookup").addEventListener("click",()=>{
       lookupInput.value="";lookupResults.replaceChildren();
-      lookupStatus.textContent=ops.length?"Введите БИН, ИИН или наименование.":"Сначала загрузите банковскую выписку.";
+      lookupStatus.textContent=ops.length?"Введите БИН, ИИН или наименование.":"";
       lookupDialog.showModal();lookupInput.focus();
     });
     $("closeCounterpartyLookup").addEventListener("click",()=>lookupDialog.close());
     $("counterpartyLookupForm").addEventListener("submit",event=>{event.preventDefault();findCounterparties();});
-    lookupInput.addEventListener("input",()=>{lookupResults.replaceChildren();lookupStatus.textContent=ops.length?"Нажмите «Найти».":"Сначала загрузите банковскую выписку.";});
+    lookupInput.addEventListener("input",()=>{lookupResults.replaceChildren();lookupStatus.textContent=ops.length?"Нажмите «Найти».":"";});
   }
   $("search").addEventListener("input",render);
   $("counterpartyFilter")?.addEventListener("change",render);

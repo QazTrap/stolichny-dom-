@@ -486,14 +486,14 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 </dialog>
 
 <dialog id="counterpartyLookupDialog" aria-labelledby="counterpartyLookupTitle">
- <div class="recon-dialog-head"><div><h2 id="counterpartyLookupTitle">Сведения по контрагентам</h2><p>Поиск по загруженной банковской выписке</p></div><button id="closeCounterpartyLookup" type="button" aria-label="Закрыть">×</button></div>
+ <div class="recon-dialog-head"><div><h2 id="counterpartyLookupTitle">Сведения по контрагентам</h2></div><button id="closeCounterpartyLookup" type="button" aria-label="Закрыть">×</button></div>
  <form id="counterpartyLookupForm" class="counterparty-lookup-form">
   <div class="search-field"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-search"></use></svg><input class="search" id="counterpartyLookupInput" type="search" aria-label="БИН, ИИН или наименование контрагента" placeholder="БИН / ИИН / наименование" autocomplete="off" maxlength="250"></div>
   <button class="btn primary" type="submit">Найти</button>
  </form>
  <p id="counterpartyLookupStatus" role="status" class="muted"></p>
  <div id="counterpartyLookupResults" class="counterparty-lookup-results"></div>
- <p class="muted">Источник: загруженная выписка. Официальные сведения КГД — после подключения API. Данные не отправляются на сервер.</p>
+ <p class="muted">Официальные сведения КГД — после подключения API. Данные не отправляются на сервер.</p>
 </dialog>
 <dialog id="reconciliationDialog" aria-labelledby="reconDialogTitle">
  <div class="recon-dialog-head"><div><h2 id="reconDialogTitle">Создать акт сверки</h2><p>Черновик по вручную введённым данным взаиморасчётов</p></div><button id="reconClose" type="button" aria-label="Закрыть">×</button></div>
@@ -533,7 +533,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="/workspace-core.js?v=alatau-xls-20261125" defer></script>
-<script src="/app.js?v=counterparty-lookup-20261127" defer></script>
+<script src="/app.js?v=counterparty-lookup-clean-20261127" defer></script>
 <script src="/reconciliation.js?v=20261125-act-draft-2" defer></script>
 <script>
 document.querySelectorAll('.ai-sidebar [data-ai-prompt]').forEach(function(button){
