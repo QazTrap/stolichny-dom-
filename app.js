@@ -783,7 +783,7 @@
       '<tr data-id="'+x.id+'"'+(markedOperationIds.has(x.id)?' class="operation-marked"':'')+' tabindex="0">'+
       '<td>'+show(x.date||"Проверить дату")+'</td>'+
       '<td>'+directionDropdown(x.direction)+'</td>'+
-      '<td>'+counterpartyButton(x)+(x.possibleDuplicate&&!x.duplicateConfirmed?'<div class="notice">Возможный дубль</div>':"")+'</td>'+
+      '<td>'+counterpartyButton(x)+'<div style="font-size:11px;color:#777;margin-top:2px" title="Проверка по реестру НДС пока недоступна">НДС: в разработке 🔌</div>'+(x.possibleDuplicate&&!x.duplicateConfirmed?'<div class="notice">Возможный дубль</div>':"")+'</td>'+
       '<td class="amount">'+fmt(x.amount)+'</td>'+
       '<td class="account-cell">'+accountPicker(x,"debit")+'</td>'+
       '<td class="account-cell">'+accountPicker(x,"credit")+'</td>'+
