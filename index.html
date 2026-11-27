@@ -616,10 +616,30 @@ function interactive(d){
  const descriptions={"16%":"Основная ставка для облагаемых оборотов, если законом не установлена иная ставка или освобождение.","5%":"Пониженная ставка 2026 года для отдельных медицинских товаров и услуг при соблюдении условий Налогового кодекса.","0% (при законном основании)":"Нулевая ставка применяется только к оборотам, для которых она предусмотрена законом, например к подтверждённому экспорту."};
  if(descriptions[key])body.append(node("p",descriptions[key]));
  }
- for(const row of rows){const dl=node("dl");for(let j=1;j<d.columns.length;j++){const line=node("div");line.append(node("dt",d.columns[j]),node("dd",String(row[j]??"")));dl.append(line);}body.append(dl);}
+ for(const row of rows){const dl=node("dl");for(let j=1;j<d.columns.length;j++){const line=node("div");line.append(node("dt",d.columns[j]),node("dd",typeof row[j]==="number"?row[j].toLocaleString("ru-RU",{maximumFractionDigits:2}):String(row[j]??"")));dl.append(line);}body.append(dl);}
  if(d.title.startsWith("Ставки НДС")){
  const rate=parseFloat(key);
- if(Number.isFinite(rate)){const label=node("label","Сумма с НДС, ₸"),input=node("input"),out=node("p");input.type="number";input.min="0";input.step="0.01";input.inputMode="decimal";input.value=String(rows[0][1]);label.append(input);const calc=()=>{const raw=input.valueAsNumber;if(!Number.isFinite(raw)||raw<0){out.textContent="Введите неотрицательную сумму.";return;}const tax=Math.round(raw*rate/(100+rate)*100)/100;const fmt=n=>n.toLocaleString("ru-RU",{minimumFractionDigits:2,maximumFractionDigits:2})+" ₸";out.textContent="НДС: "+fmt(tax)+" · Без НДС: "+fmt(raw-tax);};input.addEventListener("input",calc);calc();body.append(label,out);}
+ if(Number.isFinite(rate)){
+ const panel=node("div"),modes=node("div"),extract=node("button","Выделить НДС"),add=node("button","Начислить НДС"),label=node("label"),caption=node("span","Сумма с НДС, ₸"),input=node("input"),out=node("div"),copy=node("button","Копировать результат"),feedback=node("small");
+ panel.className="ref-vat-calc";modes.className="ref-vat-modes";out.className="ref-vat-result";out.setAttribute("aria-live","polite");feedback.setAttribute("role","status");
+ for(const b of [extract,add,copy]){b.type="button";b.className="btn outline";}
+ input.type="text";input.inputMode="decimal";input.value=String(rows[0][1]);label.append(caption,input);modes.append(extract,add);
+ let mode="extract",result="";
+ const fmt=n=>n.toLocaleString("ru-RU",{minimumFractionDigits:2,maximumFractionDigits:2})+" ₸";
+ function calc(){
+ const value=input.value.replace(/\s/g,"").replace(",",".");const raw=Number(value);out.replaceChildren();feedback.textContent="";result="";
+ if(!/^\d+(?:\.\d{0,2})?$/.test(value)||!Number.isFinite(raw)||raw>1e12){out.textContent="Введите корректную сумму (до двух знаков после запятой).";copy.disabled=true;return;}
+ const cents=Math.round(raw*100),tax=Math.round(mode==="extract"?cents*rate/(100+rate):cents*rate/100),net=mode==="extract"?cents-tax:cents,total=mode==="extract"?cents:cents+tax;
+ const values=[["Сумма без НДС",net],["НДС "+rate+"%",tax],["Итого с НДС",total]];
+ result=values.map(([k,v])=>k+": "+fmt(v/100)).join("\n");
+ for(const [k,v] of values){const line=node("div");line.append(node("span",k),node("strong",fmt(v/100)));out.append(line);}copy.disabled=false;
+ }
+ function change(next){mode=next;extract.setAttribute("aria-pressed",String(mode==="extract"));add.setAttribute("aria-pressed",String(mode==="add"));caption.textContent=mode==="extract"?"Сумма с НДС, ₸":"Сумма без НДС, ₸";calc();}
+ extract.onclick=()=>change("extract");add.onclick=()=>change("add");input.addEventListener("input",calc);
+ input.addEventListener("blur",()=>{const raw=Number(input.value.replace(/\s/g,"").replace(",","."));if(result&&Number.isFinite(raw))input.value=raw.toLocaleString("ru-RU",{maximumFractionDigits:2});});
+ copy.onclick=async()=>{if(!result)return;try{await navigator.clipboard.writeText(result);feedback.textContent="Скопировано";}catch{const field=node("textarea");field.value=result;panel.append(field);field.select();try{if(document.execCommand("copy")){feedback.textContent="Скопировано";field.remove();}else feedback.textContent="Выделите и скопируйте текст вручную.";}catch{feedback.textContent="Выделите и скопируйте текст вручную.";}}};
+ panel.append(modes,label,out,copy,feedback);body.append(panel);change("extract");
+ }
  }
  item.append(body);list.append(item);
  }
@@ -648,6 +668,14 @@ $("refPrint").onclick=()=>{if(!current)return;const w=window.open("","_blank");i
 #refContent .ref-detail dd{margin:0;flex:1 1 110px;font-weight:600;text-align:right}
 #refContent .ref-detail input{display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:8px;border:1px solid #ccd7e4;border-radius:6px;font-size:16px}
 @media(max-width:600px){#cheatDesk{padding:12px}#refReader{padding:10px!important}#refContent h2{font-size:19px}#refList{grid-template-columns:minmax(0,1fr)!important}#refContent .ref-detail dd{text-align:left}}
+
+#refContent .ref-vat-calc{background:#fff;border:1px solid #dce4ed;border-radius:10px;padding:12px;margin-top:12px;display:grid;gap:10px}
+#refContent .ref-vat-modes{display:flex;gap:6px;flex-wrap:wrap}
+#refContent .ref-vat-modes button{flex:1 1 120px;white-space:normal;height:auto;min-height:38px}
+#refContent .ref-vat-modes button[aria-pressed="true"]{background:#e5eefb;border-color:#739bcf;color:#24466c}
+#refContent .ref-vat-result{background:#f1f5f9;border-radius:8px;padding:10px;display:grid;gap:8px}
+#refContent .ref-vat-result div{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+#refContent .ref-vat-result div:last-child{border-top:1px solid #dce4ed;padding-top:8px}
 </style>
 </body></html>
 
