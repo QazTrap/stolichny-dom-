@@ -45,3 +45,15 @@ test("a redirect is never followed and the alternate official host can answer",a
  assert.equal(new URL(calls[1][0]).hostname,"kgd.gov.kz");
  assert.match(result.vatInfo,/Состоит/);
 });
+
+test("HTTP 200 HTML on GET falls back to documented POST",async()=>{
+ const calls=[];
+ const result=await lookupVat(xin,"test-secret",{today,fetchImpl:async(url,options)=>{
+  calls.push([url,options]);
+  if(calls.length===1)return {ok:true,status:200,headers:{get:()=>"text/html"},json:async()=>{throw new SyntaxError("not JSON")}};
+  return {ok:true,status:200,json:async()=>({iinBin:xin,ndsRegistrationDate:"2025-05-29",ndsDeregistrationDate:null})};
+ }});
+ assert.equal(calls[1][1].method,"POST");
+ assert.equal(new URL(calls[0][0]).hostname,new URL(calls[1][0]).hostname);
+ assert.match(result.vatInfo,/Состоит/);
+});
