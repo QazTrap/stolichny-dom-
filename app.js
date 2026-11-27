@@ -1133,7 +1133,12 @@
           });
           downloads.append(button);
         }
-        card.append(downloads);lookupResults.append(card);lookupStatus.textContent="Официальные сведения КГД";lookupDialog.scrollTop=0;
+        const footer=document.createElement("div");footer.className="kgd-footer";footer.append(downloads);
+        try{
+          const url=window.KgdBrand?.link(d.xin);
+          if(url){const a=document.createElement("a");a.className="kgd-qr";a.href=url;a.target="_blank";a.rel="noopener noreferrer";a.append(window.KgdBrand.qrCanvas(d.xin));const caption=document.createElement("span");caption.textContent="Открыть карточку";a.append(caption);footer.append(a);}
+        }catch(err){console.warn("QR unavailable");}
+        card.append(footer);lookupResults.append(card);lookupStatus.textContent="Официальные сведения КГД";lookupDialog.scrollTop=0;
       }catch(err){if(sequence===lookupSequence&&lookupDialog.open)lookupStatus.textContent=err.name==="TimeoutError"?"КГД не ответил вовремя.":(err.message==="Failed to fetch"?"Сервер КГД недоступен.":err.message);}
     }
     function findCounterparties(){
@@ -1177,6 +1182,8 @@
     lookupDialog.addEventListener("close",()=>{lookupSequence++;accessInput.value="";lookupResults.replaceChildren();});
     $("counterpartyLookupForm").addEventListener("submit",event=>{event.preventDefault();findCounterparties();});
     lookupInput.addEventListener("input",()=>{lookupSequence++;lookupResults.replaceChildren();lookupStatus.textContent="";});
+    const openKgdLink=()=>{const match=location.hash.match(/^#kgd=(\d{12})$/);if(!match)return;lookupSequence++;lookupResults.replaceChildren();lookupStatus.textContent="";updateKgdAuth();if(!lookupDialog.open)lookupDialog.showModal();lookupInput.value=match[1];lookupInput.focus();history.replaceState(null,"",location.pathname+location.search);};
+    window.addEventListener("hashchange",openKgdLink);openKgdLink();
   }
   $("search").addEventListener("input",render);
   $("counterpartyFilter")?.addEventListener("change",render);

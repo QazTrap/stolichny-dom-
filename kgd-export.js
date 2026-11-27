@@ -19,7 +19,7 @@
       if(Object.hasOwn(d,key))rows.push(["Показатель КГД "+key,text(d[key])]);
     }
     const statistics=Array.isArray(d.statistics)?d.statistics.map(r=>statKeys.map(k=>typeof r[k]==="number"?r[k]:text(r[k]))):[];
-    return {rows,statistics,date:now.toLocaleString("ru-RU",{timeZone:"Asia/Almaty"}),filename:"STOLDOM_КГД_"+(/^\d{12}$/.test(String(d.xin))?d.xin:"контрагент")+"_"+now.toISOString().slice(0,10)};
+    return {rows,statistics,xin:String(d.xin||""),date:now.toLocaleString("ru-RU",{timeZone:"Asia/Almaty"}),filename:"STOLDOM_КГД_"+(/^\d{12}$/.test(String(d.xin))?d.xin:"контрагент")+"_"+now.toISOString().slice(0,10)};
   }
   function save(bytes,mime,name){
     const blob=new Blob([bytes],{type:mime}),url=URL.createObjectURL(blob);
@@ -48,7 +48,7 @@
   function zip(files){
     const local=[],central=[];let offset=0;
     for(const [name,contents] of Object.entries(files)){
-      const n=enc.encode(name),data=enc.encode(contents),crc=crc32(data);
+      const n=enc.encode(name),data=typeof contents==="string"?enc.encode(contents):contents,crc=crc32(data);
       const l=new Uint8Array(30+n.length),lv=new DataView(l.buffer);
       lv.setUint32(0,0x04034b50,true);lv.setUint16(4,20,true);lv.setUint16(6,0x800,true);lv.setUint16(12,33,true);lv.setUint32(14,crc,true);lv.setUint32(18,data.length,true);lv.setUint32(22,data.length,true);lv.setUint16(26,n.length,true);l.set(n,30);
       const c=new Uint8Array(46+n.length),cv=new DataView(c.buffer);
@@ -59,12 +59,16 @@
     ev.setUint32(0,0x06054b50,true);ev.setUint16(8,central.length,true);ev.setUint16(10,central.length,true);ev.setUint32(12,directory.length,true);ev.setUint32(16,offset,true);
     return concat([...local,directory,end]);
   }
-  function docx(r){
+  function imageParagraph(id,name,cx,cy){
+    return '<w:p><w:r><w:drawing><wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" distT="0" distB="0" distL="0" distR="0"><wp:extent cx="'+cx+'" cy="'+cy+'"/><wp:docPr id="'+id+'" name="'+esc(name)+'"/><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="'+id+'" name="'+esc(name)+'"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed="rId'+id+'"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+cx+'" cy="'+cy+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>';
+  }
+  function docx(r,images){
     const xml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
-    const body=paragraph("STOLDOM.SITE",{bold:true,size:22,color:"315D91"})+paragraph(TITLE,{bold:true,size:34})+paragraph(SOURCE)+paragraph("Дата формирования: "+r.date)+table([["Показатель","Значение"],...r.rows],[3300,5700])+(r.statistics.length?paragraph("Статистика по годам",{bold:true,size:26})+table([STATS,...r.statistics],[1000,1300,1900,1200,1500,2100]):"");
+    const body=(images?imageParagraph(1,"STOLDOM",550000,550000):"")+paragraph("STOLDOM.SITE",{bold:true,size:22,color:"315D91"})+paragraph(TITLE,{bold:true,size:34})+paragraph(SOURCE)+paragraph("Дата формирования: "+r.date)+table([["Показатель","Значение"],...r.rows],[3300,5700])+(r.statistics.length?paragraph("Статистика по годам",{bold:true,size:26})+table([STATS,...r.statistics],[1000,1300,1900,1200,1500,2100]):"")+(images?.qr?paragraph("Открыть карточку контрагента")+imageParagraph(2,"QR",1200000,1200000):"");
     return zip({
-      "[Content_Types].xml":xml+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>',
+      "[Content_Types].xml":xml+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>',
       "_rels/.rels":xml+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
+      ...(images?{"word/media/logo.png":images.logo,...(images.qr?{"word/media/qr.png":images.qr}:{}),"word/_rels/document.xml.rels":xml+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/logo.png"/>'+(images.qr?'<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/qr.png"/>':'')+'</Relationships>'}:{}),
       "word/document.xml":xml+'<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'+body+'<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1200" w:right="1200" w:bottom="1200" w:left="1200"/></w:sectPr></w:body></w:document>'
     });
   }
@@ -92,6 +96,7 @@
     const W=1240,H=1754,M=86,RIGHT=W-M,BOTTOM=H-105,LH=29;
     const canvas=document.createElement("canvas");canvas.width=W;canvas.height=H;
     const ctx=canvas.getContext("2d",{alpha:false});if(!ctx)throw Error("Не удалось подготовить PDF.");
+    const logo=await globalThis.KgdBrand.logoCanvas(),qr=globalThis.KgdBrand.link(r.xin)?globalThis.KgdBrand.qrCanvas(r.xin,6):null;
     const pages=[];let y,page=0;
     function font(size,bold=false){ctx.font=(bold?"bold ":"")+size+"px Arial, sans-serif";}
     function draw(t,x,yy,size=23,bold=false,color="#17233a"){font(size,bold);ctx.fillStyle=color;ctx.fillText(String(t),x,yy);}
@@ -111,7 +116,7 @@
     }
     function start(){
       page++;ctx.fillStyle="#fff";ctx.fillRect(0,0,W,H);
-      draw("STOLDOM.SITE",M,92,24,true,"#315d91");draw(TITLE,M,150,40,true);
+      ctx.drawImage(logo,M,48,60,60);draw("STOLDOM.SITE",M+74,92,24,true,"#315d91");draw(TITLE,M,150,40,true);
       draw(SOURCE,M,191,22,false,"#526174");draw("Дата формирования: "+r.date,M,225,20,false,"#526174");
       ctx.fillStyle="#315d91";ctx.fillRect(M,249,RIGHT-M,3);y=282;
     }
@@ -142,12 +147,13 @@
       y+=38;draw("Статистика по годам",M,y,30,true);y+=20;
       for(const data of r.statistics)await row("Год: "+data[0],STATS.slice(1).map((label,i)=>label+": "+data[i+1]).join("\n"));
     }
+    if(qr){if(y+210>BOTTOM){await finish();start();}const size=164;ctx.drawImage(qr,RIGHT-size,y+12,size,size);draw("Открыть карточку",RIGHT-210,y+200,21,false,"#526174");}
     await finish();return imagePdf(pages,W,H);
   }
   async function download(format,d,fields){
     const r=report(d,fields);
     if(format==="xlsx")return excel(r);
-    if(format==="docx")return save(docx(r),"application/vnd.openxmlformats-officedocument.wordprocessingml.document",r.filename+".docx");
+    if(format==="docx"){const brand=globalThis.KgdBrand,logo=await brand.png(await brand.logoCanvas()),qr=brand.link(r.xin)?await brand.png(brand.qrCanvas(r.xin,6)):null;return save(docx(r,{logo,qr}),"application/vnd.openxmlformats-officedocument.wordprocessingml.document",r.filename+".docx");}
     if(format==="pdf")return save(await pdf(r),"application/pdf",r.filename+".pdf");
     throw Error("Неизвестный формат.");
   }

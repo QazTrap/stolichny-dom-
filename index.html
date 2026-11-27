@@ -300,6 +300,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
  .kgd-stats th:first-child,.kgd-stats td:first-child{text-align:left}
  .kgd-stats tbody tr:nth-child(odd){background:#f5f8fc}
  @media(max-width:520px){.kgd-detail{grid-template-columns:1fr;gap:3px;padding:8px}.kgd-card{padding:10px}.kgd-card .kgd-name{font-size:18px}}
+ .kgd-brand-head{display:flex;align-items:center;gap:10px}.kgd-brand-head img{object-fit:contain;flex:none;border-radius:50%}.kgd-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;border-top:1px solid var(--line);padding-top:12px}.kgd-footer .kgd-downloads{border:0;margin:0;padding:0}.kgd-qr{display:flex;flex-direction:column;align-items:center;gap:3px;margin:0;text-decoration:none;color:var(--muted);font-size:11px;text-align:center}.kgd-qr canvas{width:108px;height:108px;image-rendering:pixelated}
  .kgd-downloads{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.kgd-downloads .btn{min-height:34px;padding:7px 12px;font-size:12px}
  .amount-header-tools{display:flex;align-items:center;justify-content:space-between;gap:12px}
  @media(min-width:1201px){.amount-header-tools .ledger-visibility-toggle{margin-inline-end:32px}}
@@ -513,7 +514,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 </dialog>
 
 <dialog id="counterpartyLookupDialog" aria-labelledby="counterpartyLookupTitle">
- <div class="recon-dialog-head"><div><h2 id="counterpartyLookupTitle">Сведения по контрагентам</h2></div><button id="closeCounterpartyLookup" type="button" aria-label="Закрыть">×</button></div>
+ <div class="recon-dialog-head"><div class="kgd-brand-head"><img src="/stoldom-people-logo.webp?v=7" width="38" height="38" alt="STOLDOM"><div><h2 id="counterpartyLookupTitle">Сведения по контрагентам</h2><p>STOLDOM.SITE</p></div></div><button id="closeCounterpartyLookup" type="button" aria-label="Закрыть">×</button></div>
  <div id="kgdAccessPanel"><label id="kgdAccessLabel" class="kgd-access-label">Код доступа к КГД<input id="kgdAccessInput" class="search" type="password" autocomplete="off" placeholder="Введите код доступа" maxlength="256"></label>
  <label class="kgd-remember"><input type="checkbox" id="kgdRemember" checked> Запомнить меня на 30 дней</label></div>
  <form id="counterpartyLookupForm" class="counterparty-lookup-form">
@@ -562,8 +563,10 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="/workspace-core.js?v=alatau-xls-20261125" defer></script>
-<script src="/kgd-export.js?v=20261127-1" defer></script>
-<script src="/app.js?v=kgd-pdf-word-20261127" defer></script>
+<script src="/vendor/qrcode.js?v=1" defer></script>
+<script src="/kgd-brand.js?v=1" defer></script>
+<script src="/kgd-export.js?v=20261127-brand" defer></script>
+<script src="/app.js?v=kgd-brand-20261127" defer></script>
 <script src="/reconciliation.js?v=20261125-act-draft-2" defer></script>
 <script>
 document.querySelectorAll('.ai-sidebar [data-ai-prompt]').forEach(function(button){

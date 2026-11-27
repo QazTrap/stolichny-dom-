@@ -30,13 +30,14 @@ app.get("/vendor/xlsx.full.min.js", (_req,res) => {
   res.sendFile(path.join(__dirname,"node_modules","xlsx","dist","xlsx.full.min.js"));
 });
 app.use("/vendor/pdfjs",express.static(path.join(__dirname,"vendor","pdfjs")));
-for(const name of ["workspace-core.js","app.js","alatau-pdf.mjs","kgd-export.js"]){
+for(const name of ["workspace-core.js","app.js","alatau-pdf.mjs","kgd-export.js","kgd-brand.js","vendor/qrcode.js"]){
   app.get("/"+name,(_req,res)=>{
     res.set("Cache-Control","no-store");
     res.type("application/javascript");
     res.sendFile(path.join(__dirname,name));
   });
 }
+app.get("/stoldom-people-logo.webp",(_req,res)=>res.sendFile(path.join(__dirname,"stoldom-people-logo.webp")));
 require("./kgd-api")(app);
 app.get("/api/health",(_req,res)=>{
   res.set("Cache-Control","no-store");
