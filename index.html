@@ -384,18 +384,12 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
    </div>
    
   </div>
-  <section class="ai-sidebar" aria-labelledby="aiSidebarTitle" hidden style="display:none!important">
-   <div class="ai-sidebar-head"><strong id="aiSidebarTitle">STOLDOM AI Agent</strong><span>В разработке</span></div>
-   <label for="aiSidebarPrompt">Команда для ИИ-бухгалтера</label>
-   <textarea id="aiSidebarPrompt" rows="3" placeholder="Например: проверь НДС, разнеси зарплату, сделай реализацию..."></textarea>
-   <button class="btn ai-sidebar-disabled" type="button" disabled>Выполнить с ИИ · В разработке</button>
-   <button class="btn ai-sidebar-act" id="openReconciliation" type="button">Создать акт сверки</button>
-   <button class="btn ai-sidebar-act" type="button" data-ai-prompt="Разнеси банковскую выписку" aria-label="Разнести выписку — подготовить команду">Разнести выписку</button>
-   <button class="btn ai-sidebar-act" type="button" data-ai-prompt="Проверь НДС" aria-label="Проверить НДС — подготовить команду">Проверить НДС</button>
-   <button class="btn ai-sidebar-act" type="button" data-ai-prompt="Сделай реализацию" aria-label="Сделать реализацию — подготовить команду">Сделать реализацию</button>
-   <button class="btn ai-sidebar-act" type="button" data-ai-prompt="Разнеси зарплату" aria-label="Разнести зарплату — подготовить команду">Разнести зарплату</button>
-   <small>Акт сверки доступен вручную. Остальные кнопки подставляют команды ИИ; выполнение в 1С — в разработке.</small>
-   <button class="btn ai-sidebar-disabled" type="button" disabled>Подключить базу 1С для работы с ИИ · В разработке</button>
+  <section class="ai-sidebar stoldom-ai-panel" aria-labelledby="aiSidebarTitle">
+   <div class="ai-sidebar-head"><strong id="aiSidebarTitle"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c1 5 3 7 8 9-5 1-7 3-8 8-1-5-3-7-8-8 5-2 7-4 8-9Z"/><path d="M20 2v5M17.5 4.5h5"/></svg> STOLDOM AI</strong><span>В разработке</span></div>
+   <textarea id="aiSidebarPrompt" rows="4" aria-label="Команда для ИИ-бухгалтера" placeholder="Разнеси выписку, определи проводки и статьи ДДС по назначению платежей."></textarea>
+   <button class="btn stoldom-ai-run" id="stoldomAiRun" type="button"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c1 5 3 7 8 9-5 1-7 3-8 8-1-5-3-7-8-8 5-2 7-4 8-9Z"/><path d="M20 2v5M17.5 4.5h5"/></svg> Выполнить</button>
+   <small id="stoldomAiStatus" role="status" hidden></small>
+   <div hidden style="display:none!important"><button class="btn ai-sidebar-act" id="openReconciliation" type="button">Создать акт сверки</button></div>
   </section>
   <div class="company"><strong>Данные компании</strong><span class="muted">После загрузки выписки — над таблицей операций</span></div>
   <button type="button" id="cheatOpen" class="btn outline" style="width:100%;white-space:normal;justify-content:flex-start;margin:8px 0" aria-haspopup="dialog"><svg class="ui-icon" aria-hidden="true"><use href="#ic-folder"></use></svg> Шпаргалки бухгалтера</button>
@@ -677,6 +671,21 @@ $("refPrint").onclick=()=>{if(!current)return;const w=window.open("","_blank");i
 #refContent .ref-vat-result div{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
 #refContent .ref-vat-result div:last-child{border-top:1px solid #dce4ed;padding-top:8px}
 </style>
+<style>
+.ai-sidebar.stoldom-ai-panel{display:grid;gap:12px;background:#fff;border:1px solid #e0e5eb;border-radius:14px;padding:14px;box-shadow:none}
+.stoldom-ai-panel .ai-sidebar-head{display:flex;align-items:center;justify-content:space-between;gap:5px}
+.stoldom-ai-panel .ai-sidebar-head strong{display:flex;align-items:center;gap:5px;color:#172333;font-size:15px;white-space:nowrap}
+.stoldom-ai-panel .ai-sidebar-head strong svg{color:#3976b9;flex:none}
+.stoldom-ai-panel .ai-sidebar-head span{background:none;padding:0;color:#78818d;font-size:10px}
+.stoldom-ai-panel textarea{box-sizing:border-box;width:100%;min-height:108px;border:1px solid #dfe3e8;border-radius:10px;background:#fff;font-size:13px;line-height:1.55;padding:10px;color:#172333}
+.stoldom-ai-panel textarea::placeholder{color:#8993a0;opacity:0.8}
+.stoldom-ai-panel .stoldom-ai-run{display:flex;justify-content:center;align-items:center;gap:7px;background:#2563a8;color:#fff;border:1px solid #2563a8;border-radius:9px;min-height:44px;font-size:14px;text-align:center}
+.stoldom-ai-panel .stoldom-ai-run:hover{background:#20578f}
+@media(max-width:600px){.stoldom-ai-panel textarea{font-size:16px}}
+</style>
+<script>
+(function(){const button=document.getElementById("stoldomAiRun"),status=document.getElementById("stoldomAiStatus");button.addEventListener("click",()=>{status.hidden=false;status.textContent="STOLDOM AI пока в разработке. OpenAI API ещё не подключён. Данные не отправлены.";});})();
+</script>
 </body></html>
 
 
