@@ -783,7 +783,7 @@
       '<tr data-id="'+x.id+'"'+(markedOperationIds.has(x.id)?' class="operation-marked"':'')+' tabindex="0">'+
       '<td>'+show(x.date||"Проверить дату")+'</td>'+
       '<td>'+directionDropdown(x.direction)+'</td>'+
-      '<td>'+counterpartyButton(x)+'<div style="font-size:11px;color:#777;margin-top:2px" title="Проверка по реестру НДС пока недоступна">НДС: в разработке 🔌</div>'+(x.possibleDuplicate&&!x.duplicateConfirmed?'<div class="notice">Возможный дубль</div>':"")+'</td>'+
+      '<td>'+counterpartyButton(x)+'<div style="font-size:11px;color:#777;margin-top:2px" title="Проверка по реестру НДС пока недоступна">НДС: в разработке <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" style="width:12px;height:12px;vertical-align:-2px;margin-left:2px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-wrench"></use></svg></div>'+(x.possibleDuplicate&&!x.duplicateConfirmed?'<div class="notice">Возможный дубль</div>':"")+'</td>'+
       '<td class="amount">'+fmt(x.amount)+'</td>'+
       '<td class="account-cell">'+accountPicker(x,"debit")+'</td>'+
       '<td class="account-cell">'+accountPicker(x,"credit")+'</td>'+
