@@ -449,7 +449,7 @@
     toggle.setAttribute("aria-label",action+" столбцы Дт и Кт");
     toggle.title=action+" столбцы Дт и Кт";
     const detailCell=$("rows").querySelector("tr.operation-detail td");
-    if(detailCell)detailCell.colSpan=ledgerColumnsHidden?7:9;
+    if(detailCell)detailCell.colSpan=ledgerColumnsHidden?8:10;
     syncTableScrollWidth();
   }
   $("toggleLedgerColumns").addEventListener("click",()=>{
@@ -462,7 +462,7 @@
     for(const [number,title] of accounts)$("ledgerCodes").append(new Option(number+" · "+title,number));
   }
   function attachRowEditor(row){
-    cellFields.forEach((field,index)=>row.cells[index].replaceChildren(field));
+    cellFields.forEach((field,index)=>row.cells[index+1].replaceChildren(field));
     $("article").after($("customArticle"));
     const detail=document.createElement("tr");
     detail.className="operation-detail";
@@ -479,20 +479,27 @@
     return '<button type="button" class="counterparty-trigger" data-counterparty-id="'+x.id+'" title="Дважды нажмите для реквизитов контрагента" aria-label="'+show("Реквизиты контрагента: "+(x.originalName||x.name||"Не указан"))+'">'+show(C.compactLegalDisplayName(x.name||"Не указан"))+'</button>';
   }
   function syncMarkedExport(visible){
-    const button=$("exportJson"), count=markedOperationIds.size;
-    button.disabled=count===0&&visible.length===0;
-    button.title=count?"Скачать только выделенные операции, включая скрытые фильтром":"Скачать операции по текущему фильтру";
-    button.replaceChildren();
-    const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("class","ui-icon");svg.setAttribute("aria-hidden","true");
-    const use=document.createElementNS("http://www.w3.org/2000/svg","use");use.setAttribute("href","#ic-download");svg.append(use);
-    button.append(svg,document.createTextNode(count?"Скачать выделенные ("+count+") · JSON":"Скачать JSON для 1С"));
+    const chosen=visible.filter(x=>markedOperationIds.has(x.id)),count=chosen.length,button=$("exportJson");
+    button.disabled=!count;button.title="Скачать только отмеченные операции текущего фильтра";
+    button.textContent="Скачать JSON ("+count+")";
+    const all=$("markAllOperations");if(all){all.disabled=!visible.length;all.checked=!!visible.length&&count===visible.length;all.indeterminate=count>0&&count<visible.length;}
+    const totals=C.totals(chosen);const info=$("markedSummary");if(info)info.textContent="Выбрано: "+count+" · Приход: "+fmt(totals.incoming)+" · Расход: "+fmt(totals.outgoing);
   }
   function markOperation(row,id,active){
-    if(active)markedOperationIds.add(id);
-    else markedOperationIds.delete(id);
+    if(active)markedOperationIds.add(id);else markedOperationIds.delete(id);
     row.classList.toggle("operation-marked",active);
+    const check=row.querySelector("[data-mark-operation]");if(check)check.checked=active;
     syncMarkedExport(currentRows(rowsForDate()));
   }
+  $("rows").addEventListener("change",event=>{
+    if(!event.target.matches("[data-mark-operation]"))return;
+    const row=event.target.closest("tr[data-id]");if(row)markOperation(row,Number(row.dataset.id),event.target.checked);
+  });
+  $("markAllOperations")?.addEventListener("change",event=>{
+    const visible=currentRows(rowsForDate());markedOperationIds.clear();
+    if(event.target.checked)visible.forEach(x=>markedOperationIds.add(x.id));
+    render();
+  });
   function resetOperationMarks(){
     lastRowTap=null;
     markedOperationIds.clear();
@@ -781,6 +788,8 @@
     updateDdsArticleFilter();
     const dateRows=rowsForDate();
     const visible=currentRows(dateRows);
+    const visibleIds=new Set(visible.map(x=>x.id));
+    for(const id of markedOperationIds)if(!visibleIds.has(id))markedOperationIds.delete(id);
     updateStats(visible,dateRows);
     const shown=visible.slice(0,400);
     storage.append(...cellFields.values(),...extraFields);
@@ -790,6 +799,7 @@
     if(!shown.some(x=>x.id===selected))selected=null;
     $("rows").innerHTML=shown.length?shown.map(x=>
       '<tr data-id="'+x.id+'"'+(markedOperationIds.has(x.id)?' class="operation-marked"':'')+' tabindex="0">'+
+      '<td class="operation-check"><input type="checkbox" data-mark-operation aria-label="Выбрать операцию" '+(markedOperationIds.has(x.id)?'checked':'')+'></td>'+
       '<td>'+show(x.date||"Проверить дату")+'</td>'+
       '<td>'+directionDropdown(x.direction)+'</td>'+
       '<td>'+counterpartyButton(x)+'<div style="font-size:11px;color:#777;margin-top:2px" title="Проверка по реестру НДС пока недоступна">НДС: в разработке <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" style="width:12px;height:12px;vertical-align:-2px;margin-left:2px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-wrench"></use></svg></div>'+(x.possibleDuplicate&&!x.duplicateConfirmed?'<div class="notice">Возможный дубль</div>':"")+'</td>'+
@@ -799,7 +809,7 @@
       '<td>'+fieldDropdown("article","Статья ДДС",x.article||"Не указана")+'</td>'+
       '<td>'+fieldDropdown("docType","Тип документа 1С",x.docType||"Не выбран")+'</td>'+
       '<td class="statement-comment" title="'+show(x.comment?x.comment:(x.purpose?"Назначение платежа из выписки: "+x.purpose:"В выписке не найден ни комментарий, ни назначение платежа"))+'"><span class="comment-preview">'+show(x.comment||x.purpose||"—")+'</span></td></tr>'
-    ).join(""):'<tr><td colspan="'+(ledgerColumnsHidden?7:9)+'" class="empty">'+(fileLabel?"В выписке нет операций за выбранный период":"Операции не найдены")+'</td></tr>';
+    ).join(""):'<tr><td colspan="'+(ledgerColumnsHidden?8:10)+'" class="empty">'+(fileLabel?"В выписке нет операций за выбранный период":"Операции не найдены")+'</td></tr>';
     if(selected!==null)attachRowEditor($("rows").querySelector('tr[data-id="'+selected+'"]'));
     syncLedgerVisibility();
     $("shownCount").textContent=ops.length?"Показано "+shown.length+" из "+visible.length+" по фильтру (всего "+ops.length+")":"Операций пока нет";
@@ -989,6 +999,8 @@
     $("similarActions").hidden=count===0;
     $("similarCount").textContent=String(count);
     $("applyToSimilar").checked=false;
+    $("applyToMarked").checked=false;
+    $("markedActions").hidden=!markedOperationIds.has(x.id)||markedOperationIds.size<2;
   }
   $("editForm").addEventListener("submit",event=>{
     event.preventDefault();
@@ -997,6 +1009,9 @@
     const previousCounterparty=counterpartyKey(x);
     const originalRuleKey=C.operationRuleKey(x);
     const applyBulk=$("applyToSimilar").checked;
+    const applyMarked=$("applyToMarked").checked;
+    const targets=applyMarked?currentRows(rowsForDate()).filter(v=>v.id!==x.id&&markedOperationIds.has(v.id)&&v.direction===$("operationDirection").value):[];
+    if(applyMarked&&!confirm("Применить Дт/Кт, ДДС и тип документа к "+targets.length+" другим отмеченным операциям того же направления?"))return;
     const previousName=x.name;
     x.name=C.fixTengeText($("counterparty").value.trim().slice(0,300));
     if(x.name!==previousName)x.originalName=x.name;
@@ -1015,6 +1030,7 @@
     x.duplicateConfirmed=$("confirmDuplicate").checked;
     const readyBefore=ops.filter(item=>item.status==="ready").length;
     const bulk=applyBulk?C.applyPostingToSimilar(ops,x,originalRuleKey):null;
+    for(const v of targets){for(const k of ["debit","credit","article","docType"])v[k]=x[k];v.debitSource=v.creditSource=v.articleSource=v.docTypeSource="manual";v.debitReason=v.creditReason="Групповое изменение бухгалтером";C.refreshSuggestedPosting(v);}
     C.markDuplicates(ops);
     closeRowEditor();scheduleSave();
     if(bulk){
@@ -1230,6 +1246,7 @@
     document.querySelectorAll("[data-filter]").forEach(b=>b.classList.toggle("active",b===button));render();
   }));
   document.querySelectorAll("[data-direction]").forEach(button=>button.addEventListener("click",()=>{
+    if(directionFilter!==button.dataset.direction)resetOperationMarks();
     directionFilter=button.dataset.direction;
     document.querySelectorAll("[data-direction]").forEach(b=>b.classList.toggle("active",b===button));render();
   }));
@@ -1287,12 +1304,12 @@
     return /^[\s]*[=+@-]/.test(text)?"'"+text:text;
   }
   $("exportJson").addEventListener("click",()=>{
-    const marked=markedOperationIds.size>0;
-    const selectedRows=marked?ops.filter(x=>markedOperationIds.has(x.id)):currentRows(rowsForDate());
-    if(!selectedRows.length){toast("По текущему фильтру нет операций для экспорта.");return;}
+    const marked=true;
+    const selectedRows=currentRows(rowsForDate()).filter(x=>markedOperationIds.has(x.id));
+    if(!selectedRows.length){toast("Отметьте операции для экспорта.");return;}
     const pending=selectedRows.filter(x=>x.status!=="ready").length;
     const totals=C.totals(selectedRows);
-    const message="Выгрузить "+selectedRows.length+" из "+ops.length+" операций "+(marked?"из зелёного выделения (включая скрытые фильтром)":"по текущему фильтру")+"?\n"+
+    const message="Выгрузить "+selectedRows.length+" из "+ops.length+" операций "+(marked?"из отмеченных операций":"по текущему фильтру")+"?\n"+
       "Поступления: "+fmt(totals.incoming)+"; списания: "+fmt(totals.outgoing)+".\n"+
       (pending?"У "+pending+" операций не заполнены реквизиты; они будут переданы как есть. ":"")+
       "JSON предназначен для непроведённых документов. Проверьте реквизиты в 1С.";
