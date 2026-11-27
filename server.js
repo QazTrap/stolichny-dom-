@@ -37,6 +37,7 @@ for(const name of ["workspace-core.js","app.js","alatau-pdf.mjs"]){
     res.sendFile(path.join(__dirname,name));
   });
 }
+require("./kgd-api")(app);
 app.get("/api/health",(_req,res)=>{
   res.set("Cache-Control","no-store");
   res.json({ok:true,service:"STOLDOM.SITE",module:"bank-statement-workspace",dataProcessing:"browser-only"});
