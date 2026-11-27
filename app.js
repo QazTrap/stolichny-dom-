@@ -474,14 +474,20 @@
   // One searchable menu services both row fields and filters.
   let openMenu=null, lastRowTap=null, lastCounterpartyTap=null, datePopup=null;
   const markedOperationIds=new Set();
+  let exportAccessKey="",exportAccessBusy=false;
+  async function verifyExportAccess(key){
+    const response=await fetch("https://stoldom-api-production.up.railway.app/api/export/access",{method:"POST",headers:{Authorization:"Bearer "+key},credentials:"omit",cache:"no-store",signal:AbortSignal.timeout(15000)});
+    const data=await response.json();if(!response.ok||data.ok!==true)throw Error(data.error||"Доступ к экспорту не подтверждён.");
+  }
   const doubleTapInterval=410;
   function counterpartyButton(x){
     return '<button type="button" class="counterparty-trigger" data-counterparty-id="'+x.id+'" title="Дважды нажмите для реквизитов контрагента" aria-label="'+show("Реквизиты контрагента: "+(x.originalName||x.name||"Не указан"))+'">'+show(C.compactLegalDisplayName(x.name||"Не указан"))+'</button>';
   }
   function syncMarkedExport(visible){
     const chosen=visible.filter(x=>markedOperationIds.has(x.id)),count=chosen.length,button=$("exportJson");
-    button.disabled=!count;button.title="Скачать только отмеченные операции текущего фильтра";
-    button.textContent="Скачать JSON ("+count+")";
+    button.disabled=!count||!exportAccessKey||exportAccessBusy;button.title=exportAccessKey?"Скачать только отмеченные операции текущего фильтра":"Закрытое тестирование JSON для 1С";
+    button.textContent=exportAccessKey?"Скачать JSON ("+count+")":"JSON для 1С · В разработке";
+    const access=$("exportAccessOpen");if(access)access.textContent=exportAccessKey?"Закрыть доступ":"Доступ к экспорту";
     const all=$("markAllOperations");if(all){all.disabled=!visible.length;all.checked=!!visible.length&&count===visible.length;all.indeterminate=count>0&&count<visible.length;}
     const totals=C.totals(chosen);const info=$("markedSummary");if(info)info.textContent="Выбрано: "+count+" · Приход: "+fmt(totals.incoming)+" · Расход: "+fmt(totals.outgoing);
   }
@@ -1303,7 +1309,21 @@
     const text=String(value??"");
     return /^[\s]*[=+@-]/.test(text)?"'"+text:text;
   }
-  $("exportJson").addEventListener("click",()=>{
+  $("exportAccessOpen")?.addEventListener("click",()=>{
+    if(exportAccessBusy)return;
+    if(exportAccessKey){exportAccessKey="";syncMarkedExport(currentRows(rowsForDate()));return;}
+    $("exportAccessInput").value="";$("exportAccessStatus").textContent="";$("exportAccessDialog").showModal();
+  });
+  $("exportAccessCancel")?.addEventListener("click",()=>$("exportAccessDialog").close());
+  $("exportAccessForm")?.addEventListener("submit",async event=>{
+    event.preventDefault();const input=$("exportAccessInput"),key=input.value;
+    if(exportAccessBusy||!key)return;exportAccessBusy=true;$("exportAccessSubmit").disabled=true;
+    try{await verifyExportAccess(key);exportAccessKey=key;input.value="";$("exportAccessDialog").close();toast("Закрытый экспорт доступен до обновления страницы.");}
+    catch(e){$("exportAccessStatus").textContent=e.message;}
+    finally{exportAccessBusy=false;$("exportAccessSubmit").disabled=false;syncMarkedExport(currentRows(rowsForDate()));}
+  });
+  $("exportJson").addEventListener("click",async()=>{
+    if(!exportAccessKey||exportAccessBusy)return;
     const marked=true;
     const selectedRows=currentRows(rowsForDate()).filter(x=>markedOperationIds.has(x.id));
     if(!selectedRows.length){toast("Отметьте операции для экспорта.");return;}
@@ -1314,7 +1334,9 @@
       (pending?"У "+pending+" операций не заполнены реквизиты; они будут переданы как есть. ":"")+
       "JSON предназначен для непроведённых документов. Проверьте реквизиты в 1С.";
     if(!confirm(message))return;
+    exportAccessBusy=true;syncMarkedExport(currentRows(rowsForDate()));
     try{
+      try{await verifyExportAccess(exportAccessKey);}catch(e){exportAccessKey="";throw e;}
       if(!window.StoldomExchange)throw Error("Модуль JSON не загружен. Обновите страницу.");
       const data=window.StoldomExchange.create(selectedRows,company,{filename:fileLabel,reviewNotes,operationType:x=>C.suggestDocumentOperation(x.article,x.docType)});
       const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:"application/json;charset=utf-8"}));
@@ -1322,6 +1344,7 @@
       document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
       toast("JSON скачан: "+selectedRows.length+" операций "+(marked?"из выделения":"по фильтру")+". Незаполненные поля сохранены.");
     }catch(e){toast("Не удалось сформировать JSON: "+e.message);}
+    finally{exportAccessBusy=false;syncMarkedExport(currentRows(rowsForDate()));}
   });
   $("export").addEventListener("click",()=>{
     if(!downloadsEnabled || !ops.length)return;
