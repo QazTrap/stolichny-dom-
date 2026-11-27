@@ -605,9 +605,44 @@ document.querySelectorAll('.ai-sidebar [data-ai-prompt]').forEach(function(butto
 const $=id=>document.getElementById(id);let current=null,library=null,seq=0;
 function node(tag,value){const n=document.createElement(tag);if(value!==undefined)n.textContent=value;return n;}
 function build(d){const el=node("article");el.append(node("h2","STOLDOM.SITE · "+d.title),node("p","Версия "+library.version+" · "+library.date),node("p",d.note));const table=node("table");table.style.cssText="width:100%;border-collapse:collapse;margin:12px 0";const h=table.createTHead().insertRow();for(const c of d.columns)h.append(node("th",c));const body=table.createTBody();for(const row of d.rows){const tr=body.insertRow();for(const cell of row)tr.insertCell().textContent=cell;}for(const cell of table.querySelectorAll("td,th"))cell.style.cssText="border:1px solid #d9e1eb;padding:8px;text-align:left;white-space:normal";el.append(table);for(const [label,url] of d.sources){if(!/^https:\/\//.test(url))continue;const p=node("p"),a=node("a",label);a.href=url;a.target="_blank";a.rel="noopener noreferrer";p.append(a);el.append(p);}return el;}
-function show(d){current=d;$("refContent").replaceChildren(build(d));$("refReader").hidden=false;$("refReader").scrollIntoView({block:"nearest"});}
+function interactive(d){
+ const el=build(d),table=el.querySelector("table"),list=node("div");list.className="ref-accordion";
+ const groups=new Map();
+ for(const row of d.rows){const key=String(row[0]);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(row);}
+ for(const [key,rows] of groups){
+ const item=node("details"),head=node("summary",key);item.append(head);
+ const body=node("div");body.className="ref-detail";
+ if(d.title.startsWith("Ставки НДС")){
+ const descriptions={"16%":"Основная ставка для облагаемых оборотов, если законом не установлена иная ставка или освобождение.","5%":"Пониженная ставка 2026 года для отдельных медицинских товаров и услуг при соблюдении условий Налогового кодекса.","0% (при законном основании)":"Нулевая ставка применяется только к оборотам, для которых она предусмотрена законом, например к подтверждённому экспорту."};
+ if(descriptions[key])body.append(node("p",descriptions[key]));
+ }
+ for(const row of rows){const dl=node("dl");for(let j=1;j<d.columns.length;j++){const line=node("div");line.append(node("dt",d.columns[j]),node("dd",String(row[j]??"")));dl.append(line);}body.append(dl);}
+ if(d.title.startsWith("Ставки НДС")){
+ const rate=parseFloat(key);
+ if(Number.isFinite(rate)){const label=node("label","Сумма с НДС, ₸"),input=node("input"),out=node("p");input.type="number";input.min="0";input.step="0.01";input.inputMode="decimal";input.value=String(rows[0][1]);label.append(input);const calc=()=>{const raw=input.valueAsNumber;if(!Number.isFinite(raw)||raw<0){out.textContent="Введите неотрицательную сумму.";return;}const tax=Math.round(raw*rate/(100+rate)*100)/100;const fmt=n=>n.toLocaleString("ru-RU",{minimumFractionDigits:2,maximumFractionDigits:2})+" ₸";out.textContent="НДС: "+fmt(tax)+" · Без НДС: "+fmt(raw-tax);};input.addEventListener("input",calc);calc();body.append(label,out);}
+ }
+ item.append(body);list.append(item);
+ }
+ table.replaceWith(list);return el;
+}
+function show(d){current=d;$("refContent").replaceChildren(interactive(d));$("refReader").hidden=false;$("refReader").scrollIntoView({block:"nearest"});}
 async function load(){const id=++seq;$("refStatus").textContent="Проверяем версии…";try{const response=await fetch("/cheat-library.json",{cache:"no-store"});if(!response.ok)throw Error();const next=await response.json();if(id!==seq)return;if(!Array.isArray(next.docs))throw Error();library=next;current=null;$("refReader").hidden=true;$("refList").replaceChildren();for(const d of library.docs){const b=node("button","📄 "+d.title);b.type="button";b.className="btn outline";b.style.cssText="white-space:normal;height:auto;min-height:44px";b.onclick=()=>show(d);$("refList").append(b);}$("refStatus").textContent="Версия "+library.version+" · "+library.date+" · Начальная библиотека";}catch{$("refStatus").textContent="Не удалось проверить обновление. Повторите попытку.";}}
-function html(){return "<!doctype html><html lang='ru'><meta charset='utf-8'><title>STOLDOM</title><body style='font:16px Arial,sans-serif;padding:24px;color:#24354a'>"+build(current).outerHTML+"</body></html>";}
+function html(){return "<!doctype html><html lang='ru'><meta charset='utf-8'><title>STOLDOM</title><body style='font:16px Arial,sans-serif;padding:24px;color:#24354a'>"+build(current).outerHTML+"<style>
+#cheatDesk{box-sizing:border-box;max-width:calc(100vw - 24px)}
+#refReader,#refContent,#referenceLibrary{min-width:0;max-width:100%;box-sizing:border-box}
+#refContent{overflow-wrap:anywhere}
+#refContent .ref-accordion{display:grid;gap:8px;margin:12px 0}
+#refContent .ref-accordion details{border:1px solid #dce4ed;border-radius:9px;background:#fafbfd;overflow:hidden}
+#refContent .ref-accordion summary{cursor:pointer;padding:12px 14px;font-weight:600;color:#24466c;white-space:normal}
+#refContent .ref-detail{padding:0 14px 12px;font-size:14px}
+#refContent .ref-detail dl{margin:8px 0;padding:8px 0;border-top:1px solid #e2e8f0}
+#refContent .ref-detail dl div{display:flex;justify-content:space-between;gap:10px;padding:5px 0;flex-wrap:wrap}
+#refContent .ref-detail dt{color:#64748b;flex:1 1 110px}
+#refContent .ref-detail dd{margin:0;flex:1 1 110px;font-weight:600;text-align:right}
+#refContent .ref-detail input{display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:8px;border:1px solid #ccd7e4;border-radius:6px;font-size:16px}
+@media(max-width:600px){#cheatDesk{padding:12px}#refReader{padding:10px!important}#refContent h2{font-size:19px}#refList{grid-template-columns:minmax(0,1fr)!important}#refContent .ref-detail dd{text-align:left}}
+</style>
+</body></html>";}
 $("cheatOpen").addEventListener("click",()=>{if(!library)load();});$("refRefresh").onclick=load;$("refClose").onclick=()=>{$("refReader").hidden=true;current=null;};
 $("refDownload").onclick=()=>{if(!current)return;const u=URL.createObjectURL(new Blob([html()],{type:"text/html;charset=utf-8"}));const a=node("a");a.href=u;a.download=current.title+".html";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);};
 $("refExcel").onclick=()=>{if(!current)return;if(!window.XLSX){$("refStatus").textContent="Excel-модуль недоступен.";return;}const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet([["STOLDOM.SITE",current.title],["Версия",library.version],["Дата",library.date],["Примечание",current.note],[],current.columns,...current.rows,[],...current.sources]);XLSX.utils.book_append_sheet(wb,ws,"Справочник");XLSX.writeFile(wb,current.title+".xlsx");};
