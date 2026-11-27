@@ -398,6 +398,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
    <button class="btn ai-sidebar-disabled" type="button" disabled>Подключить базу 1С для работы с ИИ · В разработке</button>
   </section>
   <div class="company"><strong>Данные компании</strong><span class="muted">После загрузки выписки — над таблицей операций</span></div>
+  <button type="button" id="cheatOpen" class="btn outline" style="width:100%;white-space:normal;justify-content:flex-start;margin:8px 0" aria-haspopup="dialog"><svg class="ui-icon" aria-hidden="true"><use href="#ic-folder"></use></svg> Шпаргалки бухгалтера</button>
   <div class="support">Поддержка<br>support@stoldom.site</div>
  </aside>
  <main>
@@ -577,6 +578,28 @@ document.querySelectorAll('.ai-sidebar [data-ai-prompt]').forEach(function(butto
  });
 });
 </script>
+<style>
+#cheatDesk{width:min(880px,94vw);max-height:85vh;border:1px solid #d9e1eb;border-radius:16px;padding:22px;background:#fff;color:#24354a;overflow:auto;box-shadow:0 20px 70px #14294a26}#cheatDesk::backdrop{background:#14294a55}#cheatGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px;margin-top:16px}#cheatGrid article{min-width:0;border:1px solid #e1e7ef;border-radius:12px;padding:12px;background:#f8fafc;display:grid;gap:8px}#cheatGrid strong{overflow-wrap:anywhere;font-size:13px}#cheatGrid .cheatIcon{font-size:32px;text-align:center}#cheatGrid button{font-size:12px;padding:6px}#cheatDrop{border:1px dashed #aebfd4;border-radius:10px;padding:20px;text-align:center;margin:14px 0}#cheatDrop.drag{background:#e6effa}#cheatStatus{font-size:12px;color:#64748b}#cheatDesk .cheatActions{display:flex;gap:6px;flex-wrap:wrap}
+</style>
+<dialog id="cheatDesk" aria-labelledby="cheatTitle"><div class="recon-dialog-head"><div><h2 id="cheatTitle">Шпаргалки бухгалтера</h2><p>Личный рабочий стол</p></div><button id="cheatClose" type="button" aria-label="Закрыть">×</button></div>
+<p class="muted">Файлы хранятся только в этом браузере. Не синхронизируются между устройствами; очистка данных сайта может удалить их.</p>
+<div id="cheatDrop"><button id="cheatAdd" class="btn primary" type="button">+ Добавить файлы</button><input id="cheatFiles" type="file" multiple accept=".pdf,.xls,.xlsx,.xlsm,.csv,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp,.gif" hidden><p>или перетащите сюда PDF, Excel, Word и изображения</p></div>
+<div id="cheatStatus" role="status" aria-live="polite"></div><div id="cheatGrid"></div></dialog>
+<script>
+(function(){
+ const $=id=>document.getElementById(id),desk=$("cheatDesk"),grid=$("cheatGrid"),status=$("cheatStatus"),input=$("cheatFiles"),drop=$("cheatDrop");
+ let dbPromise;
+ function db(){if(!dbPromise)dbPromise=new Promise((resolve,reject)=>{const req=indexedDB.open("stoldom-cheatsheets",1);req.onupgradeneeded=()=>req.result.createObjectStore("files",{keyPath:"id",autoIncrement:true});req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});return dbPromise;}
+ async function operation(mode,fn){const d=await db();return new Promise((resolve,reject)=>{const tx=d.transaction("files",mode),req=fn(tx.objectStore("files"));tx.oncomplete=()=>resolve(req.result);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});}
+ const fail=()=>{status.textContent="Не удалось сохранить или открыть файлы. Проверьте доступное место и настройки браузера.";};
+ function action(label,fn){const b=document.createElement("button");b.type="button";b.className="btn outline";b.textContent=label;b.addEventListener("click",fn);return b;}
+ function download(f,preview){const url=URL.createObjectURL(f.blob);const a=document.createElement("a");a.href=url;if(preview){a.target="_blank";a.rel="noopener noreferrer";}else a.download=f.name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
+ async function render(){try{const files=await operation("readonly",s=>s.getAll());grid.replaceChildren();status.textContent=files.length?"Файлов: "+files.length:"Пока нет файлов. Добавьте первую шпаргалку.";for(const f of files){const card=document.createElement("article"),icon=document.createElement("div"),name=document.createElement("strong"),size=document.createElement("small"),actions=document.createElement("div");icon.className="cheatIcon";const ext=f.name.split(".").pop().toLowerCase(),img=/^(png|jpg|jpeg|webp|gif)$/.test(ext);icon.textContent=img?"🖼️":/^(xls|xlsx|xlsm|csv)$/.test(ext)?"📊":ext==="pdf"?"📕":"📄";name.textContent=f.name;size.textContent=Math.max(1,Math.round(f.blob.size/1024))+" КБ";actions.className="cheatActions";if((img&&/^image\/(png|jpeg|webp|gif)$/.test(f.blob.type))||(ext==="pdf"&&f.blob.type==="application/pdf"))actions.append(action("Открыть",()=>download(f,true)));actions.append(action("Скачать",()=>download(f,false)),action("Удалить",async()=>{if(confirm("Удалить файл "+f.name+"?"))try{await operation("readwrite",s=>s.delete(f.id));await render();}catch{fail();}}));card.append(icon,name,size,actions);grid.append(card);}}catch{fail();}}
+ async function add(files){let skipped=0;try{for(const file of files){if(!/\.(pdf|xls|xlsx|xlsm|csv|doc|docx|txt|png|jpg|jpeg|webp|gif)$/i.test(file.name)||file.size>50*1024*1024){skipped++;continue;}await operation("readwrite",s=>s.add({name:file.name,blob:file}));}await render();if(skipped)status.textContent+=" · Пропущено: "+skipped+" (формат или размер более 50 МБ).";}catch{fail();}}
+ $("cheatOpen").addEventListener("click",()=>{desk.showModal();render();});$("cheatClose").addEventListener("click",()=>desk.close());$("cheatAdd").addEventListener("click",()=>input.click());input.addEventListener("change",()=>{const files=Array.from(input.files);input.value="";add(files);});drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("drag");});drop.addEventListener("dragleave",()=>drop.classList.remove("drag"));drop.addEventListener("drop",e=>{e.preventDefault();drop.classList.remove("drag");add(Array.from(e.dataTransfer.files));});
+})();
+</script>
+
 </body></html>
 
 
