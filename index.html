@@ -254,8 +254,8 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 .counterparty-trigger{display:inline;border:0;background:transparent;padding:0;color:inherit;font:inherit;font-weight:750;text-align:left;line-height:inherit;white-space:normal;cursor:pointer;touch-action:manipulation}
 .counterparty-trigger:hover{color:#156ec7}
 #operationsTable tr[data-id],#operationsTable tr[data-id]>td{transition:none;animation:none}
-#operationsTable .operation-check{width:32px;min-width:32px;text-align:center;padding:5px}#operationsTable .operation-check input{appearance:none;-webkit-appearance:none;display:inline-grid;place-content:center;width:16px;height:16px;box-sizing:border-box;border:1px solid #a9b0a5;border-radius:2px;background:#fff;cursor:pointer;margin:0;vertical-align:middle}
-#operationsTable .operation-check input:checked::after{content:"";width:8px;height:4px;border-left:2px solid #258339;border-bottom:2px solid #258339;transform:translateY(-1px) rotate(-45deg)}
+#operationsTable .operation-check{width:32px;min-width:32px;text-align:center;padding:5px}#operationsTable .operation-check input{appearance:none;-webkit-appearance:none;display:inline-grid;place-content:center;position:relative;overflow:visible;width:16px;height:16px;box-sizing:border-box;border:1px solid #a9b0a5;border-radius:2px;background:#fff;cursor:pointer;margin:0;vertical-align:middle}
+#operationsTable .operation-check input:checked::after{content:"";position:absolute;left:3px;top:-1px;width:14px;height:7px;border-left:3px solid #16b52b;border-bottom:3px solid #16b52b;transform:rotate(-48deg);filter:drop-shadow(0 0 .3px #16b52b);pointer-events:none}
 #operationsTable .operation-check input:indeterminate::after{content:"";width:8px;height:2px;background:#258339}
 #operationsTable .operation-check input:focus-visible{outline:2px solid #258339;outline-offset:2px}
 #operationsTable .operation-check input:disabled{opacity:.45;cursor:default}
