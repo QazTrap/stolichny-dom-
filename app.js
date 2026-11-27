@@ -1034,6 +1034,48 @@
     $("rows").querySelector('tr[data-id="'+id+'"] .row-dropdown')?.focus({preventScroll:true});
   }
   $("reset").addEventListener("click",closeRowEditor);
+  // Local counterparty lookup, separate from operation filters.
+  const lookupDialog=$("counterpartyLookupDialog");
+  if(lookupDialog){
+    const lookupInput=$("counterpartyLookupInput"),lookupStatus=$("counterpartyLookupStatus"),lookupResults=$("counterpartyLookupResults");
+    function findCounterparties(){
+      lookupResults.replaceChildren();
+      const query=C.norm(lookupInput.value);
+      if(!ops.length){lookupStatus.textContent="Сначала загрузите банковскую выписку.";return;}
+      if(!query){lookupStatus.textContent="Введите БИН, ИИН или наименование.";return;}
+      const found=new Map();
+      for(const op of ops){
+        const name=String(op.originalName||op.name||"").trim();
+        const bin=String(op.bin||"").trim();
+        if(!name&&!bin)continue;
+        if(!C.norm([name,op.name,bin].join(" ")).includes(query))continue;
+        const key=bin?"bin:"+bin:"name:"+C.norm(name);
+        if(!found.has(key))found.set(key,{name,bin,accounts:new Set(),count:0});
+        const entry=found.get(key);
+        if(!entry.name&&name)entry.name=name;
+        if(op.counterpartyAccount)entry.accounts.add(String(op.counterpartyAccount).trim());
+        entry.count++;
+      }
+      lookupStatus.textContent=found.size?"Найдено контрагентов: "+found.size+(found.size>100?". Показаны первые 100.":""):"Совпадений в выписке не найдено.";
+      const fragment=document.createDocumentFragment();
+      for(const entry of Array.from(found.values()).slice(0,100)){
+        const card=document.createElement("article");card.className="counterparty-lookup-result";
+        for(const [tag,value] of [["strong",entry.name||"Наименование не указано"],["span","БИН / ИИН: "+(entry.bin||"Не указан в выписке")],["span","ИИК: "+(Array.from(entry.accounts).filter(Boolean).join(", ")||"Не указан в выписке")],["span","Операций в выборке: "+entry.count]]){
+          const element=document.createElement(tag);element.textContent=value;card.append(element);
+        }
+        fragment.append(card);
+      }
+      lookupResults.append(fragment);
+    }
+    $("openCounterpartyLookup").addEventListener("click",()=>{
+      lookupInput.value="";lookupResults.replaceChildren();
+      lookupStatus.textContent=ops.length?"Введите БИН, ИИН или наименование.":"Сначала загрузите банковскую выписку.";
+      lookupDialog.showModal();lookupInput.focus();
+    });
+    $("closeCounterpartyLookup").addEventListener("click",()=>lookupDialog.close());
+    $("counterpartyLookupForm").addEventListener("submit",event=>{event.preventDefault();findCounterparties();});
+    lookupInput.addEventListener("input",()=>{lookupResults.replaceChildren();lookupStatus.textContent=ops.length?"Нажмите «Найти».":"Сначала загрузите банковскую выписку.";});
+  }
   $("search").addEventListener("input",render);
   $("counterpartyFilter")?.addEventListener("change",render);
   $("amountColumnFilter")?.addEventListener("change",render);

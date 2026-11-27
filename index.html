@@ -268,6 +268,15 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 /* Compact debit/credit visibility control. Hiding is presentation-only. */
 .operations-heading{display:inline-flex;align-items:center;gap:11px;min-width:0}
  .operations-heading .search-field{width:clamp(180px,28vw,360px);max-width:100%}
+ .counterparty-lookup-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:12px;min-width:0}
+ .counterparty-lookup-toolbar .btn{font-size:12px;min-height:40px;padding:8px 12px;white-space:normal}
+ #counterpartyLookupDialog{width:min(650px,calc(100vw - 24px));max-height:calc(100vh - 36px);overflow:auto;border:1px solid #d4e0ef;border-radius:14px;box-shadow:0 22px 75px #10204444;padding:20px;background:#fff;color:var(--ink)}
+ #counterpartyLookupDialog::backdrop{background:#152b4f77}
+ .counterparty-lookup-form{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:14px 0}
+ .counterparty-lookup-form .search-field{flex:1 1 220px;width:auto}
+ .counterparty-lookup-results{display:grid;gap:8px}
+ .counterparty-lookup-result{display:grid;gap:5px;padding:12px;border:1px solid var(--line);border-radius:9px;overflow-wrap:anywhere;font-size:13px}
+ .counterparty-lookup-result strong{font-size:14px}
  .amount-header-tools{display:flex;align-items:center;justify-content:space-between;gap:12px}
  @media(max-width:550px){.operations-heading{width:100%;flex-wrap:wrap}.operations-heading .search-field{width:100%}}
 .ledger-visibility-toggle{border:1px solid #d8e3f2;background:#f7faff;color:#395776;border-radius:7px;font-size:12px;font-weight:650;line-height:1.25;padding:5px 9px;white-space:nowrap}
@@ -416,7 +425,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
    <section class="tablecard">
     <div class="tabletop">
      <div class="operations-heading"><strong>Операции</strong><div class="search-field"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-search"></use></svg><input class="search" id="search" type="search" aria-label="Поиск по операциям, контрагентам, статьям ДДС и назначению" placeholder="Поиск....."></div></div>
-     <span class="muted" id="tableCaption">Сначала загрузите банковскую выписку</span>
+     <div class="counterparty-lookup-toolbar"><button class="btn outline" type="button" id="openCounterpartyLookup"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-search"></use></svg> Сведения по контрагентам</button><span class="muted" id="tableCaption">Сначала загрузите банковскую выписку</span></div>
     </div>
     <div class="table-scroll-top" id="tableScrollTop" aria-label="Горизонтальная прокрутка таблицы операций" role="region" tabindex="0"><div id="tableScrollTopSpacer"></div></div>
     <div class="tablewrap" id="tableScrollBottom"><table id="operationsTable"><thead><tr><th scope="col"><label class="column-filter">Дата<select id="dateColumnFilter" aria-label="Фильтр по дате" title="Выбрать дату" disabled><option value="">Все даты</option></select></label></th><th>Направление</th><th scope="col"><label class="column-filter">Контрагент<select id="counterpartyFilter" aria-label="Фильтр по контрагенту" title="Выбрать контрагента" disabled><option value="">Все контрагенты</option></select></label></th><th scope="col"><div class="amount-header-tools"><label class="column-filter">Сумма<select id="amountColumnFilter" aria-label="Фильтр по сумме" title="Выбрать сумму" disabled><option value="">Все суммы</option></select></label><button type="button" class="ledger-visibility-toggle" id="toggleLedgerColumns" aria-controls="operationsTable" aria-pressed="false" title="Скрыть столбцы Дт и Кт">Дт/Кт</button></div></th><th title="Предварительный счёт дебета">Дт</th><th title="Предварительный счёт кредита">Кт</th><th scope="col"><label class="column-filter">Статья ДДС<select id="ddsArticleFilter" aria-label="Фильтр по статье ДДС" title="Выбрать статью ДДС" disabled><option value="">Все статьи ДДС</option></select></label></th><th>Тип документа 1С</th><th>Комментарии из выписки</th></tr></thead><tbody id="rows"></tbody></table></div>
@@ -476,6 +485,16 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
  </form>
 </dialog>
 
+<dialog id="counterpartyLookupDialog" aria-labelledby="counterpartyLookupTitle">
+ <div class="recon-dialog-head"><div><h2 id="counterpartyLookupTitle">Сведения по контрагентам</h2><p>Поиск по загруженной банковской выписке</p></div><button id="closeCounterpartyLookup" type="button" aria-label="Закрыть">×</button></div>
+ <form id="counterpartyLookupForm" class="counterparty-lookup-form">
+  <div class="search-field"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-search"></use></svg><input class="search" id="counterpartyLookupInput" type="search" aria-label="БИН, ИИН или наименование контрагента" placeholder="БИН / ИИН / наименование" autocomplete="off" maxlength="250"></div>
+  <button class="btn primary" type="submit">Найти</button>
+ </form>
+ <p id="counterpartyLookupStatus" role="status" class="muted"></p>
+ <div id="counterpartyLookupResults" class="counterparty-lookup-results"></div>
+ <p class="muted">Источник: загруженная выписка. Официальные сведения КГД — после подключения API. Данные не отправляются на сервер.</p>
+</dialog>
 <dialog id="reconciliationDialog" aria-labelledby="reconDialogTitle">
  <div class="recon-dialog-head"><div><h2 id="reconDialogTitle">Создать акт сверки</h2><p>Черновик по вручную введённым данным взаиморасчётов</p></div><button id="reconClose" type="button" aria-label="Закрыть">×</button></div>
  <p class="recon-warning recon-edit">Автозаполнение из 1С пока в разработке. Банковская выписка не содержит все реализации, поступления и зачёты. Используйте подтверждённые регистры учёта.</p>
@@ -514,7 +533,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 <div class="toast" id="toast"></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="/workspace-core.js?v=alatau-xls-20261125" defer></script>
-<script src="/app.js?v=instant-row-marks-20261125" defer></script>
+<script src="/app.js?v=counterparty-lookup-20261127" defer></script>
 <script src="/reconciliation.js?v=20261125-act-draft-2" defer></script>
 <script>
 document.querySelectorAll('.ai-sidebar [data-ai-prompt]').forEach(function(button){
