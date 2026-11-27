@@ -29,19 +29,42 @@ function registryFields(data,xin,today){
 async function lookupVat(xin,token,{fetchImpl=fetch,today=new Date(Date.now()+5*3600000).toISOString().slice(0,10)}={}){
   const headers={"X-Portal-Token":token,"Accept":"application/json"};
   const signal=AbortSignal.timeout(12000);
-  try{
-    let response=await fetchImpl(ENDPOINT+"?taxpayerCode="+encodeURIComponent(xin),{method:"GET",headers,redirect:"error",signal});
-    if([400,405,415].includes(response.status)){
-      response=await fetchImpl(ENDPOINT,{method:"POST",headers:{...headers,"Content-Type":"application/json"},body:JSON.stringify({taxpayerCode:xin}),redirect:"error",signal});
+  const endpoints=[ENDPOINT,ENDPOINT.replace("portal.kgd.gov.kz","kgd.gov.kz")];
+  let failure="Реестр НДС временно недоступен";
+  for(const endpoint of endpoints){
+    try{
+      let response=await fetchImpl(endpoint+"?taxpayerCode="+encodeURIComponent(xin),{method:"GET",headers,redirect:"manual",signal});
+      if([400,405,415].includes(response.status)){
+        response=await fetchImpl(endpoint,{method:"POST",headers:{...headers,"Content-Type":"application/json"},body:JSON.stringify({taxpayerCode:xin}),redirect:"manual",signal});
+      }
+      // Never forward the credential to a redirect target. Only try our two fixed official hosts.
+      if(response.status>=300&&response.status<400){
+        console.warn("[kgd-vat]",new URL(endpoint).hostname,"HTTP redirect",response.status);
+        failure="Реестр НДС перенаправляет запрос (HTTP "+response.status+")";continue;
+      }
+      if(!response.ok){
+        console.warn("[kgd-vat]",new URL(endpoint).hostname,"HTTP",response.status);
+        if([401,403].includes(response.status))return {vatRegistryStatus:"Доступ к реестру НДС не подтверждён (HTTP "+response.status+")"};
+        if(response.status===404){failure="Доступ к реестру НДС не подтверждён (HTTP 404)";continue;}
+        failure="Реестр НДС не обработал запрос (HTTP "+response.status+")";continue;
+      }
+      let data;
+      try{data=await response.json();}catch{
+        console.warn("[kgd-vat]",new URL(endpoint).hostname,"response is not JSON");
+        failure="Реестр НДС вернул ответ не в формате JSON";continue;
+      }
+      const result=registryFields(data,xin,today);
+      console.info("[kgd-vat]",new URL(endpoint).hostname,"HTTP",response.status,result.vatInfo?"confirmed":"status not confirmed");
+      if(!data||typeof data!=="object"||Array.isArray(data)||String(data.iinBin||"")!==xin){failure=result.vatRegistryStatus;continue;}
+      return result;
+    }catch(err){
+      const reason=err?.cause?.code||err?.name||"Error";
+      const code=/^[A-Za-z0-9_]{1,60}$/.test(String(reason))?String(reason):"Error";
+      console.warn("[kgd-vat]",new URL(endpoint).hostname,"request failed",code);
+      failure="Ошибка соединения с реестром НДС ("+code+")";
+      if(signal.aborted)break;
     }
-    if(!response.ok){
-      // The supplied KGD manual identifies 403 and 404 as authorization/access errors.
-      if([401,403,404].includes(response.status))return {vatRegistryStatus:"Доступ к реестру НДС не подтверждён (HTTP "+response.status+")"};
-      return {vatRegistryStatus:"Реестр НДС не обработал запрос (HTTP "+response.status+")"};
-    }
-    return registryFields(await response.json(),xin,today);
-  }catch{
-    return {vatRegistryStatus:"Реестр НДС временно недоступен"};
   }
+  return {vatRegistryStatus:failure};
 }
 module.exports={lookupVat,registryFields};

@@ -33,3 +33,15 @@ test("access denied does not overwrite base KGD data",async()=>{
  assert.match(out.vatRegistryStatus,/404/);
  assert.equal(out.vatInfo,undefined);
 });
+
+test("a redirect is never followed and the alternate official host can answer",async()=>{
+ const calls=[];
+ const result=await lookupVat(xin,"test-secret",{today,fetchImpl:async(url,options)=>{
+  calls.push([url,options]);
+  if(calls.length===1)return {ok:false,status:302};
+  return {ok:true,status:200,json:async()=>({iinBin:xin,ndsRegistrationDate:"2025-05-29",ndsDeregistrationDate:null})};
+ }});
+ assert.equal(calls[0][1].redirect,"manual");
+ assert.equal(new URL(calls[1][0]).hostname,"kgd.gov.kz");
+ assert.match(result.vatInfo,/Состоит/);
+});
