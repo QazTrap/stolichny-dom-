@@ -1038,10 +1038,48 @@
   const lookupDialog=$("counterpartyLookupDialog");
   if(lookupDialog){
     const lookupInput=$("counterpartyLookupInput"),lookupStatus=$("counterpartyLookupStatus"),lookupResults=$("counterpartyLookupResults");
+    let lookupSequence=0,kgdAccess="";
+    const accessInput=$("kgdAccessInput");
+    const kgdFields=[["xin","БИН / ИИН"],["regDate","Дата регистрации"],["residency","Резидентство"],["oked","ОКЭД"],["okedName","Вид деятельности"],["okedDate","Дата ОКЭД"],["vatInfo","Сведения по НДС"],["vatDate","Дата регистрации по НДС"],["taxMode","Налоговый режим"],["taxModeDate","Дата налогового режима"],["registrationInvalid","Недействительная регистрация"],["reRegistrationInvalid","Недействительная перерегистрация"],["operationsWOWork","Операции без фактического выполнения"],["esfRestrinctions","Ограничения по ЭСФ"],["inactive","Бездействующий налогоплательщик"],["regAddressAbsent","Отсутствие по адресу регистрации"],["bankrupt","Банкротство"],["selfRegulatoryRegistry","Реестр СРО"],["courtDecisionRegistry","Реестр судебных решений"],["taxDebt","Налоговая задолженность"],["actuality","Актуальность сведений"]];
+    function kgdText(value){
+      if(value===null||value===undefined||value==="")return "Нет данных";
+      if(typeof value==="object")return String(value.ru||value.kk||"Нет данных");
+      return String(value);
+    }
+    async function findKgd(xin){
+      const sequence=++lookupSequence;
+      lookupResults.replaceChildren();
+      const key=accessInput.value.trim()||kgdAccess;
+      if(!key){lookupStatus.textContent="Введите код доступа к КГД.";accessInput.focus();return;}
+      lookupStatus.textContent="Запрашиваем сведения КГД…";
+      try{
+        const response=await fetch("https://stoldom-api-production.up.railway.app/api/kgd/counterparty",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({xin}),signal:AbortSignal.timeout(20000),credentials:"omit",cache:"no-store"});
+        const payload=await response.json();
+        if(sequence!==lookupSequence||!lookupDialog.open)return;
+        if(!response.ok||!payload.ok)throw Error(payload.error||"Не удалось получить сведения КГД.");
+        kgdAccess=key;accessInput.value="";
+        const d=payload.data||{},card=document.createElement("article");
+        card.className="counterparty-lookup-result";
+        const title=document.createElement("strong");title.textContent=kgdText(d.name);card.append(title);
+        for(const [field,label] of kgdFields){
+          if(!Object.hasOwn(d,field))continue;
+          const line=document.createElement("span");line.textContent=label+": "+kgdText(d[field])+(field==="taxDebt"&&typeof d[field]==="number"?" ₸":"");card.append(line);
+        }
+        if(Array.isArray(d.statistics)&&d.statistics.length){
+          const heading=document.createElement("strong");heading.textContent="Статистика по годам";card.append(heading);
+          for(const row of d.statistics){
+            const line=document.createElement("span");line.textContent=kgdText(row.year)+" — работники: "+kgdText(row.workersCount)+", налоги: "+kgdText(row.taxIn)+" ₸, КНН: "+kgdText(row.knn)+", НДС: "+kgdText(row.vatAmount)+" ₸";card.append(line);
+          }
+        }
+        lookupResults.append(card);lookupStatus.textContent="Официальные сведения КГД";
+      }catch(err){if(sequence===lookupSequence&&lookupDialog.open)lookupStatus.textContent=err.name==="TimeoutError"?"КГД не ответил вовремя.":(err.message==="Failed to fetch"?"Сервер КГД недоступен.":err.message);}
+    }
     function findCounterparties(){
       lookupResults.replaceChildren();
-      const query=C.norm(lookupInput.value);
-      if(!ops.length){lookupStatus.textContent="";return;}
+      const raw=lookupInput.value.trim();
+      if(/^\d{12}$/.test(raw)){findKgd(raw);return;}
+      const query=C.norm(raw);
+      if(!ops.length){lookupStatus.textContent="Для поиска в КГД введите 12 цифр БИН или ИИН.";return;}
       if(!query){lookupStatus.textContent="Введите БИН, ИИН или наименование.";return;}
       const found=new Map();
       for(const op of ops){
@@ -1063,18 +1101,20 @@
         for(const [tag,value] of [["strong",entry.name||"Наименование не указано"],["span","БИН / ИИН: "+(entry.bin||"Не указан в выписке")],["span","ИИК: "+(Array.from(entry.accounts).filter(Boolean).join(", ")||"Не указан в выписке")],["span","Операций в выборке: "+entry.count]]){
           const element=document.createElement(tag);element.textContent=value;card.append(element);
         }
+        if(/^\d{12}$/.test(entry.bin)){const button=document.createElement("button");button.type="button";button.className="btn outline";button.textContent="Запросить сведения КГД";button.addEventListener("click",()=>{lookupInput.value=entry.bin;findKgd(entry.bin);});card.append(button);}
         fragment.append(card);
       }
       lookupResults.append(fragment);
     }
     $("openCounterpartyLookup").addEventListener("click",()=>{
-      lookupInput.value="";lookupResults.replaceChildren();
-      lookupStatus.textContent=ops.length?"Введите БИН, ИИН или наименование.":"";
+      lookupSequence++;lookupInput.value="";lookupResults.replaceChildren();accessInput.value="";
+      lookupStatus.textContent="";
       lookupDialog.showModal();lookupInput.focus();
     });
     $("closeCounterpartyLookup").addEventListener("click",()=>lookupDialog.close());
+    lookupDialog.addEventListener("close",()=>{lookupSequence++;accessInput.value="";lookupResults.replaceChildren();});
     $("counterpartyLookupForm").addEventListener("submit",event=>{event.preventDefault();findCounterparties();});
-    lookupInput.addEventListener("input",()=>{lookupResults.replaceChildren();lookupStatus.textContent=ops.length?"Нажмите «Найти».":"";});
+    lookupInput.addEventListener("input",()=>{lookupSequence++;lookupResults.replaceChildren();lookupStatus.textContent="";});
   }
   $("search").addEventListener("input",render);
   $("counterpartyFilter")?.addEventListener("change",render);

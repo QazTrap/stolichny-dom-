@@ -13,7 +13,7 @@ app.use(helmet({
       scriptSrc: ["'self'", "https://cdn.sheetjs.com"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:"],
-      connectSrc: ["'self'"],
+      connectSrc: ["'self'", "https://stoldom-api-production.up.railway.app"],
       fontSrc: ["'self'"],
       objectSrc: ["'none'"],
       baseUri: ["'self'"],
