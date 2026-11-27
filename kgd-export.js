@@ -64,7 +64,7 @@
   }
   function docx(r,images){
     const xml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
-    const body=(images?imageParagraph(1,"STOLDOM",550000,550000):"")+paragraph("STOLDOM.SITE",{bold:true,size:22,color:"315D91"})+paragraph(TITLE,{bold:true,size:34})+paragraph(SOURCE)+paragraph("Дата формирования: "+r.date)+table([["Показатель","Значение"],...r.rows],[3300,5700])+(r.statistics.length?paragraph("Статистика по годам",{bold:true,size:26})+table([STATS,...r.statistics],[1000,1300,1900,1200,1500,2100]):"")+(images?.qr?paragraph("Открыть карточку контрагента")+imageParagraph(2,"QR",1200000,1200000):"");
+    const body=(images?imageParagraph(1,"STOLDOM",550000,550000):"")+paragraph("STOLDOM.SITE",{bold:true,size:22,color:"315D91"})+paragraph(TITLE,{bold:true,size:34})+paragraph(SOURCE)+paragraph("Дата формирования: "+r.date)+table([["Показатель","Значение"],...r.rows],[3300,5700])+(r.statistics.length?paragraph("Статистика по годам",{bold:true,size:26})+table([STATS,...r.statistics],[1000,1300,1900,1200,1500,2100]):"")+(images?.qr?imageParagraph(2,"QR",1200000,1200000)+paragraph("Открыть карточку контрагента",{size:18}):"");
     return zip({
       "[Content_Types].xml":xml+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>',
       "_rels/.rels":xml+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
@@ -93,7 +93,7 @@
     return concat(parts);
   }
   async function pdf(r){
-    const W=1240,H=1754,M=86,RIGHT=W-M,BOTTOM=H-105,LH=29;
+    const W=1240,H=1754,M=86,RIGHT=W-M,BOTTOM=H-105,LH=26;
     const canvas=document.createElement("canvas");canvas.width=W;canvas.height=H;
     const ctx=canvas.getContext("2d",{alpha:false});if(!ctx)throw Error("Не удалось подготовить PDF.");
     const logo=await globalThis.KgdBrand.logoCanvas(),qr=globalThis.KgdBrand.link(r.xin)?globalThis.KgdBrand.qrCanvas(r.xin,6):null;
@@ -126,16 +126,17 @@
       pages.push(new Uint8Array(await blob.arrayBuffer()));
     }
     async function row(label,value){
-      const split=M+398,labels=wrap(label,365,23,true),values=wrap(value,RIGHT-split-24);
+      const split=M+398,labels=wrap(label,365,21),values=wrap(value,RIGHT-split-24,22,true);
       const total=Math.max(labels.length,values.length);
+      if(total*LH+12<=BOTTOM-282&&y+total*LH+12>BOTTOM){await finish();start();}
       let pos=0;
       while(pos<total){
-        let n=Math.floor((BOTTOM-y-18)/LH);
-        if(n<1){await finish();start();n=Math.floor((BOTTOM-y-18)/LH);}
-        const take=Math.min(total-pos,n),height=take*LH+18;
+        let n=Math.floor((BOTTOM-y-12)/LH);
+        if(n<1){await finish();start();n=Math.floor((BOTTOM-y-12)/LH);}
+        const take=Math.min(total-pos,n),height=take*LH+12;
         ctx.fillStyle="#f1f4f8";ctx.fillRect(M,y,398,height);
         ctx.strokeStyle="#d4dbe4";ctx.lineWidth=1;ctx.strokeRect(M,y,RIGHT-M,height);
-        for(let i=0;i<take;i++){if(labels[pos+i]!==undefined)draw(labels[pos+i],M+12,y+27+i*LH,23,true);if(values[pos+i]!==undefined)draw(values[pos+i],split+12,y+27+i*LH);}
+        for(let i=0;i<take;i++){if(labels[pos+i]!==undefined)draw(labels[pos+i],M+12,y+24+i*LH,21,false,"#526174");if(values[pos+i]!==undefined)draw(values[pos+i],split+12,y+24+i*LH,22,true);}
         y+=height;pos+=take;
       }
     }
@@ -143,11 +144,36 @@
     await row("Показатель","Значение");
     for(const [label,value] of r.rows)await row(label,value);
     if(r.statistics.length){
-      if(y+90>BOTTOM){await finish();start();}
-      y+=38;draw("Статистика по годам",M,y,30,true);y+=20;
-      for(const data of r.statistics)await row("Год: "+data[0],STATS.slice(1).map((label,i)=>label+": "+data[i+1]).join("\n"));
+      const widths=[100,150,245,130,180,263],labels=["Год","Работники","Налоги, ₸","КНН","Средний КНН","НДС, ₸"];
+      const fmt=new Intl.NumberFormat("ru-RU",{maximumFractionDigits:2});
+      const header=()=>{
+        y+=32;draw("Статистика по годам",M,y,28,true);y+=17;
+        ctx.fillStyle="#e7edf5";ctx.fillRect(M,y,RIGHT-M,42);
+        let x=M;
+        labels.forEach((label,i)=>{draw(label,x+10,y+27,18,true,"#526174");x+=widths[i];});
+        y+=42;
+      };
+      if(y+140>BOTTOM){await finish();start();}
+      header();
+      for(const [i,data] of r.statistics.entries()){
+        if(y+42>BOTTOM){await finish();start();header();}
+        if(i%2===0){ctx.fillStyle="#f5f8fc";ctx.fillRect(M,y,RIGHT-M,42);}
+        let x=M;
+        data.forEach((value,j)=>{
+          const str=typeof value==="number"&&j!==0?fmt.format(value):String(value);
+          let size=21;font(size,true);
+          while(size>13&&ctx.measureText(str).width>widths[j]-18){size--;font(size,true);}
+          draw(str,x+10,y+28,size,true);x+=widths[j];
+        });
+        ctx.fillStyle="#d4dbe4";ctx.fillRect(M,y+41,RIGHT-M,1);y+=42;
+      }
     }
-    if(qr){if(y+210>BOTTOM){await finish();start();}const size=164;ctx.drawImage(qr,RIGHT-size,y+12,size,size);draw("Открыть карточку",RIGHT-210,y+200,21,false,"#526174");}
+    if(qr){
+      if(y+222>BOTTOM){await finish();start();}
+      const size=180,center=RIGHT-110,top=y+12;
+      ctx.imageSmoothingEnabled=false;ctx.drawImage(qr,center-size/2,top,size,size);ctx.imageSmoothingEnabled=true;
+      const caption="Открыть карточку";font(19);draw(caption,center-ctx.measureText(caption).width/2,top+size+20,19,false,"#526174");
+    }
     await finish();return imagePdf(pages,W,H);
   }
   async function download(format,d,fields){
