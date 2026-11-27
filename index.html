@@ -583,7 +583,7 @@ document.querySelectorAll('.ai-sidebar [data-ai-prompt]').forEach(function(butto
 </style>
 <dialog id="cheatDesk" aria-labelledby="cheatTitle"><div class="recon-dialog-head"><div><h2 id="cheatTitle">Шпаргалки бухгалтера</h2><p>Личный рабочий стол</p></div><button id="cheatClose" type="button" aria-label="Закрыть">×</button></div>
 <p class="muted">Файлы хранятся только в этом браузере. Не синхронизируются между устройствами; очистка данных сайта может удалить их.</p>
-<div id="cheatDrop"><button id="cheatAdd" class="btn primary" type="button">+ Добавить файлы</button><input id="cheatFiles" type="file" multiple accept=".pdf,.xls,.xlsx,.xlsm,.csv,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp,.gif" hidden><p>или перетащите сюда PDF, Excel, Word и изображения</p></div>
+<section id="referenceLibrary" style="margin:16px 0"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><h3>Справочники STOLDOM</h3><button id="refRefresh" class="btn outline" type="button">↻ Обновить справочники</button></div><p id="refStatus" class="muted" role="status"></p><div id="refList" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px"></div><section id="refReader" hidden style="margin-top:16px;border:1px solid #d9e1eb;border-radius:12px;padding:16px"><div style="display:flex;justify-content:space-between;gap:8px"><strong>Просмотр справочника</strong><button class="btn outline" id="refClose" type="button">Закрыть</button></div><div id="refContent" style="overflow:auto"></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="refDownload" class="btn outline" type="button">Скачать HTML</button><button id="refExcel" class="btn outline" type="button">Скачать Excel</button><button id="refPrint" class="btn outline" type="button">Печать / PDF</button></div></section></section><h3>Мои файлы</h3><div id="cheatDrop"><button id="cheatAdd" class="btn primary" type="button">+ Добавить файлы</button><input id="cheatFiles" type="file" multiple accept=".pdf,.xls,.xlsx,.xlsm,.csv,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp,.gif" hidden><p>или перетащите сюда PDF, Excel, Word и изображения</p></div>
 <div id="cheatStatus" role="status" aria-live="polite"></div><div id="cheatGrid"></div></dialog>
 <script>
 (function(){
@@ -600,6 +600,20 @@ document.querySelectorAll('.ai-sidebar [data-ai-prompt]').forEach(function(butto
 })();
 </script>
 
+<script>
+(function(){
+const $=id=>document.getElementById(id);let current=null,library=null,seq=0;
+function node(tag,value){const n=document.createElement(tag);if(value!==undefined)n.textContent=value;return n;}
+function build(d){const el=node("article");el.append(node("h2","STOLDOM.SITE · "+d.title),node("p","Версия "+library.version+" · "+library.date),node("p",d.note));const table=node("table");table.style.cssText="width:100%;border-collapse:collapse;margin:12px 0";const h=table.createTHead().insertRow();for(const c of d.columns)h.append(node("th",c));const body=table.createTBody();for(const row of d.rows){const tr=body.insertRow();for(const cell of row)tr.insertCell().textContent=cell;}for(const cell of table.querySelectorAll("td,th"))cell.style.cssText="border:1px solid #d9e1eb;padding:8px;text-align:left;white-space:normal";el.append(table);for(const [label,url] of d.sources){if(!/^https:\/\//.test(url))continue;const p=node("p"),a=node("a",label);a.href=url;a.target="_blank";a.rel="noopener noreferrer";p.append(a);el.append(p);}return el;}
+function show(d){current=d;$("refContent").replaceChildren(build(d));$("refReader").hidden=false;$("refReader").scrollIntoView({block:"nearest"});}
+async function load(){const id=++seq;$("refStatus").textContent="Проверяем версии…";try{const response=await fetch("/cheat-library.json",{cache:"no-store"});if(!response.ok)throw Error();const next=await response.json();if(id!==seq)return;if(!Array.isArray(next.docs))throw Error();library=next;current=null;$("refReader").hidden=true;$("refList").replaceChildren();for(const d of library.docs){const b=node("button","📄 "+d.title);b.type="button";b.className="btn outline";b.style.cssText="white-space:normal;height:auto;min-height:44px";b.onclick=()=>show(d);$("refList").append(b);}$("refStatus").textContent="Версия "+library.version+" · "+library.date+" · Начальная библиотека";}catch{$("refStatus").textContent="Не удалось проверить обновление. Повторите попытку.";}}
+function html(){return "<!doctype html><html lang='ru'><meta charset='utf-8'><title>STOLDOM</title><body style='font:16px Arial,sans-serif;padding:24px;color:#24354a'>"+build(current).outerHTML+"</body></html>";}
+$("cheatOpen").addEventListener("click",()=>{if(!library)load();});$("refRefresh").onclick=load;$("refClose").onclick=()=>{$("refReader").hidden=true;current=null;};
+$("refDownload").onclick=()=>{if(!current)return;const u=URL.createObjectURL(new Blob([html()],{type:"text/html;charset=utf-8"}));const a=node("a");a.href=u;a.download=current.title+".html";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);};
+$("refExcel").onclick=()=>{if(!current)return;if(!window.XLSX){$("refStatus").textContent="Excel-модуль недоступен.";return;}const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet([["STOLDOM.SITE",current.title],["Версия",library.version],["Дата",library.date],["Примечание",current.note],[],current.columns,...current.rows,[],...current.sources]);XLSX.utils.book_append_sheet(wb,ws,"Справочник");XLSX.writeFile(wb,current.title+".xlsx");};
+$("refPrint").onclick=()=>{if(!current)return;const w=window.open("","_blank");if(!w){$("refStatus").textContent="Разрешите всплывающие окна для печати.";return;}w.document.open();w.document.write(html());w.document.close();w.focus();w.print();};
+})();
+</script>
 </body></html>
 
 
