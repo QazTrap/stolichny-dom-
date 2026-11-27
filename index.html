@@ -213,8 +213,8 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 .choice-options .highlight,.choice-options [role=option]:hover{background:#eaf3ff}
 .choice-empty{padding:8px;color:var(--muted)}
 .cell-field{min-width:8em;width:100%;border:1px solid #a9c5e6;border-radius:6px;padding:6px;background:#fff;color:var(--ink);font:inherit}
-#rows td:nth-child(3){white-space:normal;overflow-wrap:anywhere;max-width:29em}
-#rows td:nth-child(7),#rows td:nth-child(8){white-space:normal}
+#rows td:nth-child(4){white-space:normal;overflow-wrap:anywhere;max-width:29em}
+#rows td:nth-child(8),#rows td:nth-child(9){white-space:normal}
 .account-cell .cell-field{width:6em;min-width:5em}
 #counterparty.cell-field{min-width:14em}
 .operation-detail>td{padding:0;background:#f5f9ff;white-space:normal;cursor:default}
@@ -254,6 +254,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 .counterparty-trigger{display:inline;border:0;background:transparent;padding:0;color:inherit;font:inherit;font-weight:750;text-align:left;line-height:inherit;white-space:normal;cursor:pointer;touch-action:manipulation}
 .counterparty-trigger:hover{color:#156ec7}
 #operationsTable tr[data-id],#operationsTable tr[data-id]>td{transition:none;animation:none}
+#operationsTable .operation-check{width:32px;min-width:32px;text-align:center;padding:5px}#operationsTable .operation-check input{width:16px;height:16px;accent-color:#27834e;cursor:pointer;margin:0;vertical-align:middle}
 #operationsTable tr.operation-marked>td{background-color:var(--green2)}
 .counterparty-trigger:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:3px}
 .counterparty-info{position:fixed;z-index:70;max-width:calc(100vw - 16px);width:325px;background:#fff;border:1px solid #d7e2f1;border-radius:12px;box-shadow:0 12px 30px rgba(25,54,93,.16);padding:0;color:var(--ink);overflow:auto;max-height:calc(100vh - 16px)}
@@ -311,10 +312,10 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 .ledger-visibility-toggle:hover{background:#eaf3ff;border-color:#b7d0ed}
 .ledger-visibility-toggle:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 .ledger-visibility-toggle[aria-pressed="true"]{background:linear-gradient(#f9fafb,#e9edf2);border-color:#c7ced8}
-#operationsTable.ledger-columns-hidden thead th:nth-child(5),
 #operationsTable.ledger-columns-hidden thead th:nth-child(6),
-#operationsTable.ledger-columns-hidden tbody tr:not(.operation-detail)>td:nth-child(5),
-#operationsTable.ledger-columns-hidden tbody tr:not(.operation-detail)>td:nth-child(6){display:none}
+#operationsTable.ledger-columns-hidden thead th:nth-child(7),
+#operationsTable.ledger-columns-hidden tbody tr:not(.operation-detail)>td:nth-child(6),
+#operationsTable.ledger-columns-hidden tbody tr:not(.operation-detail)>td:nth-child(7){display:none}
 #operationsTable.ledger-columns-hidden{min-width:730px}
 
 /* AI sidebar and locally prepared reconciliation draft */
@@ -451,7 +452,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
      <div class="counterparty-lookup-toolbar"><button class="btn outline" type="button" id="openCounterpartyLookup"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-search"></use></svg> Сведения по контрагентам</button><span class="muted" id="tableCaption" hidden style="display:none!important">Сначала загрузите банковскую выписку</span></div>
     </div>
     <div class="table-scroll-top" id="tableScrollTop" aria-label="Горизонтальная прокрутка таблицы операций" role="region" tabindex="0"><div id="tableScrollTopSpacer"></div></div>
-    <div class="tablewrap" id="tableScrollBottom"><table id="operationsTable"><thead><tr><th scope="col"><label class="column-filter">Дата<select id="dateColumnFilter" aria-label="Фильтр по дате" title="Выбрать дату" disabled><option value="">Все даты</option></select></label></th><th>Направление</th><th scope="col"><label class="column-filter">Контрагент<select id="counterpartyFilter" aria-label="Фильтр по контрагенту" title="Выбрать контрагента" disabled><option value="">Все контрагенты</option></select></label></th><th scope="col"><div class="amount-header-tools"><label class="column-filter">Сумма<select id="amountColumnFilter" aria-label="Фильтр по сумме" title="Выбрать сумму" disabled><option value="">Все суммы</option></select></label><button type="button" class="ledger-visibility-toggle" id="toggleLedgerColumns" aria-controls="operationsTable" aria-pressed="false" title="Скрыть столбцы Дт и Кт" aria-label="Скрыть столбцы Дт и Кт"><span class="ledger-debit" aria-hidden="true">Дт</span><span class="ledger-credit" aria-hidden="true">Кт</span></button></div></th><th title="Предварительный счёт дебета">Дт</th><th title="Предварительный счёт кредита">Кт</th><th scope="col"><label class="column-filter">Статья ДДС<select id="ddsArticleFilter" aria-label="Фильтр по статье ДДС" title="Выбрать статью ДДС" disabled><option value="">Все статьи ДДС</option></select></label></th><th>Тип документа 1С</th><th>Комментарии из выписки</th></tr></thead><tbody id="rows"></tbody></table></div>
+    <div class="tablewrap" id="tableScrollBottom"><table id="operationsTable"><thead><tr><th class="operation-check"><input type="checkbox" id="markAllOperations" aria-label="Выбрать все операции текущего фильтра" title="Выбрать все по текущему фильтру" disabled></th><th scope="col"><label class="column-filter">Дата<select id="dateColumnFilter" aria-label="Фильтр по дате" title="Выбрать дату" disabled><option value="">Все даты</option></select></label></th><th>Направление</th><th scope="col"><label class="column-filter">Контрагент<select id="counterpartyFilter" aria-label="Фильтр по контрагенту" title="Выбрать контрагента" disabled><option value="">Все контрагенты</option></select></label></th><th scope="col"><div class="amount-header-tools"><label class="column-filter">Сумма<select id="amountColumnFilter" aria-label="Фильтр по сумме" title="Выбрать сумму" disabled><option value="">Все суммы</option></select></label><button type="button" class="ledger-visibility-toggle" id="toggleLedgerColumns" aria-controls="operationsTable" aria-pressed="false" title="Скрыть столбцы Дт и Кт" aria-label="Скрыть столбцы Дт и Кт"><span class="ledger-debit" aria-hidden="true">Дт</span><span class="ledger-credit" aria-hidden="true">Кт</span></button></div></th><th title="Предварительный счёт дебета">Дт</th><th title="Предварительный счёт кредита">Кт</th><th scope="col"><label class="column-filter">Статья ДДС<select id="ddsArticleFilter" aria-label="Фильтр по статье ДДС" title="Выбрать статью ДДС" disabled><option value="">Все статьи ДДС</option></select></label></th><th>Тип документа 1С</th><th>Комментарии из выписки</th></tr></thead><tbody id="rows"></tbody></table></div>
     <div class="pagination"><span id="shownCount">Операций пока нет</span></div>
    </section>
    <div id="rowEditStorage" hidden>
@@ -475,13 +476,13 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
       <p id="duplicateHint"></p>
       <label><input type="checkbox" id="confirmDuplicate"> Это отдельная операция, сверено с банком</label>
      </div>
-     <div id="similarActions" class="similar-actions" hidden><label><input type="checkbox" id="applyToSimilar"> Применить выбранные Дт/Кт, ДДС и документ к похожим операциям (<span id="similarCount">0</span>)</label></div>
+     <div id="markedActions" class="similar-actions" hidden><label><input type="checkbox" id="applyToMarked"> Применить Дт/Кт, ДДС и документ к отмеченным операциям того же направления</label></div><div id="similarActions" class="similar-actions" hidden><label><input type="checkbox" id="applyToSimilar"> Применить выбранные Дт/Кт, ДДС и документ к похожим операциям (<span id="similarCount">0</span>)</label></div>
      <div class="editactions"><button class="btn outline" type="button" id="reset"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-undo"></use></svg> Отменить</button><button class="btn primary" type="submit"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-save"></use></svg> Сохранить</button></div>
     </form>
    </div>
    <datalist id="ledgerCodes"></datalist>
   </div>
-  <div class="bottom"><div class="ready"><span class="check" id="bottomStatusIcon"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-help"></use></svg></span><span id="bottomMessage">Загрузите банковскую выписку, чтобы начать работу.</span></div><div class="bottomactions"><button class="btn" id="exportJson" type="button" disabled title="JSON для 1С: операции по текущему фильтру"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-download"></use></svg>Скачать JSON для 1С</button><button class="btn in-development" id="export" type="button" disabled title="Функция в разработке"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-download"></use></svg><span class="feature-label">Скачать Excel для подготовки 1С</span><span class="feature-status"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-wrench"></use></svg>В разработке</span></button><button type="button" class="btn in-development" disabled title="Функция в разработке"><span class="feature-label">Отправить в 1С</span><span class="feature-status"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-wrench"></use></svg>В разработке</span></button></div></div>
+  <div class="bottom"><div class="ready"><span class="check" id="bottomStatusIcon"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-help"></use></svg></span><span id="bottomMessage">Загрузите банковскую выписку, чтобы начать работу.</span></div><div class="bottomactions"><span id="markedSummary" style="font-size:12px"></span><button class="btn" id="exportJson" type="button" disabled title="JSON для 1С: операции по текущему фильтру"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-download"></use></svg>Скачать JSON для 1С</button><button class="btn in-development" id="export" type="button" disabled title="Функция в разработке"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-download"></use></svg><span class="feature-label">Скачать Excel для подготовки 1С</span><span class="feature-status"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-wrench"></use></svg>В разработке</span></button><button type="button" class="btn in-development" disabled title="Функция в разработке"><span class="feature-label">Отправить в 1С</span><span class="feature-status"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ic-wrench"></use></svg>В разработке</span></button></div></div>
   <section class="tablecard" id="previewPanel" style="margin-top:12px;padding:16px" hidden>
    <h2 style="font-size:17px;margin:0 0 12px">Предварительная проверка перед экспортом</h2>
    <div id="previewContent"></div>
@@ -562,7 +563,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 <script src="/kgd-brand.js?v=1" defer></script>
 <script src="/kgd-export.js?v=20261127-labels-stats-page" defer></script>
 <script src="/stoldom-exchange.js?v=1" defer></script>
-<script src="/app.js?v=connector-filtered-json-20261127" defer></script>
+<script src="/app.js?v=marked-checkbox-20261128" defer></script>
 <script src="/reconciliation.js?v=20261125-act-draft-2" defer></script>
 <script>
 document.querySelectorAll('.ai-sidebar [data-ai-prompt]').forEach(function(button){
