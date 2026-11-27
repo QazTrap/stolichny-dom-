@@ -1,6 +1,7 @@
 "use strict";
 const express = require("express");
 const {timingSafeEqual, createHash} = require("node:crypto");
+const sessionAuth=require("./kgd-session");
 const ENDPOINT = "https://kgd.gov.kz/services/isnaportal/public/get-sur-data";
 const ORIGINS = new Set(["https://stoldom.site","https://www.stoldom.site"]);
 const PATH = "/api/kgd/counterparty";
@@ -25,7 +26,7 @@ function normalize(data){
 }
 const digest=value=>createHash("sha256").update(value).digest();
 module.exports=function mountKgd(app){
-  let windowStart=0, count=0, active=0;
+  let windowStart=0, count=0, active=0, loginWindow=0, loginFailures=0;
   function headers(req,res,next){
     res.set("Cache-Control","no-store");
     const origin=req.get("Origin");
@@ -39,13 +40,27 @@ module.exports=function mountKgd(app){
     next();
   }
   app.options(PATH,headers,(_req,res)=>res.sendStatus(204));
+  const sessionPath="/api/kgd/session";
+  app.options(sessionPath,headers,(_req,res)=>res.sendStatus(204));
+  app.post(sessionPath,headers,(req,res)=>{
+    const access=process.env.STOLDOM_KGD_ACCESS_KEY;
+    if(!access||access.length<24)return res.status(503).json({error:"Интеграция КГД ещё не настроена."});
+    const supplied=req.get("Authorization")||"";
+    if(!timingSafeEqual(digest(supplied),digest("Bearer "+access))){
+      const now=Date.now();
+      if(now-loginWindow>=60000){loginWindow=now;loginFailures=0;}
+      if(++loginFailures>10){res.set("Retry-After","60");return res.status(429).json({error:"Слишком много попыток. Повторите через минуту."});}
+      return res.status(401).json({error:"Неверный код доступа."});
+    }
+    return res.json({ok:true,...sessionAuth.issue(access)});
+  });
   app.post(PATH,headers,express.json({limit:"2kb"}),async(req,res)=>{
     const token=process.env.KGD_API_TOKEN;
     const access=process.env.STOLDOM_KGD_ACCESS_KEY;
     const endpoint=process.env.KGD_API_URL||ENDPOINT;
     if(!token||!access||access.length<24||endpoint!==ENDPOINT)return res.status(503).json({error:"Интеграция КГД ещё не настроена."});
     const supplied=req.get("Authorization")||"";
-    if(!timingSafeEqual(digest(supplied),digest("Bearer "+access)))return res.status(401).json({error:"Требуется код доступа."});
+    if(!timingSafeEqual(digest(supplied),digest("Bearer "+access))&&!sessionAuth.valid(access,supplied.startsWith("Bearer ")?supplied.slice(7):""))return res.status(401).json({error:"Сессия истекла. Введите код доступа."});
     const xin=req.body?.xin;
     if(typeof xin!=="string"||!/^\d{12}$/.test(xin))return res.status(400).json({error:"Введите 12 цифр БИН или ИИН."});
     const now=Date.now();

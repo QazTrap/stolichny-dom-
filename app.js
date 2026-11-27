@@ -1038,8 +1038,22 @@
   const lookupDialog=$("counterpartyLookupDialog");
   if(lookupDialog){
     const lookupInput=$("counterpartyLookupInput"),lookupStatus=$("counterpartyLookupStatus"),lookupResults=$("counterpartyLookupResults");
-    let lookupSequence=0,kgdAccess="";
-    const accessInput=$("kgdAccessInput");
+    let lookupSequence=0,kgdSession=null;
+    const accessInput=$("kgdAccessInput"),accessPanel=$("kgdAccessPanel"),remember=$("kgdRemember"),signOut=$("kgdSignOut");
+    const sessionKey="stoldom.kgd.session.v1";
+    const apiBase="https://stoldom-api-production.up.railway.app/api/kgd/";
+    function sessionUsable(s){return s&&typeof s.session==="string"&&/^\d{13}\.[A-Za-z0-9_-]{32}\.[A-Za-z0-9_-]{43}$/.test(s.session)&&Number.isFinite(s.expiresAt)&&s.expiresAt>Date.now();}
+    try{const saved=JSON.parse(localStorage.getItem(sessionKey)||"null");if(sessionUsable(saved))kgdSession=saved;else localStorage.removeItem(sessionKey);}catch{}
+    function updateKgdAuth(){
+      if(!sessionUsable(kgdSession)){kgdSession=null;try{localStorage.removeItem(sessionKey);}catch{}}
+      accessPanel.hidden=!!kgdSession;signOut.hidden=!kgdSession;
+    }
+    function clearKgdSession(){kgdSession=null;accessInput.value="";try{localStorage.removeItem(sessionKey);}catch{}updateKgdAuth();}
+    signOut.addEventListener("click",()=>{lookupSequence++;clearKgdSession();lookupResults.replaceChildren();lookupStatus.textContent="Вы вышли из КГД.";});
+    async function kgdFetch(route,key,body){
+      return fetch(apiBase+route,{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify(body||{}),signal:AbortSignal.timeout(20000),credentials:"omit",cache:"no-store"});
+    }
+    updateKgdAuth();
     const kgdFields=[["xin","БИН / ИИН"],["regDate","Дата регистрации"],["residency","Резидентство"],["oked","ОКЭД"],["okedName","Вид деятельности"],["okedDate","Дата ОКЭД"],["vatInfo","Сведения по НДС"],["vatDate","Дата регистрации по НДС"],["taxMode","Налоговый режим"],["taxModeDate","Дата налогового режима"],["registrationInvalid","Недействительная регистрация"],["reRegistrationInvalid","Недействительная перерегистрация"],["operationsWOWork","Операции без фактического выполнения"],["esfRestrinctions","Ограничения по ЭСФ"],["inactive","Бездействующий налогоплательщик"],["regAddressAbsent","Отсутствие по адресу регистрации"],["bankrupt","Банкротство"],["selfRegulatoryRegistry","Реестр СРО"],["courtDecisionRegistry","Реестр судебных решений"],["taxDebt","Налоговая задолженность"],["actuality","Актуальность сведений"]];
     function kgdText(value){
       if(value===null||value===undefined||value==="")return "Нет данных";
@@ -1049,15 +1063,26 @@
     async function findKgd(xin){
       const sequence=++lookupSequence;
       lookupResults.replaceChildren();
-      const key=accessInput.value.trim()||kgdAccess;
-      if(!key){lookupStatus.textContent="Введите код доступа к КГД.";accessInput.focus();return;}
+      updateKgdAuth();
+      if(!kgdSession&&!accessInput.value.trim()){lookupStatus.textContent="Введите код доступа к КГД.";accessInput.focus();return;}
       lookupStatus.textContent="Запрашиваем сведения КГД…";
       try{
-        const response=await fetch("https://stoldom-api-production.up.railway.app/api/kgd/counterparty",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({xin}),signal:AbortSignal.timeout(20000),credentials:"omit",cache:"no-store"});
+        if(!kgdSession){
+          const save=remember.checked;
+          const login=await kgdFetch("session",accessInput.value.trim());
+          const issued=await login.json();
+          if(sequence!==lookupSequence||!lookupDialog.open)return;
+          if(!login.ok||!issued.ok||!sessionUsable(issued))throw Error(issued.error||"Не удалось авторизоваться.");
+          kgdSession={session:issued.session,expiresAt:issued.expiresAt};
+          accessInput.value="";
+          try{if(save)localStorage.setItem(sessionKey,JSON.stringify(kgdSession));else localStorage.removeItem(sessionKey);}catch{}
+          updateKgdAuth();
+        }
+        const response=await kgdFetch("counterparty",kgdSession.session,{xin});
         const payload=await response.json();
         if(sequence!==lookupSequence||!lookupDialog.open)return;
+        if(response.status===401){clearKgdSession();throw Error("Сессия завершена. Введите код доступа.");}
         if(!response.ok||!payload.ok)throw Error(payload.error||"Не удалось получить сведения КГД.");
-        kgdAccess=key;accessInput.value="";
         const d=payload.data||{},card=document.createElement("article");
         card.className="counterparty-lookup-result";
         const title=document.createElement("strong");title.textContent=kgdText(d.name);card.append(title);
@@ -1109,7 +1134,7 @@
     $("openCounterpartyLookup").addEventListener("click",()=>{
       lookupSequence++;lookupInput.value="";lookupResults.replaceChildren();accessInput.value="";
       lookupStatus.textContent="";
-      lookupDialog.showModal();lookupInput.focus();
+      updateKgdAuth();lookupDialog.showModal();lookupInput.focus();
     });
     $("closeCounterpartyLookup").addEventListener("click",()=>lookupDialog.close());
     lookupDialog.addEventListener("close",()=>{lookupSequence++;accessInput.value="";lookupResults.replaceChildren();});
