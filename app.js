@@ -1084,17 +1084,41 @@
         if(response.status===401){clearKgdSession();throw Error("Сессия завершена. Введите код доступа.");}
         if(!response.ok||!payload.ok)throw Error(payload.error||"Не удалось получить сведения КГД.");
         const d=payload.data||{},card=document.createElement("article");
-        card.className="counterparty-lookup-result";
-        const title=document.createElement("strong");title.textContent=kgdText(d.name);card.append(title);
+        card.className="counterparty-lookup-result kgd-card";
+        const title=document.createElement("strong");title.className="kgd-name";title.textContent=kgdText(d.name);card.append(title);
+        const details=document.createElement("dl");details.className="kgd-details";
+        const riskFields=new Set(["registrationInvalid","reRegistrationInvalid","operationsWOWork","esfRestrinctions","inactive","regAddressAbsent","bankrupt","courtDecisionRegistry"]);
+        const numberFmt=new Intl.NumberFormat("ru-RU",{maximumFractionDigits:2});
+        function formatKgd(field,value){
+          if(typeof value==="number")return numberFmt.format(value)+(field==="taxDebt"?" ₸":"");
+          const val=kgdText(value);
+          if(/^\d{4}-\d{2}-\d{2}$/.test(val)&&(field==="actuality"||/date/i.test(field)))return val.split("-").reverse().join(".");
+          return val;
+        }
         for(const [field,label] of kgdFields){
           if(!Object.hasOwn(d,field))continue;
-          const line=document.createElement("span");line.textContent=label+": "+kgdText(d[field])+(field==="taxDebt"&&typeof d[field]==="number"?" ₸":"");card.append(line);
+          const line=document.createElement("div");line.className="kgd-detail";
+          const name=document.createElement("dt"),value=document.createElement("dd");
+          name.textContent=label;value.textContent=formatKgd(field,d[field]);
+          const raw=kgdText(d[field]).trim().toLowerCase();
+          if(raw==="нет данных"||raw==="мәлімет жоқ")value.classList.add("kgd-missing");
+          if((riskFields.has(field)&&(/^(да|иә|true)$/.test(raw)||d[field]===true))||(field==="taxDebt"&&typeof d[field]==="number"&&d[field]>0))value.classList.add("kgd-risk");
+          line.append(name,value);details.append(line);
         }
+        card.append(details);
         if(Array.isArray(d.statistics)&&d.statistics.length){
-          const heading=document.createElement("strong");heading.textContent="Статистика по годам";card.append(heading);
+          const heading=document.createElement("strong");heading.className="kgd-section-title";heading.textContent="Статистика по годам";card.append(heading);
+          const wrap=document.createElement("div");wrap.className="kgd-stats-scroll";
+          const table=document.createElement("table");table.className="kgd-stats";table.setAttribute("aria-label","Статистика КГД по годам");
+          const columns=[["year","Год"],["workersCount","Работники"],["taxIn","Налоги, ₸"],["knn","КНН"],["vatAmount","НДС, ₸"]];
+          const header=table.createTHead().insertRow();
+          for(const [,label] of columns){const th=document.createElement("th");th.scope="col";th.textContent=label;header.append(th);}
+          const tbody=table.createTBody();
           for(const row of d.statistics){
-            const line=document.createElement("span");line.textContent=kgdText(row.year)+" — работники: "+kgdText(row.workersCount)+", налоги: "+kgdText(row.taxIn)+" ₸, КНН: "+kgdText(row.knn)+", НДС: "+kgdText(row.vatAmount)+" ₸";card.append(line);
+            const tr=tbody.insertRow();
+            for(const [field] of columns){const td=tr.insertCell();td.textContent=field==="year"?kgdText(row[field]):formatKgd(field,row[field]);}
           }
+          wrap.append(table);card.append(wrap);
         }
         const downloads=document.createElement("div");downloads.className="kgd-downloads";
         for(const [format,label] of [["xlsx","Скачать Excel"],["pdf","Скачать PDF"],["docx","Скачать Word"]]){
@@ -1109,7 +1133,7 @@
           });
           downloads.append(button);
         }
-        card.append(downloads);lookupResults.append(card);lookupStatus.textContent="Официальные сведения КГД";
+        card.append(downloads);lookupResults.append(card);lookupStatus.textContent="Официальные сведения КГД";lookupDialog.scrollTop=0;
       }catch(err){if(sequence===lookupSequence&&lookupDialog.open)lookupStatus.textContent=err.name==="TimeoutError"?"КГД не ответил вовремя.":(err.message==="Failed to fetch"?"Сервер КГД недоступен.":err.message);}
     }
     function findCounterparties(){

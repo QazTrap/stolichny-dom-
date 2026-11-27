@@ -280,6 +280,26 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
  .counterparty-lookup-results{display:grid;gap:8px}
  .counterparty-lookup-result{display:grid;gap:5px;padding:12px;border:1px solid var(--line);border-radius:9px;overflow-wrap:anywhere;font-size:13px}
  .counterparty-lookup-result strong{font-size:14px}
+ #counterpartyLookupDialog{width:min(780px,calc(100vw - 24px));box-sizing:border-box}
+ #counterpartyLookupDialog>.recon-dialog-head{position:sticky;top:-20px;z-index:2;background:#fff;padding:14px 0 12px;margin-top:-14px;border-bottom:1px solid var(--line)}
+ #counterpartyLookupDialog:focus{outline:none}
+ .kgd-card{padding:14px;gap:12px}
+ .kgd-card .kgd-name{display:block;font-size:20px;line-height:1.35;font-weight:750;color:var(--ink)}
+ .kgd-details{margin:0;display:grid;gap:0}
+ .kgd-detail{display:grid;grid-template-columns:minmax(0,44%) minmax(0,1fr);gap:12px;align-items:start;padding:8px 10px;border-bottom:1px solid #e8edf3;line-height:1.45}
+ .kgd-detail:nth-child(odd){background:#f5f8fc}
+ .kgd-detail dt{font-weight:400;color:#586b84;margin:0}
+ .kgd-detail dd{font-weight:700;margin:0;min-width:0;color:var(--ink)}
+ .kgd-detail dd.kgd-missing{color:#7d8999;font-weight:600}
+ .kgd-detail dd.kgd-risk{color:#b42318}
+ .kgd-section-title{font-size:15px!important;font-weight:750;margin:6px 0 0}
+ .kgd-stats-scroll{overflow-x:auto;max-width:100%}
+ .kgd-stats{width:100%;min-width:530px;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+ .kgd-stats th{background:#edf3fb;color:#526780;font-weight:600;text-align:right;padding:9px 8px;border-bottom:1px solid #d4e0ef;white-space:normal}
+ .kgd-stats td{font-weight:700;padding:9px 8px;text-align:right;border-bottom:1px solid #e8edf3;white-space:nowrap}
+ .kgd-stats th:first-child,.kgd-stats td:first-child{text-align:left}
+ .kgd-stats tbody tr:nth-child(odd){background:#f5f8fc}
+ @media(max-width:520px){.kgd-detail{grid-template-columns:1fr;gap:3px;padding:8px}.kgd-card{padding:10px}.kgd-card .kgd-name{font-size:18px}}
  .kgd-downloads{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.kgd-downloads .btn{min-height:34px;padding:7px 12px;font-size:12px}
  .amount-header-tools{display:flex;align-items:center;justify-content:space-between;gap:12px}
  @media(min-width:1201px){.amount-header-tools .ledger-visibility-toggle{margin-inline-end:32px}}
@@ -543,7 +563,7 @@ body.is-processing label[for="fileInput"]{pointer-events:none;opacity:.6}
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="/workspace-core.js?v=alatau-xls-20261125" defer></script>
 <script src="/kgd-export.js?v=20261127-1" defer></script>
-<script src="/app.js?v=kgd-downloads-20261127" defer></script>
+<script src="/app.js?v=kgd-card-layout-20261127" defer></script>
 <script src="/reconciliation.js?v=20261125-act-draft-2" defer></script>
 <script>
 document.querySelectorAll('.ai-sidebar [data-ai-prompt]').forEach(function(button){
