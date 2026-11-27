@@ -627,7 +627,14 @@ function interactive(d){
 }
 function show(d){current=d;$("refContent").replaceChildren(interactive(d));$("refReader").hidden=false;$("refReader").scrollIntoView({block:"nearest"});}
 async function load(){const id=++seq;$("refStatus").textContent="Проверяем версии…";try{const response=await fetch("/cheat-library.json",{cache:"no-store"});if(!response.ok)throw Error();const next=await response.json();if(id!==seq)return;if(!Array.isArray(next.docs))throw Error();library=next;current=null;$("refReader").hidden=true;$("refList").replaceChildren();for(const d of library.docs){const b=node("button","📄 "+d.title);b.type="button";b.className="btn outline";b.style.cssText="white-space:normal;height:auto;min-height:44px";b.onclick=()=>show(d);$("refList").append(b);}$("refStatus").textContent="Версия "+library.version+" · "+library.date+" · Начальная библиотека";}catch{$("refStatus").textContent="Не удалось проверить обновление. Повторите попытку.";}}
-function html(){return "<!doctype html><html lang='ru'><meta charset='utf-8'><title>STOLDOM</title><body style='font:16px Arial,sans-serif;padding:24px;color:#24354a'>"+build(current).outerHTML+"<style>
+function html(){return "<!doctype html><html lang='ru'><meta charset='utf-8'><title>STOLDOM</title><body style='font:16px Arial,sans-serif;padding:24px;color:#24354a'>"+build(current).outerHTML+"</body></html>";}
+$("cheatOpen").addEventListener("click",()=>{if(!library)load();});$("refRefresh").onclick=load;$("refClose").onclick=()=>{$("refReader").hidden=true;current=null;};
+$("refDownload").onclick=()=>{if(!current)return;const u=URL.createObjectURL(new Blob([html()],{type:"text/html;charset=utf-8"}));const a=node("a");a.href=u;a.download=current.title+".html";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);};
+$("refExcel").onclick=()=>{if(!current)return;if(!window.XLSX){$("refStatus").textContent="Excel-модуль недоступен.";return;}const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet([["STOLDOM.SITE",current.title],["Версия",library.version],["Дата",library.date],["Примечание",current.note],[],current.columns,...current.rows,[],...current.sources]);XLSX.utils.book_append_sheet(wb,ws,"Справочник");XLSX.writeFile(wb,current.title+".xlsx");};
+$("refPrint").onclick=()=>{if(!current)return;const w=window.open("","_blank");if(!w){$("refStatus").textContent="Разрешите всплывающие окна для печати.";return;}w.document.open();w.document.write(html());w.document.close();w.focus();w.print();};
+})();
+</script>
+<style>
 #cheatDesk{box-sizing:border-box;max-width:calc(100vw - 24px)}
 #refReader,#refContent,#referenceLibrary{min-width:0;max-width:100%;box-sizing:border-box}
 #refContent{overflow-wrap:anywhere}
@@ -642,13 +649,6 @@ function html(){return "<!doctype html><html lang='ru'><meta charset='utf-8'><ti
 #refContent .ref-detail input{display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:8px;border:1px solid #ccd7e4;border-radius:6px;font-size:16px}
 @media(max-width:600px){#cheatDesk{padding:12px}#refReader{padding:10px!important}#refContent h2{font-size:19px}#refList{grid-template-columns:minmax(0,1fr)!important}#refContent .ref-detail dd{text-align:left}}
 </style>
-</body></html>";}
-$("cheatOpen").addEventListener("click",()=>{if(!library)load();});$("refRefresh").onclick=load;$("refClose").onclick=()=>{$("refReader").hidden=true;current=null;};
-$("refDownload").onclick=()=>{if(!current)return;const u=URL.createObjectURL(new Blob([html()],{type:"text/html;charset=utf-8"}));const a=node("a");a.href=u;a.download=current.title+".html";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);};
-$("refExcel").onclick=()=>{if(!current)return;if(!window.XLSX){$("refStatus").textContent="Excel-модуль недоступен.";return;}const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet([["STOLDOM.SITE",current.title],["Версия",library.version],["Дата",library.date],["Примечание",current.note],[],current.columns,...current.rows,[],...current.sources]);XLSX.utils.book_append_sheet(wb,ws,"Справочник");XLSX.writeFile(wb,current.title+".xlsx");};
-$("refPrint").onclick=()=>{if(!current)return;const w=window.open("","_blank");if(!w){$("refStatus").textContent="Разрешите всплывающие окна для печати.";return;}w.document.open();w.document.write(html());w.document.close();w.focus();w.print();};
-})();
-</script>
 </body></html>
 
 
