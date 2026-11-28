@@ -678,7 +678,7 @@ function renderLibrary(){
  for(const d of docs)list.append(listRow(shortTitle(d),false,()=>open(d)));
  if(!docs.length)list.append(node("p","Ничего не найдено"));
  }else{
- for(const [index,f] of folders.entries()){const count=library.docs.filter(d=>f[1].test(d.title)).length;if(count){const row=listRow(f[0],true,()=>{folder=f;renderLibrary();},count);const number=node("span",String(index+1).padStart(2,"0"));number.className="ref-folder-number";row.prepend(number);list.append(row);}}
+ for(const [index,f] of folders.entries()){const count=library.docs.filter(d=>f[1].test(d.title)).length;if(count){const row=listRow(f[0],true,()=>{folder=f;renderLibrary();},count);const number=node("span",String(index+1)+".");number.className="ref-folder-number";row.prepend(number);list.append(row);}}
  const other=library.docs.filter(d=>!folders.some(f=>f[1].test(d.title)));for(const d of other)list.append(listRow(shortTitle(d),false,()=>open(d)));
  }
 }
