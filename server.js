@@ -38,6 +38,7 @@ for(const name of ["workspace-core.js","app.js","alatau-pdf.mjs","kgd-export.js"
   });
 }
 app.get("/stoldom-people-logo.webp",(_req,res)=>res.sendFile(path.join(__dirname,"stoldom-people-logo.webp")));
+app.get(["/apple-touch-icon.png","/apple-touch-icon-precomposed.png"],(_req,res)=>res.sendFile(path.join(__dirname,"apple-touch-icon.png")));
 require("./kgd-api")(app);
 const {createHash,timingSafeEqual}=require("node:crypto");
 const exportOrigins=new Set(["https://stoldom.site","https://www.stoldom.site"]);
