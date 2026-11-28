@@ -586,7 +586,7 @@ document.querySelectorAll('.ai-sidebar [data-ai-prompt]').forEach(function(butto
 </style>
 <dialog id="cheatDesk" aria-labelledby="cheatTitle"><div class="recon-dialog-head"><div><h2 id="cheatTitle">Шпаргалки бухгалтера</h2><p>Личный рабочий стол</p></div><button id="cheatClose" type="button" aria-label="Закрыть">×</button></div>
 <p class="muted">Файлы хранятся только в этом браузере. Не синхронизируются между устройствами; очистка данных сайта может удалить их.</p>
-<section id="referenceLibrary" style="margin:16px 0"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><h3>Справочники STOLDOM</h3><button id="refRefresh" class="btn outline" type="button">↻ Обновить справочники</button></div><p id="refStatus" class="muted" role="status"></p><div id="refList" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px"></div><section id="refReader" hidden style="margin-top:16px;border:1px solid #d9e1eb;border-radius:12px;padding:16px"><div style="display:flex;justify-content:space-between;gap:8px"><strong>Просмотр справочника</strong><button class="btn outline" id="refClose" type="button">Закрыть</button></div><div id="refContent" style="overflow:auto"></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="refDownload" class="btn outline" type="button">Скачать HTML</button><button id="refExcel" class="btn outline" type="button">Скачать Excel</button><button id="refPrint" class="btn outline" type="button">Печать / PDF</button></div></section></section><h3>Мои файлы</h3><div id="cheatDrop"><button id="cheatAdd" class="btn primary" type="button">+ Добавить файлы</button><input id="cheatFiles" type="file" multiple accept=".pdf,.xls,.xlsx,.xlsm,.csv,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp,.gif" hidden><p>или перетащите сюда PDF, Excel, Word и изображения</p></div>
+<section id="referenceLibrary" style="margin:16px 0"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><h3>Справочники STOLDOM</h3><button id="refRefresh" class="btn outline" type="button">↻ Обновить справочники</button></div><p id="refStatus" class="muted" role="status"></p><input id="refSearch" type="search" placeholder="Поиск по справочникам" aria-label="Поиск по справочникам"><button id="refBack" type="button" hidden>‹ Все папки</button><div id="refList"></div><section id="refReader" hidden style="margin-top:16px;border:1px solid #d9e1eb;border-radius:12px;padding:16px"><div style="display:flex;justify-content:space-between;gap:8px"><strong>Просмотр справочника</strong><button class="btn outline" id="refClose" type="button">Закрыть</button></div><div id="refContent" style="overflow:auto"></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="refDownload" class="btn outline" type="button">Скачать HTML</button><button id="refExcel" class="btn outline" type="button">Скачать Excel</button><button id="refPrint" class="btn outline" type="button">Печать / PDF</button></div></section></section><h3>Мои файлы</h3><div id="cheatDrop"><button id="cheatAdd" class="btn primary" type="button">+ Добавить файлы</button><input id="cheatFiles" type="file" multiple accept=".pdf,.xls,.xlsx,.xlsm,.csv,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp,.gif" hidden><p>или перетащите сюда PDF, Excel, Word и изображения</p></div>
 <div id="cheatStatus" role="status" aria-live="polite"></div><div id="cheatGrid"></div></dialog>
 <script>
 (function(){
@@ -649,7 +649,42 @@ function interactive(d){
  table.replaceWith(list);return el;
 }
 function show(d){current=d;$("refContent").replaceChildren(interactive(d));$("refReader").hidden=false;$("refReader").scrollIntoView({block:"nearest"});}
-async function load(){const id=++seq;$("refStatus").textContent="Проверяем версии…";try{const response=await fetch("/cheat-library.json",{cache:"no-store"});if(!response.ok)throw Error();const next=await response.json();if(id!==seq)return;if(!Array.isArray(next.docs))throw Error();library=next;current=null;$("refReader").hidden=true;$("refList").replaceChildren();for(const d of library.docs){const b=node("button","📄 "+d.title);b.type="button";b.className="btn outline";b.style.cssText="white-space:normal;height:auto;min-height:44px";b.onclick=()=>show(d);$("refList").append(b);}$("refStatus").textContent="Версия "+library.version+" · "+library.date+" · Начальная библиотека";}catch{$("refStatus").textContent="Не удалось проверить обновление. Повторите попытку.";}}
+const folders=[
+ ["Бухгалтерский учёт",/^Типовые проводки|^Счета Дт/],
+ ["Налоги и отчётность",/^Налоги|^Ставки НДС/],
+ ["Банк и касса",/^КНП|^Банк и касса/],
+ ["Хозяйственные операции",/^Хозяйственные операции — (лизинг|депозиты)/],
+ ["Зарплата и сотрудники",/^Хозяйственные операции — зарплата/],
+ ["Работа в 1С",/^Работа в 1С/]
+];
+let folder=null;
+function shortTitle(d){return d.title.replace(/^Хозяйственные операции — |^Банк и касса — |^Работа в 1С — /,"").replace(/^./,c=>c.toUpperCase());}
+function listRow(title,isFolder,action,count){
+ const b=node("button");b.type="button";b.className="ref-nav-row";
+ const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 24 24");svg.setAttribute("aria-hidden","true");svg.setAttribute("class",isFolder?"ref-folder-icon":"ref-file-icon");
+ const p=document.createElementNS(svg.namespaceURI,"path");p.setAttribute("d",isFolder?"M3 5h7l2 2h9v13H3z":"M6 3h8l4 4v14H6z M14 3v5h4 M9 12h6 M9 16h6");svg.append(p);
+ const label=node("span",title);label.className="ref-nav-label";b.append(svg,label);
+ if(count!==undefined){const n=node("small",String(count));b.append(n);}
+ const arrow=node("span","›");arrow.className="ref-nav-arrow";arrow.setAttribute("aria-hidden","true");b.append(arrow);b.onclick=action;return b;
+}
+function renderLibrary(){
+ const list=$("refList");list.replaceChildren();if(!library)return;
+ const q=$("refSearch").value.trim().toLocaleLowerCase("ru");
+ const matches=d=>!q||[d.title,d.note,...d.rows.flat()].join(" ").toLocaleLowerCase("ru").includes(q);
+ const open=d=>{show(d);};
+ $("refBack").hidden=!folder||!!q;
+ if(q||folder){
+ const docs=library.docs.filter(d=>matches(d)&&(q||folder[1].test(d.title)));
+ for(const d of docs)list.append(listRow(shortTitle(d),false,()=>open(d)));
+ if(!docs.length)list.append(node("p","Ничего не найдено"));
+ }else{
+ for(const f of folders){const count=library.docs.filter(d=>f[1].test(d.title)).length;if(count)list.append(listRow(f[0],true,()=>{folder=f;renderLibrary();},count));}
+ const other=library.docs.filter(d=>!folders.some(f=>f[1].test(d.title)));for(const d of other)list.append(listRow(shortTitle(d),false,()=>open(d)));
+ }
+}
+$("refSearch").addEventListener("input",()=>{$("refReader").hidden=true;current=null;renderLibrary();});
+$("refBack").onclick=()=>{folder=null;$("refReader").hidden=true;current=null;renderLibrary();};
+async function load(){const id=++seq;$("refStatus").textContent="Проверяем версии…";try{const response=await fetch("/cheat-library.json",{cache:"no-store"});if(!response.ok)throw Error();const next=await response.json();if(id!==seq)return;if(!Array.isArray(next.docs))throw Error();library=next;current=null;folder=null;$("refReader").hidden=true;renderLibrary();$("refStatus").textContent="Версия "+library.version+" · "+library.date;}catch{$("refStatus").textContent="Не удалось проверить обновление. Повторите попытку.";}}
 function html(){return "<!doctype html><html lang='ru'><meta charset='utf-8'><title>STOLDOM</title><body style='font:16px Arial,sans-serif;padding:24px;color:#24354a'>"+build(current).outerHTML+"</body></html>";}
 $("cheatOpen").addEventListener("click",()=>{if(!library)load();});$("refRefresh").onclick=load;$("refClose").onclick=()=>{$("refReader").hidden=true;current=null;};
 $("refDownload").onclick=()=>{if(!current)return;const u=URL.createObjectURL(new Blob([html()],{type:"text/html;charset=utf-8"}));const a=node("a");a.href=u;a.download=current.title+".html";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);};
@@ -659,6 +694,22 @@ $("refPrint").onclick=()=>{if(!current)return;const w=window.open("","_blank");i
 </script>
 <style>
 #cheatDesk{box-sizing:border-box;max-width:calc(100vw - 24px)}
+#refList{display:flex;flex-direction:column;gap:0}
+#refSearch{width:100%;box-sizing:border-box;border:0;border-radius:10px;background:#f1f3f6;padding:11px 13px;font-size:16px;margin:6px 0 12px;color:#24354a}
+#refBack{border:0;background:none;color:#3478d4;font-size:14px;padding:8px 0;cursor:pointer}
+#refBack[hidden]{display:none}
+#refList .ref-nav-row{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:10px 4px;border:0;border-bottom:1px solid #e8edf2;border-radius:0;background:#fff;color:#24354a;text-align:left;font-size:15px;font-weight:500;cursor:pointer;white-space:normal}
+#refList .ref-nav-row:active{background:#f3f5f8}
+.ref-nav-label{flex:1;min-width:0;overflow-wrap:anywhere}
+.ref-folder-icon,.ref-file-icon{width:24px;height:24px;flex:none;stroke-width:1.4;stroke-linejoin:round}
+.ref-folder-icon{fill:#f6ce55;stroke:#d5a52a}
+.ref-file-icon{fill:none;stroke:#8494a8}
+.ref-nav-arrow{color:#9aa6b5;font-size:22px;font-weight:400}
+#refList small{color:#8494a8;font-size:12px}
+#referenceLibrary h3{font-size:16px;font-weight:600}
+#refRefresh{font-size:12px;padding:6px 9px}
+#refStatus{font-size:11px}
+
 #refReader,#refContent,#referenceLibrary{min-width:0;max-width:100%;box-sizing:border-box}
 #refContent{overflow-wrap:anywhere}
 #refContent .ref-accordion{display:grid;gap:8px;margin:12px 0}
