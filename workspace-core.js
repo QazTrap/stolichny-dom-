@@ -306,6 +306,27 @@
     for(const [field,names] of Object.entries(labels)){
       for(const name of names)aliasToField.set(norm(name),field);
     }
+    // Alatau transaction-register export: owner fields are repeated in rows.
+    // Require the explicit owner columns and the extended export signature.
+    for(let i=0;i<matrix.length;i++){
+      const headers=(Array.isArray(matrix[i])?matrix[i]:[]).map(norm);
+      if(headers[2]!=="номер счета клиента" || headers[18]!=="наименование клиента" ||
+         !/валюта/.test(headers[14]||"") ||
+         !/период|дата/.test(headers[30]||"") || !/период|дата/.test(headers[31]||""))continue;
+      const records=matrix.slice(i+1).filter(row=>Array.isArray(row)&&/^KZ[A-Z0-9]{18}$/i.test(String(row[2]??"").trim()));
+      if(!records.length)continue;
+      const unique=(col,convert)=> {
+        const values=[...new Set(records.map(row=>convert(row[col])).filter(Boolean))];
+        return values.length===1?values[0]:"";
+      };
+      info.name=unique(18,v=>String(v??"").trim());
+      info.account=unique(2,v=>String(v??"").trim().toUpperCase());
+      info.currency=unique(14,v=>/^(KZT|USD|EUR|RUB|GBP|CNY)$/i.test(String(v??"").trim())?String(v).trim().toUpperCase():"");
+      const from=unique(30,dateText),to=unique(31,dateText);
+      if(from&&to)info.period=from+" — "+to;
+      info.bank="Alatau City Bank";
+      return info;
+    }
     const max=Math.min(90,matrix.length);
     for(let i=0;i<max;i++){
       const cells=Array.isArray(matrix[i])?matrix[i]:[matrix[i]];
