@@ -678,7 +678,7 @@ function renderLibrary(){
  for(const d of docs)list.append(listRow(shortTitle(d),false,()=>open(d)));
  if(!docs.length)list.append(node("p","Ничего не найдено"));
  }else{
- for(const f of folders){const count=library.docs.filter(d=>f[1].test(d.title)).length;if(count)list.append(listRow(f[0],true,()=>{folder=f;renderLibrary();},count));}
+ for(const [index,f] of folders.entries()){const count=library.docs.filter(d=>f[1].test(d.title)).length;if(count){const row=listRow(f[0],true,()=>{folder=f;renderLibrary();},count);const number=node("span",String(index+1).padStart(2,"0"));number.className="ref-folder-number";row.prepend(number);list.append(row);}}
  const other=library.docs.filter(d=>!folders.some(f=>f[1].test(d.title)));for(const d of other)list.append(listRow(shortTitle(d),false,()=>open(d)));
  }
 }
@@ -700,6 +700,7 @@ $("refPrint").onclick=()=>{if(!current)return;const w=window.open("","_blank");i
 #refBack[hidden]{display:none}
 #refList .ref-nav-row{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:10px 4px;border:0;border-bottom:1px solid #e8edf2;border-radius:0;background:#fff;color:#24354a;text-align:left;font-size:15px;font-weight:500;cursor:pointer;white-space:normal}
 #refList .ref-nav-row:active{background:#f3f5f8}
+.ref-folder-number{font-size:12px;color:#8494a8;font-weight:400;font-variant-numeric:tabular-nums;flex:none;min-width:20px}
 .ref-nav-label{flex:1;min-width:0;overflow-wrap:anywhere}
 .ref-folder-icon,.ref-file-icon{width:24px;height:24px;flex:none;stroke-width:1.4;stroke-linejoin:round}
 .ref-folder-icon{fill:#f6ce55;stroke:#d5a52a}
